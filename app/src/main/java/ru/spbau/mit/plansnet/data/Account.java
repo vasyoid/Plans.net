@@ -7,6 +7,11 @@ import android.support.annotation.NonNull;
  */
 
 public class Account extends AbstractDataContainer<UsersGroup> {
+    private Object ID;
+
+    public Object getID() {
+        return ID;
+    }
 
     public Account(@NonNull String name) {
         super(name);

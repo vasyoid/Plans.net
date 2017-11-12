@@ -12,4 +12,12 @@ public class UsersGroup extends AbstractDataContainer<Building> {
     public UsersGroup(@NonNull String name) {
         super(name);
     }
+
+    public boolean isPrivate() {
+        return isPrivate;
+    }
+
+    public void setPrivate(boolean aPrivate) {
+        isPrivate = aPrivate;
+    }
 }
