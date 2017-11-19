@@ -10,12 +10,35 @@ import java.util.List;
  */
 
 public class FloorMap extends AbstractNamedData {
+    @NonNull
     private ArrayList<MapObject> objects;
+    @NonNull
+    private String buildingName;
+    @NonNull
+    private String groupName;
 
-    FloorMap(@NonNull String name) {
+    FloorMap(@NonNull String name, @NonNull String groupName, @NonNull String buildingName) {
         super(name);
+        objects = new ArrayList<>();
+
+        this.groupName = groupName;
+        this.buildingName = buildingName;
     }
 
+    public void setPath(@NonNull String groupName, @NonNull String buildingName) {
+        this.groupName = groupName;
+        this.buildingName = buildingName;
+    }
+
+    @NonNull
+    public String getBuildingName() {
+        return buildingName;
+    }
+
+    @NonNull
+    public String getGroupName() {
+        return groupName;
+    }
 
     @NonNull
     public List<MapObject> getArrayData() {

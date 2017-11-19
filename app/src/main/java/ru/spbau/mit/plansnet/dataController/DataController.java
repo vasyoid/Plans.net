@@ -1,9 +1,13 @@
 package ru.spbau.mit.plansnet.dataController;
 
+import com.google.firebase.auth.FirebaseUser;
+
 import ru.spbau.mit.plansnet.data.Account;
 import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
 import ru.spbau.mit.plansnet.data.UsersGroup;
+
+
 
 /**
  * Controller class which manage data and network connection
@@ -11,15 +15,19 @@ import ru.spbau.mit.plansnet.data.UsersGroup;
 
 public class DataController {
     private NetworkDataManager netManager;
+    private Account userAccount;
+
+    DataController(final FirebaseUser account) {
+        netManager = new NetworkDataManager(account);
+    }
     /**
      * Save map to account and send it to netWork
      */
-    public void saveMap(Object accountID, FloorMap map, String groupName, String buildingName)
+    public void saveMap(FloorMap map, String groupName, String buildingName)
             throws IllegalArgumentException {
 
-        Account user = netManager.getAccountByID(accountID);
 
-        UsersGroup userGroup = user.findByName(groupName);
+        UsersGroup userGroup = userAccount.findByName(groupName);
         if (userGroup == null) {
             throw new IllegalArgumentException("This user haven't group: " + groupName);
         }
@@ -32,7 +40,7 @@ public class DataController {
 
         building.setElementToContainer(map);
 
-        netManager.updateAccount(user);
+        netManager.putMapOnServer(map);
     }
 
 

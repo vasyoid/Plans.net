@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "939505549265",
+    "firebase_url": "https://plans-net.firebaseio.com",
+    "project_id": "plans-net",
+    "storage_bucket": "plans-net.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:939505549265:android:c68b77d1e94c9b9a",
+        "android_client_info": {
+          "package_name": "ru.spbau.mit.plansnet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "939505549265-qi3ufi1k8v6ep2v983meh3bgpsor3eqm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ru.spbau.mit.plansnet",
+            "certificate_hash": "f271f1450296a06e34ae3216eee867da93d28075"
+          }
+        },
+        {
+          "client_id": "939505549265-he2juu3ujb8m7fh9kgg558p7q54gcvjn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYaV7W52c0To6FuY01T8B-A4IXs3z8XpY"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "939505549265-he2juu3ujb8m7fh9kgg558p7q54gcvjn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
