@@ -1,14 +1,34 @@
 package ru.spbau.mit.plansnet.dataController;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
+import android.util.Log;
+import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+
+import ru.spbau.mit.plansnet.data.Account;
+import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
+import ru.spbau.mit.plansnet.data.UsersGroup;
 
 
 /**
@@ -27,16 +47,7 @@ public class NetworkDataManager {
     @NonNull
     private DatabaseReference databaseReference;
 
-    /*
-    /TODO LIST:
-    * saveMap();
-    * loadMap();
-    * getListOfAllMaps();
-    * checkLastMapModifying();
-    * deleteAnything();
-    * checkAnything();
-    * checkExisting();
-     */
+    private static final String STORAGE_TAG = "FIREBASE_STORAGE";
 
     public NetworkDataManager(@NonNull final FirebaseUser currentUser) {
         userAccount = currentUser;
@@ -49,6 +60,7 @@ public class NetworkDataManager {
     }
 
     public void putMapOnServer(@NonNull final FloorMap map) {
+        //put on database
         DatabaseReference userRef = databaseReference.child(userAccount.getUid());
         userRef.child("mail").setValue(userAccount.getEmail());
         userRef.child("name").setValue(userAccount.getDisplayName());
@@ -59,81 +71,95 @@ public class NetworkDataManager {
                 .child("floors")//need to add some order in future
                 .child(map.getName());
 
-        String pathInStorage = "somePath";//TODO doing something with this stub
-        floorsRef.child("path").setValue("somePath TODO");
+        String pathInStorage = userAccount.getUid() + "/"
+                + map.getGroupName() + "/"
+                + map.getBuildingName() + "/"
+                + map.getName() + ".plannet";
+        floorsRef.child("path").setValue(pathInStorage);
 
-        //TODO put on stoarage
+        //put on storage
+        StorageReference storageMapRef = storageReference.child(pathInStorage);
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ObjectOutputStream ous = new ObjectOutputStream(baos)) {
+            ous.writeObject(map);
+        } catch (IOException e) {
+            Log.d(STORAGE_TAG, "writing to byte array was incorrect");
+            e.printStackTrace();
+        }
+
+        storageMapRef.putBytes(baos.toByteArray()).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                //TODO do something helpful
+                Log.d(STORAGE_TAG, "uploading file was incorrect");
+            }
+        }); //TODO check that this is correct
     }
 
-}
-//    //TODO delete this
-//    public void testSome() {
-////        databaseRef = database.getReference("ads");
-////        databaseRef.setValue("something");
-//    }
-//}
-//
-//    FirebaseUser currentUser = mAuth.getCurrentUser();
-//        Log.d("MYTEST", "doSome");
-//
-//                if (currentUser != null) {
-//                Log.d("MYTEST", currentUser.getDisplayName());
-//                } else {
-//                Log.d("MYTEST", "can't get name2");
-//                }
-//
-//                FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
-//
-//
-//
-////        DatabaseReference dRef = firebaseDatabase.getReference(currentUser.getUid());
-////        DatabaseReference dRef = firebaseDatabase.getReference();
-////
-////        DatabaseReference m = dRef.child("users").child("asdiasjodas");
-////        m.child("name").setValue("David");
-////        m.child("age").setValue("more than 21");
-////        m.child("boobs").setValue("2");
-////
-////        m = dRef.child("urers").child("asdkasfksa");
-////        m.child("name").setValue("Not David");
-////        m.child("age").setValue("less than 21");
-////        m.child("boobs").setValue("-1");
-////        m.removeValue();
-////
-//                //================ Storage ================
-//
-//                FirebaseStorage fbStorage = FirebaseStorage.getInstance();
-//
-////        dRef.setValue(currentUser.getEmail());
-//                StorageReference hwRef = fbStorage.getReference().child("fold1/hw.tex");
-//
-//                Context context = new ContextWrapper(this);
-//final File filesDir = new File(getApplicationContext().getFilesDir().getAbsolutePath());
-//        File localFile  = new File(filesDir.getAbsolutePath(), "hw2.tex");
-////        localFile
-////        try {
-//        Toast.makeText(IdTokenActivity.this, Boolean.toString(localFile.mkdirs()), Toast.LENGTH_SHORT).show();
-//        Toast.makeText(IdTokenActivity.this, Boolean.toString(localFile.exists()), Toast.LENGTH_SHORT).show();
-//        Toast.makeText(IdTokenActivity.this, Boolean.toString(localFile.setWritable(true)), Toast.LENGTH_SHORT).show();
-//
-////        } catch (IOException e) {
-////            e.printStackTrace();
-////            Toast.makeText(IdTokenActivity.this, "error1", Toast.LENGTH_SHORT).show();
-////        }
-//
-//        hwRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-//@Override
-//public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-////                taskSnapshot.
-//        Toast.makeText(IdTokenActivity.this, "complete", Toast.LENGTH_SHORT).show();
-//        Toast.makeText(IdTokenActivity.this, filesDir.getAbsolutePath(), Toast.LENGTH_SHORT).show();
-////                Toast.makeText(IdTokenActivity.this, filesDir.listFiles()[0].getName(), Toast.LENGTH_SHORT).show();
-//        }
-//        }).addOnFailureListener(new OnFailureListener() {
-//@Override
-//public void onFailure(@NonNull Exception exception) {
-//        Toast.makeText(IdTokenActivity.this, "error2", Toast.LENGTH_SHORT).show();
-//        // Handle any errors
-//        }
-//        });
+    /**
+     * Get all tree from database and download this to the phone,
+     * create an account from it
+     */
+    @NonNull
+    public Account getAccount(final Context context) {
+        final ArrayList<String> floorsPaths = new ArrayList<>();
 
+        databaseReference.child(userAccount.getUid()).child("groups")
+                .addValueEventListener(new ValueEventListener() {
+                    final ArrayList<DataSnapshot> groupsRefs = new ArrayList<>();
+                    final ArrayList<DataSnapshot> buildingsRefs = new ArrayList<>();
+
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (DataSnapshot data : dataSnapshot.getChildren()) {
+                            groupsRefs.add(data);
+                        }
+                        for (DataSnapshot group : groupsRefs) {
+                            for (DataSnapshot data : group.child("buildings").getChildren()) {
+                                buildingsRefs.add(data);
+                            }
+                        }
+                        for (DataSnapshot building : buildingsRefs) {
+                            for (DataSnapshot data : building.child("floors").getChildren()) {
+                                floorsPaths.add((String) data.child("path").getValue());
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        Log.e(STORAGE_TAG, databaseError.getMessage());
+                    }
+                });
+
+
+        final Account account = new Account(userAccount.getDisplayName());
+
+        for (String path : floorsPaths) {
+            final File mapFile = new File(context.getApplicationContext().getFilesDir(), path);
+            mapFile.getParentFile().mkdirs();
+            storageReference.child(path).getFile(mapFile)
+                    .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                            try (ObjectInputStream ois =
+                                         new ObjectInputStream(new FileInputStream(mapFile))) {
+                                FloorMap map = (FloorMap) ois.readObject();
+
+                                UsersGroup group = account.setElementToContainer(
+                                        new UsersGroup(map.getGroupName()));
+                                Building building = group.setElementToContainer(
+                                        new Building(map.getBuildingName()));
+                                building.addData(map);
+                            } catch (Exception exception) {
+                                Toast.makeText(context,
+                                        "Can't read map from file", Toast.LENGTH_SHORT).show();
+                                exception.printStackTrace();
+                            }
+                        }
+                    });
+        }
+        return account;
+    }
+}

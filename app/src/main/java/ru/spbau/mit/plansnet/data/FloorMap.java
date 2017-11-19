@@ -2,6 +2,7 @@ package ru.spbau.mit.plansnet.data;
 
 import android.support.annotation.NonNull;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +10,7 @@ import java.util.List;
  * Created by kostya55516 on 14.10.17.
  */
 
-public class FloorMap extends AbstractNamedData {
+public class FloorMap extends AbstractNamedData implements Serializable {
     @NonNull
     private ArrayList<MapObject> objects;
     @NonNull
@@ -17,7 +18,7 @@ public class FloorMap extends AbstractNamedData {
     @NonNull
     private String groupName;
 
-    FloorMap(@NonNull String name, @NonNull String groupName, @NonNull String buildingName) {
+    public FloorMap(@NonNull String name, @NonNull String groupName, @NonNull String buildingName) {
         super(name);
         objects = new ArrayList<>();
 

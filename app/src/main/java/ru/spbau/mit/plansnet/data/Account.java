@@ -7,9 +7,9 @@ import android.support.annotation.NonNull;
  */
 
 public class Account extends AbstractDataContainer<UsersGroup> {
-    private Object ID;
+    private String ID;//TODO field this with Uid from firebase
 
-    public Object getID() {
+    public String getID() {
         return ID;
     }
 

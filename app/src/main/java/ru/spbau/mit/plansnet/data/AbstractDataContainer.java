@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +13,8 @@ import java.util.List;
  * Generic abstract class which contains ArrayList of type T and works with this data
  * @param <T> type of data which will be contains
  */
-public abstract class AbstractDataContainer<T extends AbstractNamedData> extends AbstractNamedData {
+public abstract class AbstractDataContainer<T extends AbstractNamedData>
+        extends AbstractNamedData implements Serializable {
     @NonNull
     private final ArrayList<T> data;
 
