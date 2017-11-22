@@ -28,7 +28,7 @@ public class DataController {
 
     private static final String DATA_TAG = "DATA_CONTROLLER_FILES";
 
-    DataController(@NonNull final Context context, @NonNull final FirebaseUser account) {
+    public DataController(@NonNull final Context context, @NonNull final FirebaseUser account) {
         netManager = new NetworkDataManager(account);
         userAccount = netManager.getAccount(context);
 
