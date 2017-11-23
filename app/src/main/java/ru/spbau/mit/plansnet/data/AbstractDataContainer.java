@@ -3,8 +3,6 @@ package ru.spbau.mit.plansnet.data;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +43,7 @@ public abstract class AbstractDataContainer<T extends AbstractNamedData>
      * Find an element with equals name and replace this.
      * Add the element to container if it doesn't exist
      */
-    @NotNull
+    @NonNull
     public T setElementToContainer(T toSet) {
         for (T object : data) {
             if (object.getName().equals(toSet.getName())) {
