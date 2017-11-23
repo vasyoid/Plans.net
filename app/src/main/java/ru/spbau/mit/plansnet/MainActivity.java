@@ -1,11 +1,16 @@
 package ru.spbau.mit.plansnet;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.Toast;
+import android.app.AlertDialog;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -29,18 +34,49 @@ public class MainActivity extends AppCompatActivity {
     DataController dataController;
     FirebaseUser user;
 
+    Button btnLogOut;
+    Button btnSettings;
+
+    GoogleSignInClient mGoogleSignOutClient;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        btnLogOut = (Button) findViewById(R.id.btnLogOut);
+        btnSettings = (Button) findViewById(R.id.btnSettings);
 
+        OnClickListener oclBtnLogOut = new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.btnLogOut:
+                        signOut();
+                        break;
+                }
+            }
+
+            private void signOut() {
+                mGoogleSignOutClient.signOut()
+                        .addOnCompleteListener(MainActivity.this, new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                                builder.setTitle("Я вышел из аккаунта!");
+                                AlertDialog alert = builder.create();
+                                alert.show();
+                            }
+                        });
+
+            }
+        };
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         logIn();
-
     }
 
     private void logIn() {
