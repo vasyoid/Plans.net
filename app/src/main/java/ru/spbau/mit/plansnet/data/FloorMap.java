@@ -18,6 +18,12 @@ public class FloorMap extends AbstractNamedData implements Serializable {
     @NonNull
     private String groupName;
 
+    public FloorMap() {
+        buildingName = "default";
+        groupName = "default";
+        objects = new ArrayList<>();
+    }
+
     public FloorMap(@NonNull String name, @NonNull String groupName, @NonNull String buildingName) {
         super(name);
         objects = new ArrayList<>();

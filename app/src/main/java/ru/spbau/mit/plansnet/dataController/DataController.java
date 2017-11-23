@@ -23,18 +23,23 @@ import ru.spbau.mit.plansnet.data.UsersGroup;
  */
 
 public class DataController {
+    @NonNull
     private NetworkDataManager netManager;
+    @NonNull
     private Account userAccount;
+    @NonNull
+    private Context context;
 
     private static final String DATA_TAG = "DATA_CONTROLLER_FILES";
 
     public DataController(@NonNull final Context context, @NonNull final FirebaseUser account) {
-        netManager = new NetworkDataManager(account);
-        userAccount = netManager.getAccount(context);
-
+        this.context = context;
+        netManager = new NetworkDataManager(context, account);
+        userAccount = new Account(account.getDisplayName());
+        netManager.getAccount(userAccount);
     }
 
-    public void writeMap(@NonNull final Context context, @NonNull final FloorMap map) {
+    private void writeMap(@NonNull final FloorMap map) {
         File accountFile = new File(context.getApplicationContext().getFilesDir(),
                 userAccount.getID() + File.pathSeparator
                         + map.getGroupName() + File.pathSeparator
@@ -51,30 +56,31 @@ public class DataController {
         }
     }
 
+    public void saveGroup(@NonNull final UsersGroup group) {
+        userAccount.setElementToContainer(group);
+    }
+
     /**
      * Save map to account and send it to netWork
      */
-    public void saveMap(@NonNull final Context context,
-                        @NonNull final FloorMap map,
-                        @NonNull final String groupName,
-                        @NonNull final String buildingName)
+    public void saveMap(@NonNull final FloorMap map)
             throws IllegalArgumentException {
 
 
-        UsersGroup userGroup = userAccount.findByName(groupName);
+        UsersGroup userGroup = userAccount.findByName(map.getGroupName());
         if (userGroup == null) {
-            throw new IllegalArgumentException("This user haven't group: " + groupName);
+            throw new IllegalArgumentException("This user haven't group: " + map.getGroupName());
         }
 
-        Building building = userGroup.findByName(buildingName);
+        Building building = userGroup.findByName(map.getBuildingName());
         if (building == null) {
-            throw new IllegalArgumentException("User's group '" + groupName
-                    + "' haven't building: " + buildingName);
+            throw new IllegalArgumentException("User's group '" + map.getGroupName()
+                    + "' haven't building: " + map.getBuildingName());
         }
 
         building.setElementToContainer(map);
 
-        writeMap(context, map);
+        writeMap(map);
 
         netManager.putMapOnServer(map);
     }
