@@ -30,7 +30,7 @@ public abstract class MapObjectLinear extends MapObject {
         setRotation((float)Math.toDegrees(angle));
     }
 
-    Line getPosition() {
+    public Line getPosition() {
         return position;
     }
 
