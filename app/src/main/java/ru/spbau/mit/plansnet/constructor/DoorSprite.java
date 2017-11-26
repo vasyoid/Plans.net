@@ -1,37 +1,44 @@
 package ru.spbau.mit.plansnet.constructor;
 
-import android.graphics.Point;
-import android.util.Log;
-
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
-public class Wall extends ru.spbau.mit.plansnet.constructor.MapObjectLinear {
+import ru.spbau.mit.plansnet.data.objects.Door;
+
+public class DoorSprite extends MapObjectLinear {
 
     private static ITextureRegion textureRegion;
 
-    public MapObject copy() {
-        MapObject result = new Wall(getVertexBufferObjectManager());
-        result.setPosition(getPosition());
-        return result;
+    public DoorSprite() {
+        super(textureRegion);
     }
 
-    public Wall(VertexBufferObjectManager vertexBufferObjectManager) {
-        super(textureRegion, vertexBufferObjectManager);
+    public DoorSprite(Door pDoor) {
+        super(textureRegion);
+        setPosition(pDoor.getX(), pDoor.getY(), pDoor.getX2(), pDoor.getY2());
+    }
+
+    public MapObjectSprite copy() {
+        MapObjectSprite result = new DoorSprite();
+        result.setPosition(getPosition());
+        return result;
     }
 
     public static void setTexture(ITextureRegion texture) {
         textureRegion = texture;
     }
 
+
     @Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+
         if (MAP.getTouchState() != 1) {
             return false;
         } else {
+            detachSelf();
             MAP.removeObject(this);
         }
-        return false;
+        return true;
     }
 }

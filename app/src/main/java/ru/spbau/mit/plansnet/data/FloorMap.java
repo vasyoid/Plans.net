@@ -6,6 +6,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import ru.spbau.mit.plansnet.constructor.DoorSprite;
+import ru.spbau.mit.plansnet.constructor.MapObjectSprite;
+import ru.spbau.mit.plansnet.constructor.RoomSprite;
+import ru.spbau.mit.plansnet.constructor.WallSprite;
 import ru.spbau.mit.plansnet.data.objects.Door;
 import ru.spbau.mit.plansnet.data.objects.MapObject;
 import ru.spbau.mit.plansnet.data.objects.Room;
@@ -26,19 +30,19 @@ public class FloorMap extends AbstractNamedData implements Serializable {
     public FloorMap(@NonNull final String name, @NonNull final String groupName,
                     @NonNull final String buildingName,
                     @NonNull final ru.spbau.mit.plansnet.constructor.Map map) {
-        List<ru.spbau.mit.plansnet.constructor.MapObject> objList = map.getObjects();
-//      List<Room> roomList map.getRooms();
+        List<MapObjectSprite> objList = map.getObjects();
+        List<RoomSprite> roomList = map.getRooms();
 
-        for (ru.spbau.mit.plansnet.constructor.MapObject obj : objList) {
-            if (obj instanceof ru.spbau.mit.plansnet.constructor.Wall) {
-                objects.add(new Wall((ru.spbau.mit.plansnet.constructor.Wall) obj));
-            } else if (obj instanceof ru.spbau.mit.plansnet.constructor.Door) {
-                objects.add(new Door((ru.spbau.mit.plansnet.constructor.Door) obj));
+        for (MapObjectSprite obj : objList) {
+            if (obj instanceof WallSprite) {
+                objects.add(new Wall((WallSprite) obj));
+            } else if (obj instanceof DoorSprite) {
+                objects.add(new Door((DoorSprite) obj));
             }
         }
-//        for (ru.spbau.mit.plansnet.constructor.Room room : roomList) {
-//              objects.add(new Room(room));
-//        }
+        for (ru.spbau.mit.plansnet.constructor.RoomSprite room : roomList) {
+              objects.add(new Room(room));
+        }
     }
 
     public FloorMap() {

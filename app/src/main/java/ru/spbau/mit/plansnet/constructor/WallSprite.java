@@ -2,20 +2,26 @@ package ru.spbau.mit.plansnet.constructor;
 
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
-import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
-public class Door extends MapObjectLinear {
+import ru.spbau.mit.plansnet.data.objects.Wall;
+
+public class WallSprite extends MapObjectLinear {
 
     private static ITextureRegion textureRegion;
 
-    public MapObject copy() {
-        MapObject result = new Door(getVertexBufferObjectManager());
+    public MapObjectSprite copy() {
+        MapObjectSprite result = new WallSprite();
         result.setPosition(getPosition());
         return result;
     }
 
-    public Door(VertexBufferObjectManager vertexBufferObjectManager) {
-        super(textureRegion, vertexBufferObjectManager);
+    public WallSprite() {
+        super(textureRegion);
+    }
+
+    public WallSprite(Wall pWall) {
+        super(textureRegion);
+        setPosition(pWall.getX(), pWall.getY(), pWall.getX2(), pWall.getY2());
     }
 
     public static void setTexture(ITextureRegion texture) {
@@ -24,13 +30,11 @@ public class Door extends MapObjectLinear {
 
     @Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-
         if (MAP.getTouchState() != 1) {
             return false;
         } else {
-            detachSelf();
             MAP.removeObject(this);
         }
-        return true;
+        return false;
     }
 }
