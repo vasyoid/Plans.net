@@ -4,23 +4,31 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
+import ru.spbau.mit.plansnet.data.objects.Door;
+
 public class DoorSprite extends MapObjectLinear {
 
     private static ITextureRegion textureRegion;
 
-    public MapObjectSprite copy() {
-        MapObjectSprite result = new DoorSprite(getVertexBufferObjectManager());
-        result.setPosition(getPosition());
-        return result;
+    public DoorSprite() {
+        super(textureRegion);
     }
 
-    public DoorSprite(VertexBufferObjectManager vertexBufferObjectManager) {
-        super(textureRegion, vertexBufferObjectManager);
+    public DoorSprite(Door pDoor) {
+        super(textureRegion);
+        setPosition(pDoor.getX(), pDoor.getY(), pDoor.getX2(), pDoor.getY2());
+    }
+
+    public MapObjectSprite copy() {
+        MapObjectSprite result = new DoorSprite();
+        result.setPosition(getPosition());
+        return result;
     }
 
     public static void setTexture(ITextureRegion texture) {
         textureRegion = texture;
     }
+
 
     @Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {

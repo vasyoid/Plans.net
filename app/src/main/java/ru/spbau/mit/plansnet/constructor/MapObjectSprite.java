@@ -7,6 +7,12 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 public abstract class MapObjectSprite extends Sprite {
 
     protected static Map MAP;
+    protected static VertexBufferObjectManager vertexBufferObjectManager;
+
+    public static void setVertexBufferObjectManager(VertexBufferObjectManager
+                                                            pVertexBufferObjectManager) {
+        vertexBufferObjectManager = pVertexBufferObjectManager;
+    }
 
     public abstract MapObjectSprite copy();
 

@@ -1,13 +1,15 @@
 package ru.spbau.mit.plansnet.constructor;
 
 import android.graphics.PointF;
-import android.util.Log;
+
+import com.earcutj.Earcut;
 
 import org.andengine.entity.primitive.Line;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class LineHelper {
+public class Geometry {
 
     public static void swap(Line l1, Line l2) {
         Line tmp = copy(l1);
@@ -158,7 +160,7 @@ public class LineHelper {
             return result;
         }
         if (isVertical(l2)) {
-            LineHelper.swap(l1, l2);
+            Geometry.swap(l1, l2);
         }
         if (isVertical(l1)) {
             result.set(l1.getX1(),
@@ -168,7 +170,7 @@ public class LineHelper {
             return result;
         }
         if (isHorizontal(l2)) {
-            LineHelper.swap(l1, l2);
+            Geometry.swap(l1, l2);
         }
         if (isHorizontal(l1)) {
             result.set((l2.getX2() - l2.getX1()) /
@@ -182,6 +184,101 @@ public class LineHelper {
         float x = t1 * (y - l1.getY1()) + l1.getX1();
         result.set(x, y);
         return result;
+    }
+
+    public static List<PointF> roomPolygon(List<MapObjectSprite> objects, PointF point) {
+        List<PointF> polygon = new ArrayList<>();
+        MapObjectLinear currentObject = null;
+        float curX = -1e5f;
+        Line ray = new Line(-1e5f, point.y, point.x, point.y, null);
+        for (MapObjectSprite o : objects) {
+            if (!(o instanceof MapObjectLinear)) {
+                continue;
+            }
+            MapObjectLinear ol = (MapObjectLinear) o;
+            PointF tmp = getIntersectionPoint(
+                    ray, ol.getPosition(), true);
+            if (tmp != null && curX < tmp.x) {
+                currentObject = (MapObjectLinear) o;
+                curX = tmp.x;
+            }
+        }
+        if (currentObject == null) {
+            return null;
+        }
+        if (currentObject.getPosition().getY1() > currentObject.getPosition().getY2()) {
+            changeDirection(currentObject.getPosition());
+        }
+        polygon.add(new PointF(currentObject.getPosition().getX1(),
+                currentObject.getPosition().getY1()));
+        while (true) {
+            PointF curPoint = new PointF(currentObject.getPosition().getX2(),
+                    currentObject.getPosition().getY2());
+            if (curPoint.equals(polygon.get(0))) {
+                break;
+            }
+            polygon.add(curPoint);
+            MapObjectLinear nextObject = null;
+            float currentAngle = 10;
+            for (MapObjectSprite o : objects) {
+                if (!(o instanceof MapObjectLinear)) {
+                    continue;
+                }
+                MapObjectLinear ol = (MapObjectLinear) o;
+                if (linesJoinable(ol.getPosition(), currentObject.getPosition())) {
+                    continue;
+                }
+                if (lineEndsWith(ol.getPosition(), curPoint)) {
+                    changeDirection(ol.getPosition());
+                }
+                if (lineStartsWith(ol.getPosition(), curPoint)) {
+                    if (currentAngle > getAngle(currentObject.getPosition(), ol.getPosition())) {
+                        currentAngle = getAngle(currentObject.getPosition(), ol.getPosition());
+                        nextObject = (MapObjectLinear) o;
+                    }
+                }
+            }
+            if (nextObject == null) {
+                return null;
+            }
+            currentObject = nextObject;
+        }
+        return polygon;
+    }
+
+    public static boolean isPointInsidePolygon(List<PointF> polygon, PointF point) {
+        int cntIntersections = 0;
+        Line line = new Line(point.x, point.y, point.x, -1e5f, null);
+        polygon.add(polygon.get(0));
+        for (int i = 0; i < polygon.size() - 1; i++) {
+            Line side = new Line(polygon.get(i).x, polygon.get(i).y,
+                    polygon.get(i + 1).x, polygon.get(i + 1).y, null);
+            if (side.collidesWith(line)) {
+                cntIntersections++;
+            }
+        }
+        return cntIntersections % 2 == 1;
+    }
+
+    public static float[] makeTriangles(List<PointF> polygon) {
+        float[][][] vertices = new float[1][polygon.size()][2];
+
+        for (int i = 0; i < polygon.size(); i++) {
+            vertices[0][i][0] = polygon.get(i).x;
+            vertices[0][i][1] = polygon.get(i).y;
+        }
+
+        List<float[][]> triangles = Earcut.earcut(vertices, true);
+
+        float[] vertexData = new float[triangles.size() * 9];
+
+        for (int i = 0; i < triangles.size(); i++) {
+            for (int t = 0; t < 3; ++t) {
+                vertexData[9 * i + 3 * t] = triangles.get(i)[t][0];
+                vertexData[9 * i + 3 * t + 1] = triangles.get(i)[t][1];
+            }
+        }
+        return vertexData;
     }
 
 }

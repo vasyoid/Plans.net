@@ -2,20 +2,26 @@ package ru.spbau.mit.plansnet.constructor;
 
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
-import org.andengine.opengl.vbo.VertexBufferObjectManager;
+
+import ru.spbau.mit.plansnet.data.objects.Wall;
 
 public class WallSprite extends MapObjectLinear {
 
     private static ITextureRegion textureRegion;
 
     public MapObjectSprite copy() {
-        MapObjectSprite result = new WallSprite(getVertexBufferObjectManager());
+        MapObjectSprite result = new WallSprite();
         result.setPosition(getPosition());
         return result;
     }
 
-    public WallSprite(VertexBufferObjectManager vertexBufferObjectManager) {
-        super(textureRegion, vertexBufferObjectManager);
+    public WallSprite() {
+        super(textureRegion);
+    }
+
+    public WallSprite(Wall pWall) {
+        super(textureRegion);
+        setPosition(pWall.getX(), pWall.getY(), pWall.getX2(), pWall.getY2());
     }
 
     public static void setTexture(ITextureRegion texture) {

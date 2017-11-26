@@ -2,6 +2,7 @@ package ru.spbau.mit.plansnet.constructor;
 
 import android.content.Context;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -97,6 +98,8 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 
 	@Override
 	protected Scene onCreateScene() {
+        MapObjectSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
+        RoomSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
         final Scene scene = new Scene();
 		scene.setBackground(new Background(0.9f, 1, 0.6f));
         for (int i = 0; i <= GRID_COLS; i++) {
@@ -158,8 +161,8 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 }
                 if (state == 3) {
                     if (pSceneTouchEvent.isActionDown()) {
-                        map.createRoom(pSceneTouchEvent.getX(), pSceneTouchEvent.getY(), pScene,
-                                getVertexBufferObjectManager());
+                        map.createRoom(pSceneTouchEvent.getX(), pSceneTouchEvent.getY(), pScene
+                        );
                     }
                     return false;
                 }
@@ -171,14 +174,15 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 currentY = Math.max(currentY, 0);
                 switch (pSceneTouchEvent.getAction()) {
                     case TouchEvent.ACTION_DOWN:
+                        Log.d("VASYOID", "vbom: " + getVertexBufferObjectManager());
                         firstX = currentX;
                         firstY = currentY;
                         currentLine.setPosition(firstX, firstY,
                                 currentX, currentY);
                         if (item == 0) {
-                            currentAdded = new WallSprite(getVertexBufferObjectManager());
+                            currentAdded = new WallSprite();
                         } else {
-                            currentAdded = new DoorSprite(getVertexBufferObjectManager());
+                            currentAdded = new DoorSprite();
                         }
                         currentAdded.setPosition(currentLine);
                         pScene.attachChild(currentAdded);
