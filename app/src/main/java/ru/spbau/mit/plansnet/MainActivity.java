@@ -124,7 +124,6 @@ public class MainActivity extends AppCompatActivity {
 
                             user = auth.getCurrentUser();
                             dataController = new DataController(getApplicationContext(), user);
-
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(LOG_IN_TAG, "signInWithCredential:failure", task.getException());

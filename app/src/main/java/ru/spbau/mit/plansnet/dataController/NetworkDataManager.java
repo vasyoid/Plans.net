@@ -5,8 +5,10 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -15,7 +17,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -39,6 +43,8 @@ public class NetworkDataManager {
     @NonNull
     private final FirebaseStorage storage;
     @NonNull
+    private final Context context;
+    @NonNull
     private FirebaseUser userAccount;
     @NonNull
     private StorageReference storageReference;
@@ -47,9 +53,13 @@ public class NetworkDataManager {
     @NonNull
     private DatabaseReference databaseReference;
 
+    private boolean inProcess = false;
+
     private static final String STORAGE_TAG = "FIREBASE_STORAGE";
 
-    public NetworkDataManager(@NonNull final FirebaseUser currentUser) {
+    public NetworkDataManager(@NonNull final Context context,
+                              @NonNull final FirebaseUser currentUser) {
+        this.context = context;
         userAccount = currentUser;
 
         storage = FirebaseStorage.getInstance();
@@ -60,11 +70,18 @@ public class NetworkDataManager {
     }
 
     public void putMapOnServer(@NonNull final FloorMap map) {
+//        Log.d(STORAGE_TAG, "in put map func");
+//        while (inProcess) {
+//            SystemClock.sleep(100);
+//        };
+//        Log.d(STORAGE_TAG, "start put map func");
+//        inProcess = true;
         //put on database
         DatabaseReference userRef = databaseReference.child(userAccount.getUid());
         userRef.child("mail").setValue(userAccount.getEmail());
         userRef.child("name").setValue(userAccount.getDisplayName());
-        DatabaseReference buildingsRef = userRef.child(map.getGroupName()).child("buildings");
+        DatabaseReference buildingsRef = userRef.child("groups")
+                .child(map.getGroupName()).child("buildings");
 
         buildingsRef.child("isPublic").setValue(true);
         DatabaseReference floorsRef = buildingsRef.child(map.getBuildingName())
@@ -91,10 +108,19 @@ public class NetworkDataManager {
         storageMapRef.putBytes(baos.toByteArray()).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                //TODO do something helpful
-                Log.d(STORAGE_TAG, "uploading file was incorrect");
+                Toast.makeText(context, "Fail while map uploading", Toast.LENGTH_SHORT).show();
+                Log.d(STORAGE_TAG, "uploading was incorrect");
+//                inProcess = false;
             }
-        }); //TODO check that this is correct
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                Toast.makeText(context, "Uploading map successful", Toast.LENGTH_SHORT).show();
+                Log.d(STORAGE_TAG, "uploading success");
+//                inProcess = false;
+            }
+        });
+
     }
 
     /**
@@ -102,7 +128,13 @@ public class NetworkDataManager {
      * create an account from it
      */
     @NonNull
-    public Account getAccount(final Context context) {
+    public void getAccount(final Account account) {
+//        Log.d(STORAGE_TAG, "in get account func");
+//        while (inProcess) {
+//            SystemClock.sleep(100);
+//        };
+//        Log.d(STORAGE_TAG, "start get account");
+//        inProcess = true;
         final ArrayList<String> floorsPaths = new ArrayList<>();
 
         databaseReference.child(userAccount.getUid()).child("groups")
@@ -111,7 +143,7 @@ public class NetworkDataManager {
                     final ArrayList<DataSnapshot> buildingsRefs = new ArrayList<>();
 
                     @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
+                    public void onDataChange(final DataSnapshot dataSnapshot) {
                         for (DataSnapshot data : dataSnapshot.getChildren()) {
                             groupsRefs.add(data);
                         }
@@ -125,41 +157,61 @@ public class NetworkDataManager {
                                 floorsPaths.add((String) data.child("path").getValue());
                             }
                         }
+                        for (final String path : floorsPaths) {
+                            storageReference.child(path).getMetadata().addOnCompleteListener(
+                                    new OnCompleteListener<StorageMetadata>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<StorageMetadata> task) {
+
+                                            final File mapFile = new File(context.getApplicationContext()
+                                                    .getFilesDir(), path);
+
+                                            if (mapFile.lastModified() > task.getResult().getUpdatedTimeMillis()) {
+                                                Log.d(STORAGE_TAG,
+                                                        task.getResult().getName() + " is up to date");
+                                                return;
+                                            }
+
+                                            mapFile.getParentFile().mkdirs();
+                                            storageReference.child(path).getFile(mapFile)
+                                                    .addOnSuccessListener(new OnSuccessListener<FileDownloadTask
+                                                            .TaskSnapshot>() {
+                                                        @Override
+                                                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                                                            readMapFromFile(mapFile, account);
+                                                        }
+                                                    });
+                                        }
+                                    });
+                        }
+//                        inProcess = false;
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
                         Log.e(STORAGE_TAG, databaseError.getMessage());
+//                        inProcess = false;
                     }
+
+
                 });
-
-
-        final Account account = new Account(userAccount.getDisplayName());
-
-        for (String path : floorsPaths) {
-            final File mapFile = new File(context.getApplicationContext().getFilesDir(), path);
-            mapFile.getParentFile().mkdirs();
-            storageReference.child(path).getFile(mapFile)
-                    .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                        @Override
-                        public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                            try (ObjectInputStream ois =
-                                         new ObjectInputStream(new FileInputStream(mapFile))) {
-                                FloorMap map = (FloorMap) ois.readObject();
-
-                                UsersGroup group = account.setElementToContainer(
-                                        new UsersGroup(map.getGroupName()));
-                                Building building = group.setElementToContainer(
-                                        new Building(map.getBuildingName()));
-                                building.addData(map);
-                            } catch (Exception exception) {
-                                Toast.makeText(context,
-                                        "Can't read map from file", Toast.LENGTH_SHORT).show();
-                                exception.printStackTrace();
-                            }
-                        }
-                    });
-        }
-        return account;
     }
+
+    private void readMapFromFile(File mapFile, Account account) {
+        try (ObjectInputStream ois =
+                     new ObjectInputStream(new FileInputStream(mapFile))) {
+            FloorMap map = (FloorMap) ois.readObject();
+
+            UsersGroup group = account.setElementToContainer(new UsersGroup(map.getGroupName()));
+            Building building = group.setElementToContainer(new Building(map.getBuildingName()));
+
+            building.addData(map);
+            Log.d(STORAGE_TAG, "map " + map.getName() + " was readed");
+        } catch (Exception exception) {
+            Toast.makeText(context,
+                    "Can't read map from file", Toast.LENGTH_SHORT).show();
+            exception.printStackTrace();
+        }
+    }
+
 }
