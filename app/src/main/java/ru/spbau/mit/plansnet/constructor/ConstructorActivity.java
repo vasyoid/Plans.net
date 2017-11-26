@@ -60,8 +60,8 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
         setCameraResolution();
         GRID_SIZE = (100000 / CAMERA_HEIGHT);
         map = new Map(GRID_SIZE, GRID_COLS, GRID_ROWS);
-        MapObject.setMap(map);
-        Room.setMap(map);
+        MapObjectSprite.setMap(map);
+        RoomSprite.setMap(map);
         MapObjectLinear.setThickness(60000 / CAMERA_HEIGHT);
     	final SmoothCamera camera = new SmoothCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_WIDTH, CAMERA_HEIGHT, 50);
     	camera.setCenter(GRID_SIZE * GRID_COLS / 2, GRID_SIZE * GRID_ROWS / 2);
@@ -80,7 +80,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 }
             });
             wallTexture.load();
-            Wall.setTexture(TextureRegionFactory.extractFromTexture(wallTexture));
+            WallSprite.setTexture(TextureRegionFactory.extractFromTexture(wallTexture));
             ITexture doorTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
                 @Override
                 public InputStream open() throws IOException {
@@ -88,7 +88,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 }
             });
             doorTexture.load();
-            Door.setTexture(TextureRegionFactory.extractFromTexture(doorTexture));
+            DoorSprite.setTexture(TextureRegionFactory.extractFromTexture(doorTexture));
 
         } catch (IOException e) {
             Debug.e(e);
@@ -176,9 +176,9 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                         currentLine.setPosition(firstX, firstY,
                                 currentX, currentY);
                         if (item == 0) {
-                            currentAdded = new Wall(getVertexBufferObjectManager());
+                            currentAdded = new WallSprite(getVertexBufferObjectManager());
                         } else {
-                            currentAdded = new Door(getVertexBufferObjectManager());
+                            currentAdded = new DoorSprite(getVertexBufferObjectManager());
                         }
                         currentAdded.setPosition(currentLine);
                         pScene.attachChild(currentAdded);

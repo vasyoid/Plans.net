@@ -4,17 +4,17 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
-public class Door extends MapObjectLinear {
+public class DoorSprite extends MapObjectLinear {
 
     private static ITextureRegion textureRegion;
 
-    public MapObject copy() {
-        MapObject result = new Door(getVertexBufferObjectManager());
+    public MapObjectSprite copy() {
+        MapObjectSprite result = new DoorSprite(getVertexBufferObjectManager());
         result.setPosition(getPosition());
         return result;
     }
 
-    public Door(VertexBufferObjectManager vertexBufferObjectManager) {
+    public DoorSprite(VertexBufferObjectManager vertexBufferObjectManager) {
         super(textureRegion, vertexBufferObjectManager);
     }
 

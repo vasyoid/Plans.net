@@ -10,7 +10,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import java.util.List;
 
 
-public class Room extends Mesh {
+public class RoomSprite extends Mesh {
 
     private static Map MAP;
     private List<PointF> polygon;
@@ -19,7 +19,7 @@ public class Room extends Mesh {
         MAP = pMap;
     }
 
-    public Room(List<PointF> pPolygon, float pX, float pY, float[] pBufferData, int pVertexCount, DrawMode pDrawMode, VertexBufferObjectManager pVertexBufferObjectManager) {
+    public RoomSprite(List<PointF> pPolygon, float pX, float pY, float[] pBufferData, int pVertexCount, DrawMode pDrawMode, VertexBufferObjectManager pVertexBufferObjectManager) {
         super(pX, pY, pBufferData, pVertexCount, pDrawMode, pVertexBufferObjectManager);
         polygon = pPolygon;
     }

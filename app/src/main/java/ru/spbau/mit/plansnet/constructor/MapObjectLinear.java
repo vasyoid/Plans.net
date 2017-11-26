@@ -4,7 +4,7 @@ import org.andengine.entity.primitive.Line;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
-public abstract class MapObjectLinear extends MapObject {
+public abstract class MapObjectLinear extends MapObjectSprite {
 
     private static int THICKNESS = 10;
     private Line position;

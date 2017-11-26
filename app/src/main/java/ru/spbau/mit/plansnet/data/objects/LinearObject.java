@@ -6,6 +6,8 @@ import org.andengine.entity.primitive.Line;
 
 import java.io.Serializable;
 
+import ru.spbau.mit.plansnet.constructor.MapObjectLinear;
+
 /**
  * Created by kostya55516 on 26.11.17.
  */
@@ -14,7 +16,7 @@ public class LinearObject extends MapObject implements Serializable {
     private Point coord;
     private Point secondCoord;
 
-    public LinearObject(@NonNull final ru.spbau.mit.plansnet.constructor.MapObjectLinear object) {
+    public LinearObject(@NonNull final MapObjectLinear object) {
         Line objCoord = object.getPosition();
         coord.x = (int)objCoord.getX1();
         coord.y = (int)objCoord.getY1();

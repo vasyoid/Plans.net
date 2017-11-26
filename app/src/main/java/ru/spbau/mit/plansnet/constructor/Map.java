@@ -18,10 +18,10 @@ import java.util.Random;
 
 public class Map implements Serializable {
 
-    private List<MapObject> objects;
-    private List<Room> rooms;
-    private List<MapObject> removedObjects;
-    private List<Room> removedRooms;
+    private List<MapObjectSprite> objects;
+    private List<RoomSprite> rooms;
+    private List<MapObjectSprite> removedObjects;
+    private List<RoomSprite> removedRooms;
     private int touchState;
     private int gridSize;
     private int gridCols;
@@ -45,34 +45,34 @@ public class Map implements Serializable {
         return touchState;
     }
 
-    public List<MapObject> getObjects() {
+    public List<MapObjectSprite> getObjects() {
         return objects;
     }
 
-    public void addObject(MapObject object) {
+    public void addObject(MapObjectSprite object) {
         removedObjects.remove(object);
         objects.add(object);
     }
-    public void addRoom(Room room) {
+    public void addRoom(RoomSprite room) {
         removedRooms.remove(room);
         rooms.add(room);
     }
 
-    public void removeObject(MapObject object) {
+    public void removeObject(MapObjectSprite object) {
         objects.remove(object);
         removedObjects.add(object);
     }
 
-    public void removeRoom(Room room) {
+    public void removeRoom(RoomSprite room) {
         rooms.remove(room);
         removedRooms.add(room);
     }
 
     public void detachRemoved() {
-        for (MapObject o : removedObjects) {
+        for (MapObjectSprite o : removedObjects) {
             o.detachSelf();
         }
-        for (Room r : removedRooms) {
+        for (RoomSprite r : removedRooms) {
             r.detachSelf();
         }
         removedObjects.clear();
@@ -87,7 +87,7 @@ public class Map implements Serializable {
     }
 
     public boolean checkIntersections(MapObjectLinear pObject) {
-        for (MapObject o : objects) {
+        for (MapObjectSprite o : objects) {
             if (!(o instanceof MapObjectLinear)) {
                 continue;
             }
@@ -100,7 +100,7 @@ public class Map implements Serializable {
     }
 
     public void joinAll(MapObjectLinear pObject) {
-        for (MapObject o : objects) {
+        for (MapObjectSprite o : objects) {
             if (!(o instanceof MapObjectLinear)) {
                 continue;
             }
@@ -119,7 +119,7 @@ public class Map implements Serializable {
         MapObjectLinear currentObject = null;
         float curX = -1e5f;
         Line ray = new Line(-1e5f, point.y, point.x, point.y, null);
-        for (MapObject o : objects) {
+        for (MapObjectSprite o : objects) {
             if (!(o instanceof MapObjectLinear)) {
                 continue;
             }
@@ -148,7 +148,7 @@ public class Map implements Serializable {
             polygon.add(curPoint);
             MapObjectLinear nextObject = null;
             float currentAngle = 10;
-            for (MapObject o : objects) {
+            for (MapObjectSprite o : objects) {
                 if (!(o instanceof MapObjectLinear)) {
                     continue;
                 }
@@ -190,7 +190,7 @@ public class Map implements Serializable {
 
     public boolean checkRoomTouched(TouchEvent pTouchEvent) {
         PointF touchPoint = new PointF(pTouchEvent.getX(), pTouchEvent.getY());
-        for (Room r : rooms) {
+        for (RoomSprite r : rooms) {
             if (isPointInsidePolygon(r.getPolygon(), touchPoint)) {
                 return r.onTouch(pTouchEvent);
             }
@@ -229,7 +229,7 @@ public class Map implements Serializable {
 
         Random rand = new Random();
 
-        Room room = new Room(polygon, 0, 0,
+        RoomSprite room = new RoomSprite(polygon, 0, 0,
                 vertexData, vertexData.length / 3,
                 DrawMode.TRIANGLES, pVertexBufferObjectManager);
         room.setColor(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
