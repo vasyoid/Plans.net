@@ -49,6 +49,10 @@ public class Map implements Serializable {
         return objects;
     }
 
+    public List<RoomSprite> getRooms() {
+        return rooms;
+    }
+
     public void addObject(MapObjectSprite object) {
         removedObjects.remove(object);
         objects.add(object);
@@ -229,7 +233,7 @@ public class Map implements Serializable {
 
         Random rand = new Random();
 
-        RoomSprite room = new RoomSprite(polygon, 0, 0,
+        RoomSprite room = new RoomSprite(polygon, pX, pY,
                 vertexData, vertexData.length / 3,
                 DrawMode.TRIANGLES, pVertexBufferObjectManager);
         room.setColor(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());

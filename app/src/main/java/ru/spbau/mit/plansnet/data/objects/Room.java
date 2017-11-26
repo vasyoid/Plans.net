@@ -14,7 +14,7 @@ public class Room extends MapObject implements Serializable {
     private int x;
     private int y;
     public Room(@NonNull final RoomSprite room) {
-//        x = room.getX();
-//        y = room.getY();
+        x = (int) room.getInitialX();
+        y = (int) room.getInitialY();
     }
 }

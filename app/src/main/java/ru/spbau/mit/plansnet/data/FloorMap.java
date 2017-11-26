@@ -8,9 +8,11 @@ import java.util.List;
 
 import ru.spbau.mit.plansnet.constructor.DoorSprite;
 import ru.spbau.mit.plansnet.constructor.MapObjectSprite;
+import ru.spbau.mit.plansnet.constructor.RoomSprite;
 import ru.spbau.mit.plansnet.constructor.WallSprite;
 import ru.spbau.mit.plansnet.data.objects.Door;
 import ru.spbau.mit.plansnet.data.objects.MapObject;
+import ru.spbau.mit.plansnet.data.objects.Room;
 import ru.spbau.mit.plansnet.data.objects.Wall;
 
 /**
@@ -29,7 +31,7 @@ public class FloorMap extends AbstractNamedData implements Serializable {
                     @NonNull final String buildingName,
                     @NonNull final ru.spbau.mit.plansnet.constructor.Map map) {
         List<MapObjectSprite> objList = map.getObjects();
-//      List<RoomSprite> roomList map.getRooms();
+        List<RoomSprite> roomList = map.getRooms();
 
         for (MapObjectSprite obj : objList) {
             if (obj instanceof WallSprite) {
@@ -38,9 +40,9 @@ public class FloorMap extends AbstractNamedData implements Serializable {
                 objects.add(new Door((DoorSprite) obj));
             }
         }
-//        for (ru.spbau.mit.plansnet.constructor.RoomSprite room : roomList) {
-//              objects.add(new RoomSprite(room));
-//        }
+        for (ru.spbau.mit.plansnet.constructor.RoomSprite room : roomList) {
+              objects.add(new Room(room));
+        }
     }
 
     public FloorMap() {

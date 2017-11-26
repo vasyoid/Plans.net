@@ -14,14 +14,25 @@ public class RoomSprite extends Mesh {
 
     private static Map MAP;
     private List<PointF> polygon;
+    private float initialX, initialY;
 
     public static void setMap(Map pMap) {
         MAP = pMap;
     }
 
     public RoomSprite(List<PointF> pPolygon, float pX, float pY, float[] pBufferData, int pVertexCount, DrawMode pDrawMode, VertexBufferObjectManager pVertexBufferObjectManager) {
-        super(pX, pY, pBufferData, pVertexCount, pDrawMode, pVertexBufferObjectManager);
+        super(0, 0, pBufferData, pVertexCount, pDrawMode, pVertexBufferObjectManager);
+        initialX = pX;
+        initialY = pY;
         polygon = pPolygon;
+    }
+
+    public float getInitialX() {
+        return initialX;
+    }
+
+    public float getInitialY() {
+        return initialY;
     }
 
     public List<PointF> getPolygon() {
