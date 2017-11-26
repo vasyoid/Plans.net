@@ -60,8 +60,18 @@ public class DataController {
         userAccount.setElementToContainer(group);
     }
 
+    public UsersGroup getGroup(@NonNull String groupName) {
+        return userAccount.findByName(groupName);
+    }
+
+    public FloorMap getMap(@NonNull String groupName,
+                           @NonNull String buildingName,
+                           @NonNull String mapName) {
+        return userAccount.findByName(groupName).findByName(buildingName).findByName(mapName);
+    }
+
     /**
-     * Save map to account and send it to netWork
+     * Save map to account, to file and send it to netWork
      */
     public void saveMap(@NonNull final FloorMap map)
             throws IllegalArgumentException {
