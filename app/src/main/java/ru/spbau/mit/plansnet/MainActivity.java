@@ -1,3 +1,4 @@
+
 package ru.spbau.mit.plansnet;
 
 import android.content.DialogInterface;
@@ -62,10 +63,8 @@ public class MainActivity extends AppCompatActivity {
                         .addOnCompleteListener(MainActivity.this, new OnCompleteListener<Void>() {
                             @Override
                             public void onComplete(@NonNull Task<Void> task) {
-                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                                builder.setTitle("Я вышел из аккаунта!");
-                                AlertDialog alert = builder.create();
-                                alert.show();
+                                Toast.makeText(MainActivity.this, "You logged out.",
+                                        Toast.LENGTH_SHORT).show();
                             }
                         });
 
