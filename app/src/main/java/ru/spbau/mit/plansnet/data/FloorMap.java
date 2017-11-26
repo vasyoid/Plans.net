@@ -6,6 +6,15 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import ru.spbau.mit.plansnet.constructor.DoorSprite;
+import ru.spbau.mit.plansnet.constructor.MapObjectSprite;
+import ru.spbau.mit.plansnet.constructor.RoomSprite;
+import ru.spbau.mit.plansnet.constructor.WallSprite;
+import ru.spbau.mit.plansnet.data.objects.Door;
+import ru.spbau.mit.plansnet.data.objects.MapObject;
+import ru.spbau.mit.plansnet.data.objects.Room;
+import ru.spbau.mit.plansnet.data.objects.Wall;
+
 /**
  * Created by kostya55516 on 14.10.17.
  */
@@ -18,13 +27,32 @@ public class FloorMap extends AbstractNamedData implements Serializable {
     @NonNull
     private String groupName;
 
+    public FloorMap(@NonNull final String name, @NonNull final String groupName,
+                    @NonNull final String buildingName,
+                    @NonNull final ru.spbau.mit.plansnet.constructor.Map map) {
+        List<MapObjectSprite> objList = map.getObjects();
+        List<RoomSprite> roomList = map.getRooms();
+
+        for (MapObjectSprite obj : objList) {
+            if (obj instanceof WallSprite) {
+                objects.add(new Wall((WallSprite) obj));
+            } else if (obj instanceof DoorSprite) {
+                objects.add(new Door((DoorSprite) obj));
+            }
+        }
+        for (ru.spbau.mit.plansnet.constructor.RoomSprite room : roomList) {
+              objects.add(new Room(room));
+        }
+    }
+
     public FloorMap() {
         buildingName = "default";
         groupName = "default";
         objects = new ArrayList<>();
     }
 
-    public FloorMap(@NonNull String name, @NonNull String groupName, @NonNull String buildingName) {
+    public FloorMap(@NonNull final String name, @NonNull final String groupName,
+                    @NonNull final String buildingName) {
         super(name);
         objects = new ArrayList<>();
 

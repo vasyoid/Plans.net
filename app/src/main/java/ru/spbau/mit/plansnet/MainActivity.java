@@ -26,6 +26,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
+import ru.spbau.mit.plansnet.constructor.ConstructorActivity;
 import ru.spbau.mit.plansnet.dataController.DataController;
 
 public class MainActivity extends AppCompatActivity {
@@ -70,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         };
+
     }
 
     @Override
@@ -148,5 +150,11 @@ public class MainActivity extends AppCompatActivity {
             handleSignInResult(task);
             // [END get_id_token]
         }
+    }
+
+    public void openConstructor(View v) {
+        Intent intent = new Intent(MainActivity.this,
+                ConstructorActivity.class);
+        startActivity(intent);
     }
 }
