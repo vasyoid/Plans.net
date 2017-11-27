@@ -3,6 +3,7 @@ package ru.spbau.mit.plansnet.dataController;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.List;
 
 import ru.spbau.mit.plansnet.data.Account;
 import ru.spbau.mit.plansnet.data.Building;
@@ -40,6 +42,11 @@ import ru.spbau.mit.plansnet.data.UsersGroup;
  */
 
 public class NetworkDataManager {
+
+    @NonNull
+    private final ArrayAdapter adapter;
+    @NonNull
+    private final List<FloorMap> listOfMaps;
     @NonNull
     private final FirebaseStorage storage;
     @NonNull
@@ -58,7 +65,9 @@ public class NetworkDataManager {
     private static final String STORAGE_TAG = "FIREBASE_STORAGE";
 
     public NetworkDataManager(@NonNull final Context context,
-                              @NonNull final FirebaseUser currentUser) {
+                              @NonNull final FirebaseUser currentUser,
+                              @NonNull final ArrayAdapter adapter,
+                              @NonNull final List<FloorMap> listOfMaps) {
         this.context = context;
         userAccount = currentUser;
 
@@ -67,6 +76,9 @@ public class NetworkDataManager {
 
         database = FirebaseDatabase.getInstance();
         databaseReference = database.getReference();
+
+        this.adapter = adapter;
+        this.listOfMaps = listOfMaps;
     }
 
     public void putMapOnServer(@NonNull final FloorMap map) {
@@ -166,7 +178,7 @@ public class NetworkDataManager {
                                             final File mapFile = new File(context.getApplicationContext()
                                                     .getFilesDir(), path);
 
-                                            if (mapFile.lastModified() > task.getResult().getUpdatedTimeMillis()) {
+                                            if (mapFile.exists() && mapFile.lastModified() > task.getResult().getUpdatedTimeMillis()) {
                                                 Log.d(STORAGE_TAG,
                                                         task.getResult().getName() + " is up to date");
                                                 return;
@@ -201,6 +213,9 @@ public class NetworkDataManager {
         try (ObjectInputStream ois =
                      new ObjectInputStream(new FileInputStream(mapFile))) {
             FloorMap map = (FloorMap) ois.readObject();
+
+            listOfMaps.add(map);
+            adapter.notifyDataSetChanged();
 
             UsersGroup group = account.setElementToContainer(new UsersGroup(map.getGroupName()));
             Building building = group.setElementToContainer(new Building(map.getBuildingName()));

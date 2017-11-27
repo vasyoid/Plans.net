@@ -12,11 +12,11 @@ public abstract class AbstractNamedData implements Serializable {
     @NonNull
     private String name;
 
-    AbstractNamedData() {
+    public AbstractNamedData() {
         name = "default";
     }
 
-    AbstractNamedData(@NonNull final String name) {
+    public AbstractNamedData(@NonNull final String name) {
         this.name = name;
     }
 
