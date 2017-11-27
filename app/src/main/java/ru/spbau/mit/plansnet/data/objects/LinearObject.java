@@ -18,6 +18,10 @@ public class LinearObject extends MapObject implements Serializable {
 
     public LinearObject(@NonNull final MapObjectLinear object) {
         Line objCoord = object.getPosition();
+
+        coord = new Point();
+        secondCoord = new Point();
+
         coord.x = (int)objCoord.getX1();
         coord.y = (int)objCoord.getY1();
 

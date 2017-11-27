@@ -37,12 +37,12 @@ public class RoomSprite extends Mesh {
         polygon = pPolygon;
     }
 
-/*
- *   public RoomSprite(Room pRoom) {
- *       this(Geometry.roomPolygon(MAP.getObjects(),
- *               new PointF(pRoom.getX(), pRoom.getY())), pRoom.getX(), pRoom.getY());
- *   }
- */
+
+   public RoomSprite(Room pRoom) {
+       this(Geometry.roomPolygon(MAP.getObjects(),
+               new PointF(pRoom.getX(), pRoom.getY())), pRoom.getX(), pRoom.getY());
+   }
+
 
     public static void setVertexBufferObjectManager(VertexBufferObjectManager
                                                             pVertexBufferObjectManager) {

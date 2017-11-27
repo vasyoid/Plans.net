@@ -43,6 +43,7 @@ import ru.spbau.mit.plansnet.dataController.DataController;
 public class MainActivity extends AppCompatActivity {
     private static final String LOG_IN_TAG = "LogIn";
     private static final int RC_GET_TOKEN = 9002;
+    private static final int CONSTRUCTOR_TOKEN = 9003;
 
     private DataController dataController;
     private FirebaseUser user;
@@ -206,12 +207,27 @@ public class MainActivity extends AppCompatActivity {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             handleSignInResult(task);
             // [END get_id_token]
+        } else if (requestCode == CONSTRUCTOR_TOKEN) {
+            if (data != null) {
+                FloorMap toSaveMap = (FloorMap) data.getSerializableExtra("toSaveMap");
+                Log.d("VASYOID", toOpenMap.getGroupName());
+                Log.d("VASYOID", toOpenMap.getName());
+                if (toSaveMap != null) {
+//                    dataController.saveMap(toOpenMap);
+                }
+                toOpenMap = toSaveMap;
+            } else {
+                Toast.makeText(this, "Nothing to save", Toast.LENGTH_LONG).show();
+            }
         }
     }
 
     public void openConstructor(View v) {
         Intent intent = new Intent(MainActivity.this,
                 ConstructorActivity.class);
-        startActivity(intent);
+        if (toOpenMap != null) {
+            intent.putExtra("toOpenMap", toOpenMap);
+        }
+        startActivityForResult(intent, CONSTRUCTOR_TOKEN);
     }
 }

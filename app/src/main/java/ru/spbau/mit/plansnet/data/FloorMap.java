@@ -38,6 +38,8 @@ public class FloorMap extends AbstractNamedData implements Serializable {
         List<MapObjectSprite> objList = map.getObjects();
         List<RoomSprite> roomList = map.getRooms();
 
+        objects = new ArrayList<>();
+
         for (MapObjectSprite obj : objList) {
             if (obj instanceof WallSprite) {
                 objects.add(new Wall((WallSprite) obj));

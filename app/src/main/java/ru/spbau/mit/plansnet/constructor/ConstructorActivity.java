@@ -1,6 +1,8 @@
 package ru.spbau.mit.plansnet.constructor;
 
 import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -30,6 +32,8 @@ import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.bitmap.BitmapTexture;
 
 import ru.spbau.mit.plansnet.R;
+import ru.spbau.mit.plansnet.data.FloorMap;
+import ru.spbau.mit.plansnet.data.objects.MapObject;
 
 public class ConstructorActivity extends SimpleLayoutGameActivity {
 	private static int CAMERA_WIDTH = 0;
@@ -42,6 +46,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     private int state = 0;
     private int item = 0;
     private Map map;
+    private FloorMap toOpenMap;
     private PinchZoomDetector mPinchZoomDetector;
 
     private void setCameraResolution() {
@@ -57,10 +62,34 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     }
 
     @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+                Intent intent = getIntent();
+        toOpenMap = (FloorMap) intent.getSerializableExtra("toOpenMap");
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (toOpenMap == null) {
+            Log.d("VASYOID", "map is null!");
+        } else {
+            Intent intent = new Intent();
+            intent.putExtra("toSaveMap", new FloorMap(toOpenMap.getName(),
+                    toOpenMap.getGroupName(), toOpenMap.getBuildingName(), map));
+            setResult(1, intent);
+        }
+        super.onBackPressed();
+    }
+
+    @Override
 	public EngineOptions onCreateEngineOptions() {
         setCameraResolution();
         GRID_SIZE = (100000 / CAMERA_HEIGHT);
-        map = new Map(GRID_SIZE, GRID_COLS, GRID_ROWS);
+        Map.setGridSize(GRID_SIZE);
+        if (map == null) {
+            map = new Map();
+        }
         MapObjectSprite.setMap(map);
         RoomSprite.setMap(map);
         MapObjectLinear.setThickness(60000 / CAMERA_HEIGHT);
@@ -245,6 +274,19 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             }
         });
         mPinchZoomDetector.setEnabled(true);
+
+        if (toOpenMap != null) {
+            map = new Map(toOpenMap);
+        }
+
+        for (MapObjectSprite o : map.getObjects()) {
+            scene.attachChild(o);
+            scene.registerTouchArea(o);
+        }
+        for (RoomSprite r : map.getRooms()) {
+            scene.attachChild(r);
+        }
+
 
         return scene;
 	}

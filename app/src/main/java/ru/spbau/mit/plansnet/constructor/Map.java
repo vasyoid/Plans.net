@@ -14,6 +14,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import ru.spbau.mit.plansnet.data.FloorMap;
+import ru.spbau.mit.plansnet.data.objects.Door;
+import ru.spbau.mit.plansnet.data.objects.MapObject;
+import ru.spbau.mit.plansnet.data.objects.Room;
+import ru.spbau.mit.plansnet.data.objects.Wall;
+
 public class Map implements Serializable {
 
     private List<MapObjectSprite> objects;
@@ -21,18 +27,30 @@ public class Map implements Serializable {
     private List<MapObjectSprite> removedObjects;
     private List<RoomSprite> removedRooms;
     private int touchState;
-    private int gridSize;
-    private int gridCols;
-    private int gridRows;
+    private static int gridSize;
 
-    Map(int gridSize, int gridCols, int gridRows) {
-        this.gridSize = gridSize;
-        this.gridCols = gridCols;
-        this.gridRows = gridRows;
+    Map() {
         objects = new LinkedList<>();
         rooms = new LinkedList<>();
         removedObjects = new LinkedList<>();
         removedRooms = new LinkedList<>();
+    }
+
+    Map(FloorMap pMap) {
+        this();
+        for (MapObject o : pMap.getArrayData()) {
+            if (o instanceof Door) {
+                addObject(new DoorSprite((Door) o));
+            } else if (o instanceof Wall) {
+                addObject(new WallSprite((Wall) o));
+            } else if (o instanceof Room) {
+                addRoom(new RoomSprite((Room) o));
+            }
+        }
+    }
+
+    public static void setGridSize(int pSize) {
+        gridSize = pSize;
     }
 
     public void setTouchState(int state) {
