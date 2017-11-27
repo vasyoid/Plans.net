@@ -58,14 +58,26 @@ public class DataController {
             FloorMap map = (FloorMap) ois.readObject();
 
 
-            UsersGroup group = userAccount.setElementToContainer(new UsersGroup(map.getGroupName()));
-            Building building = group.setElementToContainer(new Building(map.getBuildingName()));
+            UsersGroup group = userAccount.findByName(map.getGroupName());
+            if (group == null) {
+                group = userAccount.addData(new UsersGroup(map.getGroupName()));
+            }
+            Building building = group.findByName(map.getBuildingName());
+            if (building == null) {
+                building = group.addData(new Building(map.getBuildingName()));
+            }
 
             if (building.findByName(map.getName()) == null) {
-                building.addData(map);
                 listOfMaps.add(map);
                 adapter.notifyDataSetChanged();
+            } else {
+                for (int i = 0; i < listOfMaps.size(); i++) {
+                    if (listOfMaps.get(i).getName().equals(map.getName())) {
+                        listOfMaps.set(i, map);
+                    }
+                }
             }
+            building.setElementToContainer(map);
 
 
             Log.d(DATA_TAG, "map " + map.getName() + " was readed");
@@ -89,6 +101,8 @@ public class DataController {
                 }
             }
         }
+//        Toast.makeText(context, "files readed", Toast.LENGTH_SHORT).show();
+        Log.d(DATA_TAG, "local files was readed");
     }
 
 
@@ -102,6 +116,7 @@ public class DataController {
 
         try (ObjectOutputStream ous = new ObjectOutputStream(new FileOutputStream(accountFile))) {
             ous.writeObject(map);
+
         } catch (IOException e) {
             Toast.makeText(context, "Can't save a map to the phone", Toast.LENGTH_SHORT).show();
             Log.d(DATA_TAG, "Can't write a map to the phone");
@@ -159,12 +174,16 @@ public class DataController {
                     + "' haven't building: " + map.getBuildingName());
         }
 
+        if (building.findByName(map.getName()) == null) {
+            listOfMaps.add(map);
+            adapter.notifyDataSetChanged();
+        }
         building.setElementToContainer(map);
+        Log.d(DATA_TAG, "set new map to account");
 
-//        listOfMaps.add(map);
-//        adapter.notifyDataSetChanged();
 
         writeMap(map);
+        Toast.makeText(context, "Map saved", Toast.LENGTH_SHORT).show();
 
         netManager.putMapOnServer(map);
     }

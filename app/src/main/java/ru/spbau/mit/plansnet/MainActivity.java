@@ -213,9 +213,10 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("VASYOID", toOpenMap.getGroupName());
                 Log.d("VASYOID", toOpenMap.getName());
                 if (toSaveMap != null) {
-//                    dataController.saveMap(toOpenMap);
+                    dataController.saveMap(toSaveMap);
                 }
                 toOpenMap = toSaveMap;
+                myMaps.clear();
             } else {
                 Toast.makeText(this, "Nothing to save", Toast.LENGTH_LONG).show();
             }
