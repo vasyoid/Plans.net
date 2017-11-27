@@ -24,17 +24,13 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import ru.spbau.mit.plansnet.data.Account;
-import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
-import ru.spbau.mit.plansnet.data.UsersGroup;
 
 
 /**
@@ -52,6 +48,8 @@ public class NetworkDataManager {
     @NonNull
     private final Context context;
     @NonNull
+    private final DataController dataController;
+    @NonNull
     private FirebaseUser userAccount;
     @NonNull
     private StorageReference storageReference;
@@ -64,10 +62,12 @@ public class NetworkDataManager {
 
     private static final String STORAGE_TAG = "FIREBASE_STORAGE";
 
-    public NetworkDataManager(@NonNull final Context context,
+    public NetworkDataManager(@NonNull final DataController dataController,
+                              @NonNull final Context context,
                               @NonNull final FirebaseUser currentUser,
                               @NonNull final ArrayAdapter adapter,
                               @NonNull final List<FloorMap> listOfMaps) {
+        this.dataController = dataController;
         this.context = context;
         userAccount = currentUser;
 
@@ -140,7 +140,7 @@ public class NetworkDataManager {
      * create an account from it
      */
     @NonNull
-    public void getAccount(final Account account) {
+    public void initAccount() {
 //        Log.d(STORAGE_TAG, "in get account func");
 //        while (inProcess) {
 //            SystemClock.sleep(100);
@@ -190,7 +190,7 @@ public class NetworkDataManager {
                                                             .TaskSnapshot>() {
                                                         @Override
                                                         public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                                                            readMapFromFile(mapFile, account);
+                                                            dataController.readMapFromFile(mapFile);
                                                         }
                                                     });
                                         }
@@ -207,26 +207,6 @@ public class NetworkDataManager {
 
 
                 });
-    }
-
-    private void readMapFromFile(File mapFile, Account account) {
-        try (ObjectInputStream ois =
-                     new ObjectInputStream(new FileInputStream(mapFile))) {
-            FloorMap map = (FloorMap) ois.readObject();
-
-            listOfMaps.add(map);
-            adapter.notifyDataSetChanged();
-
-            UsersGroup group = account.setElementToContainer(new UsersGroup(map.getGroupName()));
-            Building building = group.setElementToContainer(new Building(map.getBuildingName()));
-
-            building.addData(map);
-            Log.d(STORAGE_TAG, "map " + map.getName() + " was readed");
-        } catch (Exception exception) {
-            Toast.makeText(context,
-                    "Can't read map from file", Toast.LENGTH_SHORT).show();
-            exception.printStackTrace();
-        }
     }
 
 }

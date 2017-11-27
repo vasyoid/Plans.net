@@ -13,7 +13,8 @@ public class Account extends AbstractDataContainer<UsersGroup> {
         return ID;
     }
 
-    public Account(@NonNull String name) {
+    public Account(@NonNull final String name, @NonNull final String ID) {
         super(name);
+        this.ID = ID;
     }
 }

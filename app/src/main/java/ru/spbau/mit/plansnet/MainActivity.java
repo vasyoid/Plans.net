@@ -35,7 +35,9 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import java.util.ArrayList;
 
 import ru.spbau.mit.plansnet.constructor.ConstructorActivity;
+import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
+import ru.spbau.mit.plansnet.data.UsersGroup;
 import ru.spbau.mit.plansnet.dataController.DataController;
 
 public class MainActivity extends AppCompatActivity {
@@ -56,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
     private GoogleSignInClient mGoogleSignOutClient;
 
     private ArrayList<FloorMap> myMaps = new ArrayList<>();
+    private ArrayAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,19 +68,9 @@ public class MainActivity extends AppCompatActivity {
         btnSettings = findViewById(R.id.btnSettings);
         txtNameOfSlectedMap = findViewById(R.id.nameOfSlectedMap);
         btnAddMap = findViewById(R.id.btnAddMap);
-
-        OnClickListener oclBtnLogOut = new OnClickListener() {
-
+        btnLogOut.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                switch (v.getId()) {
-                    case R.id.btnLogOut:
-                        signOut();
-                        break;
-                }
-            }
-
-            private void signOut() {
                 mGoogleSignOutClient.signOut()
                         .addOnCompleteListener(MainActivity.this, new OnCompleteListener<Void>() {
                             @Override
@@ -86,10 +79,9 @@ public class MainActivity extends AppCompatActivity {
                                         Toast.LENGTH_SHORT).show();
                             }
                         });
-
             }
-        };
 
+        });
 
         btnAddMap.setOnClickListener(new OnClickListener() {
             @Override
@@ -101,12 +93,16 @@ public class MainActivity extends AppCompatActivity {
                 dialogNameOfNewMap.setView(input);
 
                 dialogNameOfNewMap.setButton(AlertDialog.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                String nameOfNewMap = input.toString();
-                                //TODO add new map
-                            }
-                        });
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        final String nameOfNewMap = input.getText().toString();
+
+                        dataController.addBuildingToGroup(new Building("default"),
+                                dataController.addGroup(new UsersGroup("default")));
+                        dataController.saveMap(new FloorMap(nameOfNewMap,
+                                "default", "default"));
+                    }
+                });
 
 
                 dialogNameOfNewMap.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
@@ -116,31 +112,22 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
                 dialogNameOfNewMap.show();
-
-
-                //TODO create map
             }
         });
 
         ListView listOfMaps = findViewById(R.id.listOfMaps);
-        dataController.saveMap(new FloorMap("map1", "building1", "group1"));
-        dataController.saveMap(new FloorMap("map2", "building1", "group1"));
-        dataController.saveMap(new FloorMap("map3", "building1", "group2"));
-        dataController.saveMap(new FloorMap("map4", "building2", "group2"));
-        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, myMaps);
+        adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, myMaps);
         listOfMaps.setAdapter(adapter);
 
-        listOfMaps.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        listOfMaps.setOnItemClickListener(new AdapterView.OnItemClickListener()
+
+        {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 toOpenMap = myMaps.get(position);
                 txtNameOfSlectedMap.setText("Current map: " + toOpenMap.getName());
-                //TODO update UI
             }
         });
-
-        btnLogOut.setOnClickListener(oclBtnLogOut);
-
     }
 
     @Override
@@ -193,7 +180,8 @@ public class MainActivity extends AppCompatActivity {
                             Log.d("MYTEST", "firebase auth");
 
                             user = auth.getCurrentUser();
-                            dataController = new DataController(getApplicationContext(), user);
+                            dataController = new DataController(getApplicationContext(), user,
+                                    adapter, myMaps);
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(LOG_IN_TAG, "signInWithCredential:failure", task.getException());
