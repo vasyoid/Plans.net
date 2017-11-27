@@ -49,6 +49,7 @@ dependencies {
     implementation 'com.android.support:cardview-v7:27.0.1'
     compile project(path: ':andengine')
     compile project(path: ':earcutj')
+    implementation 'com.android.support:design:27.0.1'
 }
 
 

@@ -1,9 +1,12 @@
 
 package ru.spbau.mit.plansnet;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -11,6 +14,7 @@ import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
     private Button btnLogOut;
     private Button btnSettings;
 
+    private FloatingActionButton btnAddMap;
+
     private FloorMap toOpenMap;
     private TextView txtNameOfSlectedMap;
 
@@ -58,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
         btnLogOut = findViewById(R.id.btnLogOut);
         btnSettings = findViewById(R.id.btnSettings);
         txtNameOfSlectedMap = findViewById(R.id.nameOfSlectedMap);
+        btnAddMap = findViewById(R.id.btnAddMap);
 
         OnClickListener oclBtnLogOut = new OnClickListener() {
 
@@ -83,6 +90,38 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+
+        btnAddMap.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog dialogNameOfNewMap = new AlertDialog.Builder(MainActivity.this).create();
+                dialogNameOfNewMap.setTitle("Give me new name of Map");
+
+                final EditText input = new EditText(MainActivity.this);
+                dialogNameOfNewMap.setView(input);
+
+                dialogNameOfNewMap.setButton(AlertDialog.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                String nameOfNewMap = input.toString();
+                                //TODO add new map
+                            }
+                        });
+
+
+                dialogNameOfNewMap.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+                dialogNameOfNewMap.show();
+
+
+                //TODO create map
+            }
+        });
+
         ListView listOfMaps = findViewById(R.id.listOfMaps);
         myMaps.add(new FloorMap("map1", "building1", "group1"));
         myMaps.add(new FloorMap("map2", "building1", "group1"));
@@ -99,6 +138,9 @@ public class MainActivity extends AppCompatActivity {
                 //TODO update UI
             }
         });
+
+        btnLogOut.setOnClickListener(oclBtnLogOut);
+
     }
 
     @Override
