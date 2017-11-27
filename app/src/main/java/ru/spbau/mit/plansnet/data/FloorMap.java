@@ -27,6 +27,11 @@ public class FloorMap extends AbstractNamedData implements Serializable {
     @NonNull
     private String groupName;
 
+    @Override
+    public String toString() {
+        return super.getName();
+    }
+
     public FloorMap(@NonNull final String name, @NonNull final String groupName,
                     @NonNull final String buildingName,
                     @NonNull final ru.spbau.mit.plansnet.constructor.Map map) {

@@ -1,7 +1,6 @@
 
 package ru.spbau.mit.plansnet;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -9,9 +8,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
-import android.app.AlertDialog;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -26,27 +28,36 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
+import java.util.ArrayList;
+
 import ru.spbau.mit.plansnet.constructor.ConstructorActivity;
+import ru.spbau.mit.plansnet.data.FloorMap;
 import ru.spbau.mit.plansnet.dataController.DataController;
 
 public class MainActivity extends AppCompatActivity {
     private static final String LOG_IN_TAG = "LogIn";
     private static final int RC_GET_TOKEN = 9002;
 
-    DataController dataController;
-    FirebaseUser user;
+    private DataController dataController;
+    private FirebaseUser user;
 
-    Button btnLogOut;
-    Button btnSettings;
+    private Button btnLogOut;
+    private Button btnSettings;
 
-    GoogleSignInClient mGoogleSignOutClient;
-    
+    private FloorMap toOpenMap;
+    private TextView txtNameOfSlectedMap;
+
+    private GoogleSignInClient mGoogleSignOutClient;
+
+    private ArrayList<FloorMap> myMaps = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        btnLogOut = (Button) findViewById(R.id.btnLogOut);
-        btnSettings = (Button) findViewById(R.id.btnSettings);
+        btnLogOut = findViewById(R.id.btnLogOut);
+        btnSettings = findViewById(R.id.btnSettings);
+        txtNameOfSlectedMap = findViewById(R.id.nameOfSlectedMap);
 
         OnClickListener oclBtnLogOut = new OnClickListener() {
 
@@ -72,6 +83,22 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+        ListView listOfMaps = findViewById(R.id.listOfMaps);
+        myMaps.add(new FloorMap("map1", "building1", "group1"));
+        myMaps.add(new FloorMap("map2", "building1", "group1"));
+        myMaps.add(new FloorMap("map3", "building1", "group2"));
+        myMaps.add(new FloorMap("map4", "building2", "group2"));
+        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, myMaps);
+        listOfMaps.setAdapter(adapter);
+
+        listOfMaps.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                toOpenMap = myMaps.get(position);
+                txtNameOfSlectedMap.setText("Current map: " + toOpenMap.getName());
+                //TODO update UI
+            }
+        });
     }
 
     @Override
