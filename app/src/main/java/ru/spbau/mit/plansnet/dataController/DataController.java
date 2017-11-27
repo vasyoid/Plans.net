@@ -1,8 +1,11 @@
 package ru.spbau.mit.plansnet.dataController;
 
 import android.content.Context;
+import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseUser;
@@ -11,6 +14,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.security.acl.Group;
+import java.util.List;
 
 import ru.spbau.mit.plansnet.data.Account;
 import ru.spbau.mit.plansnet.data.Building;
@@ -24,6 +29,10 @@ import ru.spbau.mit.plansnet.data.UsersGroup;
 
 public class DataController {
     @NonNull
+    private final ArrayAdapter adapter;
+    @NonNull
+    private final List<FloorMap> listOfMaps;
+    @NonNull
     private NetworkDataManager netManager;
     @NonNull
     private Account userAccount;
@@ -32,12 +41,16 @@ public class DataController {
 
     private static final String DATA_TAG = "DATA_CONTROLLER_FILES";
 
-    public DataController(@NonNull final Context context, @NonNull final FirebaseUser account) {
+    public DataController(@NonNull final Context context, @NonNull final FirebaseUser account,
+                          @NonNull final ArrayAdapter adapter, @NonNull final List<FloorMap> listOfMaps) {
         this.context = context;
-        netManager = new NetworkDataManager(context, account);
+        netManager = new NetworkDataManager(context, account, adapter, listOfMaps);
+        this.adapter = adapter;
+        this.listOfMaps = listOfMaps;
         userAccount = new Account(account.getDisplayName());
         netManager.getAccount(userAccount);
     }
+
 
     private void writeMap(@NonNull final FloorMap map) {
         File accountFile = new File(context.getApplicationContext().getFilesDir(),
@@ -56,18 +69,32 @@ public class DataController {
         }
     }
 
-    public void saveGroup(@NonNull final UsersGroup group) {
-        userAccount.setElementToContainer(group);
+    @NonNull
+    public UsersGroup addGroup(@NonNull final UsersGroup group) {
+        return userAccount.setElementToContainer(group);
     }
 
-    public UsersGroup getGroup(@NonNull String groupName) {
+    @Nullable
+    public UsersGroup getGroup(@NonNull final String groupName) {
         return userAccount.findByName(groupName);
     }
 
-    public FloorMap getMap(@NonNull String groupName,
-                           @NonNull String buildingName,
-                           @NonNull String mapName) {
-        return userAccount.findByName(groupName).findByName(buildingName).findByName(mapName);
+    @Nullable
+    public FloorMap getMapFromBuilding(@NonNull final Building building,
+                                       @NonNull final String mapName) {
+        return building.findByName(mapName);
+    }
+
+    @NonNull
+    public Building addBuildingToGroup(@NonNull final Building building,
+                                       @NonNull final UsersGroup group) {
+        return group.setElementToContainer(building);
+    }
+
+    @Nullable
+    public Building getBuildingFromGroup(@NonNull final String buildingName,
+                                         @NonNull final UsersGroup group) {
+        return group.findByName(buildingName);
     }
 
     /**
@@ -89,6 +116,9 @@ public class DataController {
         }
 
         building.setElementToContainer(map);
+
+        listOfMaps.add(map);
+        adapter.notifyDataSetChanged();
 
         writeMap(map);
 

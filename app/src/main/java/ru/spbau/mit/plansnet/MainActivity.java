@@ -84,10 +84,10 @@ public class MainActivity extends AppCompatActivity {
         };
 
         ListView listOfMaps = findViewById(R.id.listOfMaps);
-        myMaps.add(new FloorMap("map1", "building1", "group1"));
-        myMaps.add(new FloorMap("map2", "building1", "group1"));
-        myMaps.add(new FloorMap("map3", "building1", "group2"));
-        myMaps.add(new FloorMap("map4", "building2", "group2"));
+        dataController.saveMap(new FloorMap("map1", "building1", "group1"));
+        dataController.saveMap(new FloorMap("map2", "building1", "group1"));
+        dataController.saveMap(new FloorMap("map3", "building1", "group2"));
+        dataController.saveMap(new FloorMap("map4", "building2", "group2"));
         ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, myMaps);
         listOfMaps.setAdapter(adapter);
 
