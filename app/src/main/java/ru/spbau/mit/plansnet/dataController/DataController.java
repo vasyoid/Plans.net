@@ -1,5 +1,6 @@
 package ru.spbau.mit.plansnet.dataController;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -17,6 +18,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
 
+import ru.spbau.mit.plansnet.MainActivity;
 import ru.spbau.mit.plansnet.data.Account;
 import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
@@ -44,15 +46,19 @@ public class DataController {
     public DataController(@NonNull final Context context, @NonNull final FirebaseUser account,
                           @NonNull final ArrayAdapter adapter, @NonNull final List<FloorMap> listOfMaps) {
         this.context = context;
-        netManager = new NetworkDataManager(this, context, account, adapter, listOfMaps);
+        netManager = new NetworkDataManager(context, account);
+
         this.adapter = adapter;
         this.listOfMaps = listOfMaps;
         userAccount = new Account(account.getDisplayName(), account.getUid());
-        netManager.initAccount();
-        loadLocalFiles();
     }
 
-    void readMapFromFile(File mapFile) {
+    public void downloadMaps(@NonNull final ProgressDialog progressDialog,
+                             @NonNull final MainActivity context) {
+        netManager.downloadMaps(progressDialog, context);
+    }
+
+    private void readMapFromFile(File mapFile) {
         try (ObjectInputStream ois =
                      new ObjectInputStream(new FileInputStream(mapFile))) {
             FloorMap map = (FloorMap) ois.readObject();
@@ -88,7 +94,7 @@ public class DataController {
         }
     }
 
-    private void loadLocalFiles() {
+    public void loadLocalFiles() {
         File root = new File(context.getApplicationContext().getFilesDir(), userAccount.getID());
         if (!root.exists()) {
             return;
@@ -101,7 +107,6 @@ public class DataController {
                 }
             }
         }
-//        Toast.makeText(context, "files readed", Toast.LENGTH_SHORT).show();
         Log.d(DATA_TAG, "local files was readed");
     }
 
@@ -150,10 +155,6 @@ public class DataController {
     public Building getBuildingFromGroup(@NonNull final String buildingName,
                                          @NonNull final UsersGroup group) {
         return group.findByName(buildingName);
-    }
-
-    public void addMap(@NonNull final FloorMap map) {
-
     }
 
     /**

@@ -1,9 +1,12 @@
 
 package ru.spbau.mit.plansnet;
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
@@ -61,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<FloorMap> myMaps = new ArrayList<>();
     private ArrayAdapter adapter;
 
+    private int mapCount;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,65 +74,41 @@ public class MainActivity extends AppCompatActivity {
         btnSettings = findViewById(R.id.btnSettings);
         txtNameOfSlectedMap = findViewById(R.id.nameOfSlectedMap);
         btnAddMap = findViewById(R.id.btnAddMap);
-        btnLogOut.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mGoogleSignOutClient.signOut()
-                        .addOnCompleteListener(MainActivity.this, new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
-                                Toast.makeText(MainActivity.this, "You logged out.",
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                        });
-            }
+        btnLogOut.setOnClickListener(v -> mGoogleSignOutClient.signOut()
+                .addOnCompleteListener(MainActivity.this, task ->
+                        Toast.makeText(MainActivity.this, "You logged out.",
+                                Toast.LENGTH_SHORT).show()));
 
-        });
+        btnAddMap.setOnClickListener(v -> {
+            AlertDialog dialogNameOfNewMap = new AlertDialog.Builder(MainActivity.this).create();
+            dialogNameOfNewMap.setTitle("Give me new name of Map");
 
-        btnAddMap.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AlertDialog dialogNameOfNewMap = new AlertDialog.Builder(MainActivity.this).create();
-                dialogNameOfNewMap.setTitle("Give me new name of Map");
+            final EditText input = new EditText(MainActivity.this);
+            dialogNameOfNewMap.setView(input);
 
-                final EditText input = new EditText(MainActivity.this);
-                dialogNameOfNewMap.setView(input);
+            dialogNameOfNewMap.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
+                final String nameOfNewMap = input.getText().toString();
 
-                dialogNameOfNewMap.setButton(AlertDialog.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        final String nameOfNewMap = input.getText().toString();
-
-                        dataController.addBuildingToGroup(new Building("default"),
-                                dataController.addGroup(new UsersGroup("default")));
-                        dataController.saveMap(new FloorMap(nameOfNewMap,
-                                "default", "default"));
-                    }
-                });
+                dataController.addBuildingToGroup(new Building("default"),
+                        dataController.addGroup(new UsersGroup("default")));
+                dataController.saveMap(new FloorMap(nameOfNewMap,
+                        "default", "default"));
+            });
 
 
-                dialogNameOfNewMap.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
+            dialogNameOfNewMap.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", (dialog, which) -> {
 
-                    }
-                });
-                dialogNameOfNewMap.show();
-            }
+            });
+            dialogNameOfNewMap.show();
         });
 
         ListView listOfMaps = findViewById(R.id.listOfMaps);
         adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, myMaps);
         listOfMaps.setAdapter(adapter);
 
-        listOfMaps.setOnItemClickListener(new AdapterView.OnItemClickListener()
-
-        {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                toOpenMap = myMaps.get(position);
-                txtNameOfSlectedMap.setText("Current map: " + toOpenMap.getName());
-            }
+        listOfMaps.setOnItemClickListener((parent, view, position, id) -> {
+            toOpenMap = myMaps.get(position);
+            txtNameOfSlectedMap.setText("Current map: " + toOpenMap.getName());
         });
     }
 
@@ -172,29 +153,42 @@ public class MainActivity extends AppCompatActivity {
 
         AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
         auth.signInWithCredential(credential)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            // Sign in success, update UI with the signed-in user's information
-                            Log.d(LOG_IN_TAG, "signInWithCredential:success");
-                            Log.d("MYTEST", "firebase auth");
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        // Sign in success, update UI with the signed-in user's information
+                        Log.d(LOG_IN_TAG, "signInWithCredential:success");
+                        Log.d("MYTEST", "firebase auth");
 
-                            user = auth.getCurrentUser();
-                            dataController = new DataController(getApplicationContext(), user,
-                                    adapter, myMaps);
-                        } else {
-                            // If sign in fails, display a message to the user.
-                            Log.w(LOG_IN_TAG, "signInWithCredential:failure", task.getException());
-                            Toast.makeText(MainActivity.this, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
-                        }
+                        user = auth.getCurrentUser();
+                        dataController = new DataController(getApplicationContext(), user,
+                                adapter, myMaps);
 
-                        // ...
+                        final ProgressDialog downloadingDialog = new ProgressDialog(MainActivity.this);
+                        downloadingDialog.setTitle("Loading maps from server");
+                        downloadingDialog.setCancelable(false);
+                        downloadingDialog.setMessage("Loading...");
+                        downloadingDialog.setMax(1);
+                        downloadingDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                        downloadingDialog.show();
+                        dataController.downloadMaps(downloadingDialog, MainActivity.this);
                     }
                 });
     }
     // [END handle_sign_in_result]
+
+    public void onServerDataLoaded() {
+        ProgressDialog loadingDialog = new ProgressDialog(MainActivity.this);
+        loadingDialog.setTitle("Loading maps from storage");
+        loadingDialog.setCancelable(false);
+        loadingDialog.setMessage("Loading...");
+        loadingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+
+        runOnUiThread(() -> {
+            loadingDialog.show();
+            dataController.loadLocalFiles();
+            loadingDialog.dismiss();
+        });
+    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -210,8 +204,8 @@ public class MainActivity extends AppCompatActivity {
         } else if (requestCode == CONSTRUCTOR_TOKEN) {
             if (data != null) {
                 FloorMap toSaveMap = (FloorMap) data.getSerializableExtra("toSaveMap");
-                Log.d("VASYOID", toOpenMap.getGroupName());
-                Log.d("VASYOID", toOpenMap.getName());
+//                Log.d("VASYOID", toOpenMap.getGroupName());
+//                Log.d("VASYOID", toOpenMap.getName());
                 if (toSaveMap != null) {
                     dataController.saveMap(toSaveMap);
                 }

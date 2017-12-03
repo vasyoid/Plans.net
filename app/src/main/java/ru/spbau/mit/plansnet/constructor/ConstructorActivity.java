@@ -87,11 +87,6 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
         setCameraResolution();
         GRID_SIZE = (100000 / CAMERA_HEIGHT);
         Map.setGridSize(GRID_SIZE);
-        if (map == null) {
-            map = new Map();
-        }
-        MapObjectSprite.setMap(map);
-        RoomSprite.setMap(map);
         MapObjectLinear.setThickness(60000 / CAMERA_HEIGHT);
     	final SmoothCamera camera = new SmoothCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_WIDTH, CAMERA_HEIGHT, 50);
     	camera.setCenter(GRID_SIZE * GRID_COLS / 2, GRID_SIZE * GRID_ROWS / 2);
@@ -278,6 +273,11 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
         if (toOpenMap != null) {
             map = new Map(toOpenMap);
         }
+        if (map == null) {
+            map = new Map();
+        }
+        MapObjectSprite.setMap(map);
+        RoomSprite.setMap(map);
 
         for (MapObjectSprite o : map.getObjects()) {
             scene.attachChild(o);
