@@ -96,8 +96,7 @@ public class NetworkDataManager {
      * Get all tree from database and download this to the phone,
      * create an account from it
      */
-    public void downloadMaps(@NonNull final ProgressDialog progressDialog,
-                             @NonNull final MainActivity context) {
+    public void downloadMaps(@NonNull final ProgressDialog progressDialog) {
         final ArrayList<String> floorsPaths = new ArrayList<>();
 
         databaseReference.child(userAccount.getUid()).child("groups")
@@ -135,10 +134,7 @@ public class NetworkDataManager {
                                             Log.d(STORAGE_TAG,
                                                     task.getResult().getName() + " is up to date");
                                             progressDialog.incrementProgressBy(1);
-                                            if (progressDialog.getProgress() == floorsPaths.size()) {
-                                                progressDialog.dismiss();
-                                                context.onServerDataLoaded();
-                                            }
+
                                             return;
                                         }
 
@@ -153,15 +149,10 @@ public class NetworkDataManager {
                                                     Log.d("LOAD", progressDialog.getProgress() + " : " + progressDialog.getMax());
                                                     if (progressDialog.getProgress() == floorsPaths.size()) {
                                                         progressDialog.dismiss();
-                                                        context.onServerDataLoaded();
                                                     }
                                                     Log.d(STORAGE_TAG, progressDialog.getProgress() + " get file from storage: " + mapFile.getName());
                                                 }).addOnFailureListener(e -> {
                                             progressDialog.incrementProgressBy(1);
-                                            if (progressDialog.getProgress() == floorsPaths.size()) {
-                                                progressDialog.dismiss();
-                                                context.onServerDataLoaded();
-                                            }
                                             Toast.makeText(context, "Can't download map: " + mapFile.getName(), Toast.LENGTH_SHORT).show();
                                         });
                                     });
@@ -179,4 +170,13 @@ public class NetworkDataManager {
                 });
     }
 
+    public void deleteMap(@NonNull final FloorMap map) {
+        databaseReference.child(userAccount.getUid()).child("groups")
+                .child(map.getGroupName()).child("buildings")
+                .child(map.getBuildingName()).child("floors");
+    }
+
+//    public void renameGroup(@NonNull final String groupName, @NonNull final String newName) {
+////        databaseReference.child(userAccount.getUid())
+//    }
 }

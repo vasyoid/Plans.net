@@ -53,9 +53,21 @@ public class DataController {
         userAccount = new Account(account.getDisplayName(), account.getUid());
     }
 
-    public void downloadMaps(@NonNull final ProgressDialog progressDialog,
-                             @NonNull final MainActivity context) {
-        netManager.downloadMaps(progressDialog, context);
+    public void downloadMaps(@NonNull final ProgressDialog progressDialog) {
+        netManager.downloadMaps(progressDialog);
+    }
+
+//    public void renameGroup(@NonNull final UsersGroup usersGroup,
+//                            @NonNull final String newName) {
+//        netManager.renameGroup(usersGroup.getName(), newName);
+//        usersGroup.setName(newName);
+//        //UI update??
+//    }
+
+    public void deleteMap(@NonNull final FloorMap map) {
+        userAccount.findByName(map.getGroupName())
+                .findByName(map.getBuildingName()).getAllData().remove(map);
+        netManager.deleteMap(map);
     }
 
     private void readMapFromFile(File mapFile) {
@@ -66,16 +78,15 @@ public class DataController {
 
             UsersGroup group = userAccount.findByName(map.getGroupName());
             if (group == null) {
-                group = userAccount.addData(new UsersGroup(map.getGroupName()));
+                group = userAccount.setElementToContainer(new UsersGroup(map.getGroupName()));
             }
             Building building = group.findByName(map.getBuildingName());
             if (building == null) {
-                building = group.addData(new Building(map.getBuildingName()));
+                building = group.setElementToContainer(new Building(map.getBuildingName()));
             }
 
             if (building.findByName(map.getName()) == null) {
                 listOfMaps.add(map);
-                adapter.notifyDataSetChanged();
             } else {
                 for (int i = 0; i < listOfMaps.size(); i++) {
                     if (listOfMaps.get(i).getName().equals(map.getName())) {
@@ -86,10 +97,11 @@ public class DataController {
             building.setElementToContainer(map);
 
 
-            Log.d(DATA_TAG, "map " + map.getName() + " was readed");
+            Log.d(DATA_TAG, "map " + map.getName() + " was read");
         } catch (Exception exception) {
-            Toast.makeText(context,
-                    "Can't read map from file", Toast.LENGTH_SHORT).show();
+            Log.d(DATA_TAG, "map can't be read");
+//            Toast.makeText(context,
+//                    "Can't read map from file", Toast.LENGTH_SHORT).show();
             exception.printStackTrace();
         }
     }
@@ -97,6 +109,7 @@ public class DataController {
     public void loadLocalFiles() {
         File root = new File(context.getApplicationContext().getFilesDir(), userAccount.getID());
         if (!root.exists()) {
+            Log.d(DATA_TAG, "folder for user there isn't exists");
             return;
         }
 
@@ -107,7 +120,7 @@ public class DataController {
                 }
             }
         }
-        Log.d(DATA_TAG, "local files was readed");
+        Log.d(DATA_TAG, "local files was read");
     }
 
 
@@ -127,6 +140,11 @@ public class DataController {
             Log.d(DATA_TAG, "Can't write a map to the phone");
             e.printStackTrace();
         }
+    }
+
+    @NonNull
+    public Account getAccount() {
+        return userAccount;
     }
 
     @NonNull
@@ -177,7 +195,6 @@ public class DataController {
 
         if (building.findByName(map.getName()) == null) {
             listOfMaps.add(map);
-            adapter.notifyDataSetChanged();
         }
         building.setElementToContainer(map);
         Log.d(DATA_TAG, "set new map to account");
@@ -188,6 +205,4 @@ public class DataController {
 
         netManager.putMapOnServer(map);
     }
-
-
 }

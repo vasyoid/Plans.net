@@ -5,25 +5,26 @@ import android.support.annotation.Nullable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Generic abstract class which contains ArrayList of type T and works with this data
+ * Generic abstract class which contains HashMap of type T and works with this data
  * @param <T> type of data which will be contains
  */
 public abstract class AbstractDataContainer<T extends AbstractNamedData>
         extends AbstractNamedData implements Serializable {
     @NonNull
-    private final ArrayList<T> data;
+    private final HashMap<String, T> data;
 
     public AbstractDataContainer(@NonNull String name) {
         super(name);
-        data = new ArrayList<>();
+        data = new HashMap<>();
     }
 
     @NonNull
-
-    public List<T> getArrayOfData() {
+    public HashMap<String, T> getAllData() {
         return data;
     }
 
@@ -31,28 +32,23 @@ public abstract class AbstractDataContainer<T extends AbstractNamedData>
      * Adds an element to the data
      *
      * @param element an element to adding
-     * @return an added element
+     * @return previous value or null
      */
     @NonNull
     public T addData(@NonNull T element) {
-        data.add(element);
-        return data.get(data.size() - 1);
+        return data.put(element.getName(), element);
     }
 
     /**
      * Find an element with equals name and replace this.
      * Add the element to container if it doesn't exist
+     *
+     * @return an added element
      */
     @NonNull
     public T setElementToContainer(T toSet) {
-        for (T object : data) {
-            if (object.getName().equals(toSet.getName())) {
-                object = toSet;
-                return object;
-            }
-        }
-
-        return addData(toSet);
+        data.put(toSet.getName(), toSet);
+        return toSet;
     }
 
     /**
@@ -63,12 +59,6 @@ public abstract class AbstractDataContainer<T extends AbstractNamedData>
      */
     @Nullable
     public T findByName(String elementName) {
-        for (T object : data) {
-            if (object.getName().equals(elementName)) {
-                return object;
-            }
-        }
-
-        return null;
+        return data.get(elementName);
     }
 }

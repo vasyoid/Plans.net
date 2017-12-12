@@ -1,20 +1,18 @@
 
 package ru.spbau.mit.plansnet;
 
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Looper;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -27,15 +25,14 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import ru.spbau.mit.plansnet.constructor.ConstructorActivity;
 import ru.spbau.mit.plansnet.data.Building;
@@ -163,33 +160,91 @@ public class MainActivity extends AppCompatActivity {
                         dataController = new DataController(getApplicationContext(), user,
                                 adapter, myMaps);
 
-                        final ProgressDialog downloadingDialog = new ProgressDialog(MainActivity.this);
-                        downloadingDialog.setTitle("Loading maps from server");
-                        downloadingDialog.setCancelable(false);
-                        downloadingDialog.setMessage("Loading...");
-                        downloadingDialog.setMax(1);
-                        downloadingDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                        downloadingDialog.show();
-                        dataController.downloadMaps(downloadingDialog, MainActivity.this);
+                        DownloadMapsAsyncTask downloadTask = new DownloadMapsAsyncTask(this);
+                        downloadTask.execute();
                     }
                 });
     }
     // [END handle_sign_in_result]
 
     public void onServerDataLoaded() {
-        ProgressDialog loadingDialog = new ProgressDialog(MainActivity.this);
-        loadingDialog.setTitle("Loading maps from storage");
-        loadingDialog.setCancelable(false);
-        loadingDialog.setMessage("Loading...");
-        loadingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 
-        runOnUiThread(() -> {
-            loadingDialog.show();
-            dataController.loadLocalFiles();
-            loadingDialog.dismiss();
-        });
     }
 
+    @SuppressLint("StaticFieldLeak")
+    private class LoadMapsAsyncTask extends AsyncTask<Void, Void, Void> {
+        private ProgressDialog dialog;
+
+        public LoadMapsAsyncTask(MainActivity activity) {
+            dialog = new ProgressDialog(activity);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            Log.d("AsyncWork", "starts load async task");
+            dialog.setTitle("Loading maps from storage");
+            dialog.setCancelable(false);
+            dialog.setMessage("Loading...");
+            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            dialog.show();
+        }
+
+        protected Void doInBackground(Void... args) {
+            Log.d("AsyncWork", "load async starts work");
+            dataController.loadLocalFiles();
+            Log.d("AsyncWork", "load async task done");
+            return null;
+        }
+
+        protected void onPostExecute(Void result) {
+            // do UI work here
+            Log.d("AsyncWork", "ends load async task");
+            if (dialog.isShowing()) {
+                Log.d("AsyncWork", "dismiss load async task");
+                dialog.dismiss();
+            }
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class DownloadMapsAsyncTask extends AsyncTask<Void, Void, Void> {
+        private ProgressDialog dialog;
+
+        public DownloadMapsAsyncTask(MainActivity activity) {
+            dialog = new ProgressDialog(activity);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            Log.d("AsyncWork", "starts download async task");
+            dialog.setTitle("Loading maps from server");
+            dialog.setCancelable(false);
+            dialog.setMessage("Loading...");
+            dialog.setMax(1);
+            dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            dialog.show();
+        }
+
+        protected Void doInBackground(Void... args) {
+            dataController.downloadMaps(dialog);
+            while(dialog.getProgress() < dialog.getMax()) {
+                SystemClock.sleep(200);
+            }
+            return null;
+        }
+
+        protected void onPostExecute(Void result) {
+            // do UI work here
+            Log.d("AsyncWork", "ends download async task");
+            if (dialog.isShowing()) {
+                Log.d("AsyncWork", "dismiss download async task");
+                dialog.dismiss();
+            }
+            LoadMapsAsyncTask task = new LoadMapsAsyncTask(MainActivity.this);
+            task.execute();
+        }
+    }
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -208,6 +263,7 @@ public class MainActivity extends AppCompatActivity {
 //                Log.d("VASYOID", toOpenMap.getName());
                 if (toSaveMap != null) {
                     dataController.saveMap(toSaveMap);
+                    adapter.notifyDataSetChanged();
                 }
                 toOpenMap = toSaveMap;
                 myMaps.clear();
