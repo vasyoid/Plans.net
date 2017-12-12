@@ -30,6 +30,7 @@ import java.util.concurrent.CountDownLatch;
 
 import ru.spbau.mit.plansnet.MainActivity;
 import ru.spbau.mit.plansnet.MainActivity.SearchResult;
+import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
 import ru.spbau.mit.plansnet.data.UsersGroup;
 
@@ -39,7 +40,7 @@ import ru.spbau.mit.plansnet.data.UsersGroup;
 
 public class NetworkDataManager {
     @NonNull
-    private final Context context;
+    private Context context;
     @NonNull
     private FirebaseUser userAccount;
     @NonNull
@@ -113,62 +114,20 @@ public class NetworkDataManager {
                 .child(userAccount.getUid())
                 .child("groups")
                 .addListenerForSingleValueEvent(new ValueEventListener() {
-                    final ArrayList<DataSnapshot> groupsRefs = new ArrayList<>();
-                    final ArrayList<DataSnapshot> buildingsRefs = new ArrayList<>();
-
                     @Override
                     public void onDataChange(final DataSnapshot dataSnapshot) {
-                        for (DataSnapshot data : dataSnapshot.getChildren()) {
-                            groupsRefs.add(data);
-                        }
-                        for (DataSnapshot group : groupsRefs) {
-                            for (DataSnapshot data : group.child("buildings").getChildren()) {
-                                buildingsRefs.add(data);
-                            }
-                        }
-                        for (DataSnapshot building : buildingsRefs) {
-                            for (DataSnapshot data : building.child("floors").getChildren()) {
-                                floorsPaths.add((String) data.child("path").getValue());
+                        for (DataSnapshot group : dataSnapshot.getChildren()) {
+                            for (DataSnapshot building : group.child("buildings").getChildren()) {
+                                for (DataSnapshot floor : building.child("floors").getChildren()) {
+                                    floorsPaths.add((String) floor.child("path").getValue());
+                                }
                             }
                         }
 
                         progressDialog.setMax(floorsPaths.size());
                         Log.d(STORAGE_TAG, "progress dialog size updated: " + progressDialog.getMax());
 
-                        for (final String path : floorsPaths) {
-                            storageReference.child(path).getMetadata().addOnCompleteListener(
-                                    task -> {
-                                        Log.d(STORAGE_TAG, "downloading file: " + path);
-                                        final File mapFile = new File(context.getApplicationContext()
-                                                .getFilesDir(), path);
-
-                                        if (mapFile.exists() && mapFile.lastModified() > task.getResult().getUpdatedTimeMillis()) {
-                                            Log.d(STORAGE_TAG,
-                                                    task.getResult().getName() + " is up to date");
-                                            progressDialog.incrementProgressBy(1);
-
-                                            return;
-                                        }
-
-                                        if (mapFile.getParentFile().mkdirs()) {
-                                            Log.d(STORAGE_TAG, "mkdirs returned true");
-                                        } else {
-                                            Log.d(STORAGE_TAG, "mkdirs returned false");
-                                        }
-                                        storageReference.child(path).getFile(mapFile)
-                                                .addOnSuccessListener(taskSnapshot -> {
-                                                    progressDialog.incrementProgressBy(1);
-                                                    Log.d("LOAD", progressDialog.getProgress() + " : " + progressDialog.getMax());
-                                                    if (progressDialog.getProgress() == floorsPaths.size()) {
-                                                        progressDialog.dismiss();
-                                                    }
-                                                    Log.d(STORAGE_TAG, progressDialog.getProgress() + " get file from storage: " + mapFile.getName());
-                                                }).addOnFailureListener(e -> {
-                                            progressDialog.incrementProgressBy(1);
-                                            Toast.makeText(context, "Can't download map: " + mapFile.getName(), Toast.LENGTH_SHORT).show();
-                                        });
-                                    });
-                        }
+                        downloadByPaths(floorsPaths, progressDialog);
                     }
 
                     @Override
@@ -180,6 +139,43 @@ public class NetworkDataManager {
 
 
                 });
+    }
+
+    private void downloadByPaths(List<String> floorsPaths, ProgressDialog progressDialog) {
+        for (final String path : floorsPaths) {
+            storageReference.child(path).getMetadata().addOnCompleteListener(
+                    task -> {
+                        Log.d(STORAGE_TAG, "downloading file: " + path);
+                        final File mapFile = new File(context.getApplicationContext()
+                                .getFilesDir(), path);
+
+                        if (mapFile.exists() && mapFile.lastModified() > task.getResult().getUpdatedTimeMillis()) {
+                            Log.d(STORAGE_TAG,
+                                    task.getResult().getName() + " is up to date");
+                            progressDialog.incrementProgressBy(1);
+
+                            return;
+                        }
+
+                        if (mapFile.getParentFile().mkdirs()) {
+                            Log.d(STORAGE_TAG, "mkdirs returned true");
+                        } else {
+                            Log.d(STORAGE_TAG, "mkdirs returned false");
+                        }
+                        storageReference.child(path).getFile(mapFile)
+                                .addOnSuccessListener(taskSnapshot -> {
+                                    progressDialog.incrementProgressBy(1);
+                                    Log.d("LOAD", progressDialog.getProgress() + " : " + progressDialog.getMax());
+                                    if (progressDialog.getProgress() == floorsPaths.size()) {
+                                        progressDialog.dismiss();
+                                    }
+                                    Log.d(STORAGE_TAG, progressDialog.getProgress() + " get file from storage: " + mapFile.getName());
+                                }).addOnFailureListener(e -> {
+                            progressDialog.incrementProgressBy(1);
+                            Toast.makeText(context, "Can't download map: " + mapFile.getName(), Toast.LENGTH_SHORT).show();
+                        });
+                    });
+        }
     }
 
     public void deleteReference(@Nullable final String groupName,
@@ -201,6 +197,7 @@ public class NetworkDataManager {
             return;
         }
         ref.removeValue();
+        //TODO remove from storage
     }
 
     public void getGroupsWhichContainsName(@NonNull final String name,
@@ -234,8 +231,9 @@ public class NetworkDataManager {
                 });
     }
 
-    public void downloadGroup(@NonNull final String owner, @NonNull final String group) {
-        final UsersGroup userGroup = new UsersGroup(group);
+    public void downloadGroup(@NonNull final String owner, @NonNull final String group,
+                              @NonNull final ProgressDialog progressDialog) {
+        final UsersGroup userGroup = new UsersGroup(group + "_" + owner);
         databaseReference
                 .child(owner)
                 .child("groups")
@@ -243,7 +241,19 @@ public class NetworkDataManager {
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        final ArrayList<String> floorsPaths = new ArrayList<>();
 
+                        for (DataSnapshot buildingShot : dataSnapshot.child("buildings").getChildren()) {
+                            Building building = new Building(buildingShot.getKey());
+                            userGroup.addData(building);
+                            for (DataSnapshot floorShot : buildingShot.child("floors").getChildren()) {
+                                FloorMap map = new FloorMap(group, building.getName(), floorShot.getKey());
+                                building.addData(map);
+                                floorsPaths.add((String) floorShot.child("path").getValue());
+                            }
+                        }
+
+                        downloadByPaths(floorsPaths, progressDialog);
                     }
 
                     @Override

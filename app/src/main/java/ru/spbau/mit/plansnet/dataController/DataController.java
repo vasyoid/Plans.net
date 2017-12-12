@@ -187,8 +187,9 @@ public class DataController {
         netManager.getGroupsWhichContainsName(name, ownersAndGroups, latch);
     }
 
-    public void addGroupByRef(@NonNull final String owner, @NonNull final String group) {
-        netManager.downloadGroup(owner, group);
+    public void addGroupByRef(@NonNull final String owner, @NonNull final String group,
+                              @NonNull final ProgressDialog progressDialog) {
+        netManager.downloadGroup(owner, group, progressDialog);
     }
 
     @NonNull
