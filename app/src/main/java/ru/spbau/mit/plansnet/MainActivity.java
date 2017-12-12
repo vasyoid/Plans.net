@@ -12,6 +12,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -32,7 +33,8 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 import ru.spbau.mit.plansnet.constructor.ConstructorActivity;
 import ru.spbau.mit.plansnet.data.Building;
@@ -204,6 +206,11 @@ public class MainActivity extends AppCompatActivity {
                 dialog.dismiss();
             }
             adapter.notifyDataSetChanged();
+
+
+            SearchTask st = new SearchTask(MainActivity.this);
+            st.execute("aul");
+
         }
     }
 
@@ -245,6 +252,66 @@ public class MainActivity extends AppCompatActivity {
             task.execute();
         }
     }
+
+    //helper structure for search results
+    public static class SearchResult {
+        public String ownerName, ownerId, groupName;
+        public SearchResult(String ownerId, String ownerName, String groupName) {
+            this.ownerName = ownerName;
+            this.ownerId = ownerId;
+            this.groupName = groupName;
+        }
+
+        @Override
+        public String toString() {
+            return ownerName + " - " + groupName;
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class SearchTask extends AsyncTask<String, Void, Void> {
+        private ProgressDialog dialog;
+        private List<SearchResult> list; // list with <OwnerId, OwnerName, Group>. It is keys in Database
+
+        public SearchTask(MainActivity activity) {
+            dialog = new ProgressDialog(activity);
+            list = new ArrayList<>();
+        }
+
+        @Override
+        protected void onPreExecute() {
+            Log.d("AsyncWork", "starts search async task");
+        }
+
+        protected Void doInBackground(String... args) {
+            if (args.length < 1) {
+                Log.d("AsyncWork", "nothing to search");
+                return null;
+            }
+            CountDownLatch latch = new CountDownLatch(1);
+            dataController.getSearchedGroupsAndOwners(args[0], list, latch);
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        protected void onPostExecute(Void result) {
+            // do UI work here
+            Log.d("AsyncWork", "ends search async task");
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+            for (SearchResult x : list) {
+//                dataController.addGroupByRef(x.ownerId, x.ownerName); // download found groups
+                Log.d("AsyncWork!!", "in list: " + x.ownerName + " --> " + x.groupName);
+            }
+        }
+    }
+
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

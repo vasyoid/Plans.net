@@ -3,9 +3,13 @@ package ru.spbau.mit.plansnet.dataController;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
+import android.util.Pair;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -19,10 +23,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.security.acl.Group;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 import ru.spbau.mit.plansnet.MainActivity;
+import ru.spbau.mit.plansnet.MainActivity.SearchResult;
 import ru.spbau.mit.plansnet.data.FloorMap;
+import ru.spbau.mit.plansnet.data.UsersGroup;
 
 /**
  * Manager of network data
@@ -61,7 +70,8 @@ public class NetworkDataManager {
                 .child(map.getGroupName()).child("buildings");
 
         buildingsRef.child("isPublic").setValue(true);
-        DatabaseReference floorsRef = buildingsRef.child(map.getBuildingName())
+        DatabaseReference floorsRef = buildingsRef
+                .child(map.getBuildingName())
                 .child("floors")//need to add some order in future
                 .child(map.getName());
 
@@ -99,8 +109,10 @@ public class NetworkDataManager {
     public void downloadMaps(@NonNull final ProgressDialog progressDialog) {
         final ArrayList<String> floorsPaths = new ArrayList<>();
 
-        databaseReference.child(userAccount.getUid()).child("groups")
-                .addValueEventListener(new ValueEventListener() {
+        databaseReference
+                .child(userAccount.getUid())
+                .child("groups")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
                     final ArrayList<DataSnapshot> groupsRefs = new ArrayList<>();
                     final ArrayList<DataSnapshot> buildingsRefs = new ArrayList<>();
 
@@ -170,10 +182,75 @@ public class NetworkDataManager {
                 });
     }
 
-    public void deleteMap(@NonNull final FloorMap map) {
-        databaseReference.child(userAccount.getUid()).child("groups")
-                .child(map.getGroupName()).child("buildings")
-                .child(map.getBuildingName()).child("floors");
+    public void deleteReference(@Nullable final String groupName,
+                                @Nullable final String buildingName,
+                                @Nullable final String mapName) {
+        DatabaseReference ref = databaseReference.child(userAccount.getUid());
+        if (groupName != null) {
+            ref = ref.child("groups")
+                    .child(groupName);
+            if (buildingName != null) {
+                ref = ref.child("buildings")
+                        .child(buildingName);
+                if (mapName != null) {
+                    ref = ref.child("floors")
+                            .child(mapName);
+                }
+            }
+        } else {
+            return;
+        }
+        ref.removeValue();
+    }
+
+    public void getGroupsWhichContainsName(@NonNull final String name,
+                                           @NonNull final List<SearchResult> ownersAndGroups,
+                                           @NonNull CountDownLatch latch) {
+        final String searchedName = name.toLowerCase();
+        Log.d("SUPER!", "search " + searchedName);
+        databaseReference
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        Log.d("SUPER!", "i'm here");
+                        for (DataSnapshot user : dataSnapshot.getChildren()) {
+                            for (DataSnapshot group : user.child("groups").getChildren()) {
+                                Log.d("SUPER!", "in... " + group.getKey());
+                                if (group.getKey().toLowerCase().contains(searchedName)) {
+                                    Log.d("SUPER!", "op! " + group.getKey());
+                                    ownersAndGroups.add(new SearchResult(user.getKey(),
+                                            (String) user.child("name").getValue(),
+                                            group.getKey()));
+                                }
+                            }
+                        }
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        latch.countDown();
+                    }
+                });
+    }
+
+    public void downloadGroup(@NonNull final String owner, @NonNull final String group) {
+        final UsersGroup userGroup = new UsersGroup(group);
+        databaseReference
+                .child(owner)
+                .child("groups")
+                .child(group)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
     }
 
 //    public void renameGroup(@NonNull final String groupName, @NonNull final String newName) {

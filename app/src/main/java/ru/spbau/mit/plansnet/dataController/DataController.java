@@ -5,6 +5,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.util.Pair;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
@@ -17,8 +18,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 import ru.spbau.mit.plansnet.MainActivity;
+import ru.spbau.mit.plansnet.data.AbstractDataContainer;
+import ru.spbau.mit.plansnet.data.AbstractNamedData;
 import ru.spbau.mit.plansnet.data.Account;
 import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
@@ -64,10 +68,46 @@ public class DataController {
 //        //UI update??
 //    }
 
+    public void deleteByPath(@Nullable final String groupName,
+                             @Nullable final String buildingName,
+                             @Nullable final String mapName) {
+        AbstractDataContainer ref;
+        if (groupName != null) {
+            ref = userAccount;
+            if (buildingName != null) {
+                ref = (AbstractDataContainer) ref.findByName(groupName);
+                if (ref == null) {
+                    return;
+                }
+                if (mapName != null) {
+                    ref = (AbstractDataContainer) ref.findByName(buildingName);
+                    if (ref == null) {
+                        return;
+                    }
+                    ref.getAllData().remove(mapName);
+                } else {
+                    ref.getAllData().remove(buildingName);
+                }
+            } else {
+                ref.getAllData().remove(groupName);
+            }
+        } else {
+            return;
+        }
+        netManager.deleteReference(groupName, buildingName, mapName);
+    }
+
     public void deleteMap(@NonNull final FloorMap map) {
         userAccount.findByName(map.getGroupName())
                 .findByName(map.getBuildingName()).getAllData().remove(map);
-        netManager.deleteMap(map);
+        netManager.deleteReference(map.getGroupName(), map.getBuildingName(), map.getName());
+    }
+
+    /**
+     * unsupported operation
+     */
+    public void renameMap(@NonNull final FloorMap map) {
+        throw new UnsupportedOperationException();
     }
 
     private void readMapFromFile(File mapFile) {
@@ -123,7 +163,6 @@ public class DataController {
         Log.d(DATA_TAG, "local files was read");
     }
 
-
     private void writeMap(@NonNull final FloorMap map) {
         File accountFile = new File(context.getApplicationContext().getFilesDir(),
                 userAccount.getID() + File.pathSeparator
@@ -140,6 +179,16 @@ public class DataController {
             Log.d(DATA_TAG, "Can't write a map to the phone");
             e.printStackTrace();
         }
+    }
+
+    public void getSearchedGroupsAndOwners(@NonNull String name,
+                                           @NonNull final List<MainActivity.SearchResult> ownersAndGroups,
+                                           @NonNull final CountDownLatch latch) {
+        netManager.getGroupsWhichContainsName(name, ownersAndGroups, latch);
+    }
+
+    public void addGroupByRef(@NonNull final String owner, @NonNull final String group) {
+        netManager.downloadGroup(owner, group);
     }
 
     @NonNull
