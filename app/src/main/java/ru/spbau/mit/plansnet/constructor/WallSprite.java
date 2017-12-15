@@ -5,6 +5,8 @@ import org.andengine.opengl.texture.region.ITextureRegion;
 
 import ru.spbau.mit.plansnet.data.objects.Wall;
 
+import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.DEL;
+
 public class WallSprite extends MapObjectLinear {
 
     private static ITextureRegion textureRegion;
@@ -30,7 +32,7 @@ public class WallSprite extends MapObjectLinear {
 
     @Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-        if (MAP.getTouchState() != 1) {
+        if (MAP.getTouchState() != DEL) {
             return false;
         } else {
             MAP.removeObject(this);

@@ -1,5 +1,7 @@
 package ru.spbau.mit.plansnet.constructor;
 
+import android.graphics.Point;
+
 import org.andengine.entity.primitive.Line;
 import org.andengine.opengl.texture.region.ITextureRegion;
 
@@ -15,6 +17,22 @@ public abstract class MapObjectLinear extends MapObjectSprite {
 
     public static void setThickness(int thickness) {
         THICKNESS = thickness;
+    }
+
+    public Point getPoint1() {
+        return new Point((int) position.getX1(), (int) position.getY1());
+    }
+
+    public Point getPoint2() {
+        return new Point((int) position.getX2(), (int) position.getY2());
+    }
+
+    public void setPoint1(Point point) {
+        setPosition(point.x, point.y, position.getX2(), position.getY2());
+    }
+
+    public void setPoint2(Point point) {
+        setPosition(position.getX1(), position.getY1(), point.x, point.y);
     }
 
     public void setPosition(Line line) {

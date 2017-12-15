@@ -6,6 +6,8 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
 import ru.spbau.mit.plansnet.data.objects.Door;
 
+import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.DEL;
+
 public class DoorSprite extends MapObjectLinear {
 
     private static ITextureRegion textureRegion;
@@ -33,7 +35,7 @@ public class DoorSprite extends MapObjectLinear {
     @Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
 
-        if (MAP.getTouchState() != 1) {
+        if (MAP.getTouchState() != DEL) {
             return false;
         } else {
             detachSelf();

@@ -1,5 +1,6 @@
 package ru.spbau.mit.plansnet.constructor;
 
+import android.graphics.Point;
 import android.graphics.PointF;
 
 import com.earcutj.Earcut;
@@ -10,6 +11,8 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.input.touch.TouchEvent;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -26,7 +29,8 @@ public class Map implements Serializable {
     private List<RoomSprite> rooms;
     private List<MapObjectSprite> removedObjects;
     private List<RoomSprite> removedRooms;
-    private int touchState;
+    private HashMap<Point, HashSet<MapObjectLinear>> linearObjectsByCell;
+    private ConstructorActivity.ActionState touchState;
     private static int gridSize;
 
     Map() {
@@ -34,6 +38,7 @@ public class Map implements Serializable {
         rooms = new LinkedList<>();
         removedObjects = new LinkedList<>();
         removedRooms = new LinkedList<>();
+        linearObjectsByCell = new HashMap<>();
     }
 
     Map(FloorMap pMap) {
@@ -53,11 +58,11 @@ public class Map implements Serializable {
         gridSize = pSize;
     }
 
-    public void setTouchState(int state) {
+    public void setActionState(ConstructorActivity.ActionState state) {
         touchState = state;
     }
 
-    public int getTouchState() {
+    public ConstructorActivity.ActionState getTouchState() {
         return touchState;
     }
 
@@ -69,17 +74,53 @@ public class Map implements Serializable {
         return rooms;
     }
 
-    public void addObject(MapObjectSprite object) {
+    private void addObjectToHashTable(Point point, MapObjectLinear object) {
+        if (!linearObjectsByCell.containsKey(point)) {
+            linearObjectsByCell.put(point, new HashSet<>());
+        }
+        linearObjectsByCell.get(point).add(object);
+    }
+
+    public void moveObjects(Point at, Point from, Point to) {
+        if (!linearObjectsByCell.containsKey(at)) {
+            return;
+        }
+        for (MapObjectLinear object : linearObjectsByCell.get(at)) {
+            if (object.getPoint1().equals(from)) {
+                object.setPoint1(to);
+            } else {
+                object.setPoint2(to);
+            }
+        }
+    }
+
+    void updateObjects(Point at) {
+        if (!linearObjectsByCell.containsKey(at)) {
+            return;
+        }
+        for (MapObjectLinear object : linearObjectsByCell.get(at)) {
+            addObjectToHashTable(object.getPoint1(), object);
+            addObjectToHashTable(object.getPoint2(), object);
+        }
+        linearObjectsByCell.get(at).clear();
+    }
+
+    public void addObject(MapObjectLinear object) {
         removedObjects.remove(object);
         objects.add(object);
+        addObjectToHashTable(object.getPoint1(), object);
+        addObjectToHashTable(object.getPoint2(), object);
     }
+
     public void addRoom(RoomSprite room) {
         removedRooms.remove(room);
         rooms.add(room);
     }
 
-    public void removeObject(MapObjectSprite object) {
+    public void removeObject(MapObjectLinear object) {
         objects.remove(object);
+        linearObjectsByCell.get(object.getPoint1()).remove(object);
+        linearObjectsByCell.get(object.getPoint2()).remove(object);
         removedObjects.add(object);
     }
 

@@ -57,7 +57,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="setState"
-            android:text="Двигать" />
+            android:text="Двигать карту" />
+
+        <Button
+            android:id="@+id/buttonMoveWall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="setState"
+            android:text="Двигать стену" />
 
         <Button
             android:id="@+id/buttonAdd"

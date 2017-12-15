@@ -2,8 +2,6 @@ package ru.spbau.mit.plansnet.constructor;
 
 import android.graphics.PointF;
 
-import com.earcutj.Earcut;
-
 import org.andengine.entity.primitive.DrawMode;
 import org.andengine.entity.primitive.Mesh;
 import org.andengine.input.touch.TouchEvent;
@@ -68,10 +66,10 @@ public class RoomSprite extends Mesh {
 
     public boolean onTouch(TouchEvent pSceneTouchEvent) {
         switch (MAP.getTouchState()) {
-            case 1:
+            case DEL:
                 MAP.removeRoom(this);
                 return false;
-            case 3:
+            case COLOR:
                 return true;
             default:
                 return false;
