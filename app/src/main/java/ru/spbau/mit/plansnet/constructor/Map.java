@@ -1,11 +1,7 @@
 package ru.spbau.mit.plansnet.constructor;
 
-import android.graphics.Point;
 import android.graphics.PointF;
 
-import com.earcutj.Earcut;
-
-import org.andengine.entity.primitive.DrawMode;
 import org.andengine.entity.primitive.Line;
 import org.andengine.entity.scene.Scene;
 import org.andengine.input.touch.TouchEvent;
@@ -15,7 +11,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 
 import ru.spbau.mit.plansnet.data.FloorMap;
 import ru.spbau.mit.plansnet.data.objects.Door;
@@ -29,7 +24,7 @@ public class Map implements Serializable {
     private List<RoomSprite> rooms;
     private List<MapObjectSprite> removedObjects;
     private List<RoomSprite> removedRooms;
-    private HashMap<Point, HashSet<MapObjectLinear>> linearObjectsByCell;
+    private HashMap<PointF, HashSet<MapObjectLinear>> linearObjectsByCell;
     private ConstructorActivity.ActionState touchState;
     private static int gridSize;
 
@@ -74,14 +69,15 @@ public class Map implements Serializable {
         return rooms;
     }
 
-    private void addObjectToHashTable(Point point, MapObjectLinear object) {
+    private void addObjectToHashTable(PointF point, MapObjectLinear object) {
+        PointF key = new PointF(point.x, point.y);
         if (!linearObjectsByCell.containsKey(point)) {
-            linearObjectsByCell.put(point, new HashSet<>());
+            linearObjectsByCell.put(key, new HashSet<>());
         }
         linearObjectsByCell.get(point).add(object);
     }
 
-    public void moveObjects(Point at, Point from, Point to) {
+    public void moveObjects(PointF at, PointF from, PointF to) {
         if (!linearObjectsByCell.containsKey(at)) {
             return;
         }
@@ -94,7 +90,16 @@ public class Map implements Serializable {
         }
     }
 
-    void updateObjects(Point at) {
+    void updateRooms(Scene pScene) {
+        for (RoomSprite room : rooms) {
+            pScene.detachChild(room.getMesh());
+            room.updateShape();
+            pScene.attachChild(room.getMesh());
+        }
+        pScene.sortChildren();
+    }
+
+    void updateObjects(PointF at) {
         if (!linearObjectsByCell.containsKey(at)) {
             return;
         }
@@ -134,7 +139,7 @@ public class Map implements Serializable {
             o.detachSelf();
         }
         for (RoomSprite r : removedRooms) {
-            r.detachSelf();
+            r.getMesh().detachSelf();
         }
         removedObjects.clear();
         removedRooms.clear();
@@ -147,12 +152,27 @@ public class Map implements Serializable {
         rooms.clear();
     }
 
+    public boolean checkIntersections(PointF pPoint) {
+        if (!linearObjectsByCell.containsKey(pPoint)) {
+            return false;
+        }
+        for (MapObjectLinear object : linearObjectsByCell.get(pPoint)) {
+            if (checkIntersections(object)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean checkIntersections(MapObjectLinear pObject) {
         for (MapObjectSprite o : objects) {
             if (!(o instanceof MapObjectLinear)) {
                 continue;
             }
             MapObjectLinear ol = (MapObjectLinear) o;
+            if (ol.equals(pObject)) {
+                continue;
+            }
             if (Geometry.linesIntersect(ol.getPosition(), pObject.getPosition())) {
                 return true;
             }
@@ -160,6 +180,7 @@ public class Map implements Serializable {
         return false;
     }
 
+    @Deprecated
     public void joinAll(MapObjectLinear pObject) {
         for (MapObjectSprite o : objects) {
             if (!(o instanceof MapObjectLinear)) {
@@ -186,7 +207,6 @@ public class Map implements Serializable {
     }
 
     public void createRoom(float pX, float pY, Scene pScene) {
-
         pX = (float)(Math.floor(pX / gridSize) + 0.5f) * gridSize;
         pY = (float)(Math.floor(pY / gridSize) + 0.5f) * gridSize;
 
@@ -194,10 +214,9 @@ public class Map implements Serializable {
         if (polygon == null || !Geometry.isPointInsidePolygon(polygon, new PointF(pX, pY))) {
             return;
         }
-
         RoomSprite room = new RoomSprite(polygon, pX, pY);
         addRoom(room);
-        pScene.attachChild(room);
+        pScene.attachChild(room.getMesh());
         pScene.sortChildren();
     }
 }

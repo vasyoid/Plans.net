@@ -2,7 +2,6 @@ package ru.spbau.mit.plansnet.constructor;
 
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
-import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
 import ru.spbau.mit.plansnet.data.objects.Door;
 

@@ -2,7 +2,7 @@ package ru.spbau.mit.plansnet.constructor;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Point;
+import android.graphics.PointF;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -11,7 +11,6 @@ import android.view.View;
 import android.view.WindowManager;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
@@ -23,7 +22,6 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.input.touch.detector.PinchZoomDetector;
 import org.andengine.opengl.texture.region.TextureRegionFactory;
 import org.andengine.ui.activity.SimpleLayoutGameActivity;
-import org.andengine.util.adt.io.in.IInputStreamOpener;
 import org.andengine.util.debug.Debug;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.options.EngineOptions;
@@ -143,7 +141,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 
             @Override
             public boolean onSceneTouchEvent(final Scene pScene, TouchEvent pSceneTouchEvent) {
-                if (map.checkRoomTouched(pSceneTouchEvent)) {
+                if (!pSceneTouchEvent.isActionMove() && map.checkRoomTouched(pSceneTouchEvent)) {
                     if (state == ActionState.ADD) {
                         runOnUpdateThread(() -> map.detachRemoved());
                         return false;
@@ -182,29 +180,39 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 currentY = Math.min(currentY, GRID_SIZE * GRID_ROWS);
                 currentX = Math.max(currentX, 0);
                 currentY = Math.max(currentY, 0);
+                PointF firstPoint = new PointF(firstX, firstY);
+                PointF previousPoint = new PointF(previousX, previousY);
+                PointF currentPoint = new PointF(currentX, currentY);
+
                 switch (pSceneTouchEvent.getAction()) {
                     case TouchEvent.ACTION_DOWN:
                         firstX = previousX = currentX;
                         firstY = previousY = currentY;
-                        currentLine.setPosition(firstX, firstY,
-                                currentX, currentY);
-                        if (item == 0) {
-                            currentAdded = new WallSprite();
-                        } else {
-                            currentAdded = new DoorSprite();
-                        }
-                        currentAdded.setPosition(currentLine);
-                        pScene.attachChild(currentAdded);
-                        pScene.registerTouchArea(currentAdded);
-                        break;
-                    case TouchEvent.ACTION_MOVE:
                         if (state == ActionState.MOVE_WALL) {
-                            map.moveObjects(new Point((int) firstX, (int) firstY),
-                                    new Point((int) previousX, (int) previousY),
-                                    new Point((int) currentX, (int) currentY));
+                            // TODO
                         } else {
                             currentLine.setPosition(firstX, firstY,
                                     currentX, currentY);
+                            if (item == 0) {
+                                currentAdded = new WallSprite();
+                            } else {
+                                currentAdded = new DoorSprite();
+                            }
+                            currentAdded.setPosition(currentLine);
+                            pScene.attachChild(currentAdded);
+                            pScene.registerTouchArea(currentAdded);
+                        }
+                        break;
+                    case TouchEvent.ACTION_MOVE:
+                        if (state == ActionState.MOVE_WALL) {
+                            if (!previousPoint.equals(currentPoint)) {
+                                map.moveObjects(firstPoint, previousPoint, currentPoint);
+                                try {
+                                    map.updateRooms(scene);
+                                } catch (com.earcutj.exception.EarcutException e) {}
+                            }
+                        } else {
+                            currentLine.setPosition(firstX, firstY, currentX, currentY);
                             currentAdded.setPosition(currentLine);
                         }
                         previousX = currentX;
@@ -212,13 +220,17 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                         break;
                     case TouchEvent.ACTION_UP:
                         if (state == ActionState.MOVE_WALL) {
-                            if (currentX != firstX || currentY != firstY) {
-                                map.updateObjects(new Point((int) firstX, (int) firstY));
+                            if (!firstPoint.equals(currentPoint)) {
+                                if (map.checkIntersections(firstPoint)) {
+                                    map.moveObjects(firstPoint, currentPoint, firstPoint);
+                                    map.updateRooms(scene);
+                                } else {
+                                    map.updateObjects(firstPoint);
+                                }
                             }
                         } else {
                             if ((currentX != firstX || currentY != firstY) &&
                                     !map.checkIntersections(currentAdded)) {
-                                map.joinAll(currentAdded);
                                 map.addObject(currentAdded);
                                 runOnUpdateThread(() -> map.detachRemoved());
                             } else {
@@ -253,7 +265,6 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 mCamera.setZoomFactor(newZoomFactor);
             }
 
-            /* This method is fired when fingers are lifted from the screen */
             @Override
             public void onPinchZoomFinished(PinchZoomDetector pPinchZoomDetector,
                                             TouchEvent pTouchEvent, float pZoomFactor) {
@@ -277,10 +288,10 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             scene.attachChild(o);
             scene.registerTouchArea(o);
         }
-        for (RoomSprite r : map.getRooms()) {
-            scene.attachChild(r);
-        }
 
+        for (RoomSprite r : map.getRooms()) {
+            scene.attachChild(r.getMesh());
+        }
 
         return scene;
 	}
