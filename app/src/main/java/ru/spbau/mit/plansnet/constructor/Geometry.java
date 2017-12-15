@@ -1,6 +1,7 @@
 package ru.spbau.mit.plansnet.constructor;
 
 import android.graphics.PointF;
+import android.util.Log;
 
 import com.earcutj.Earcut;
 
@@ -13,8 +14,8 @@ public class Geometry {
 
     public static void swap(Line l1, Line l2) {
         Line tmp = copy(l1);
-        l1.setPosition(l2);
-        l2.setPosition(tmp);
+        l1.setPosition(l2.getX1(), l2.getY1(), l2.getX2(), l2.getY2());
+        l2.setPosition(tmp.getX1(), tmp.getY1(), tmp.getX2(), tmp.getY2());
     }
 
     public static Line copy(Line line) {
@@ -193,11 +194,12 @@ public class Geometry {
                 continue;
             }
             MapObjectLinear ol = (MapObjectLinear) o;
-            PointF tmp = getIntersectionPoint(
-                    ray, ol.getPosition(), true);
-            if (tmp != null && curX < tmp.x) {
-                currentObject = (MapObjectLinear) o;
-                curX = tmp.x;
+            PointF tmp = getIntersectionPoint(ray, ol.getPosition(), true);
+            if (tmp != null) {
+                if (curX < tmp.x) {
+                    currentObject = (MapObjectLinear) o;
+                    curX = tmp.x;
+                }
             }
         }
         if (currentObject == null) {
