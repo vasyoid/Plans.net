@@ -3,7 +3,10 @@ package ru.spbau.mit.plansnet.constructor;
 import android.graphics.PointF;
 
 import org.andengine.entity.primitive.Line;
+import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
+
+import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.DEL;
 
 public abstract class MapObjectLinear extends MapObjectSprite {
 
@@ -67,4 +70,12 @@ public abstract class MapObjectLinear extends MapObjectSprite {
         return position;
     }
 
+    @Override
+    public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+        if (MAP.getTouchState() == DEL) {
+            MAP.removeObject(this);
+            MAP.removeRoomsByObject(this);
+        }
+        return false;
+    }
 }

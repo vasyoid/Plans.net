@@ -12,9 +12,6 @@ import org.andengine.util.color.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
-
-import ru.spbau.mit.plansnet.data.objects.Room;
 
 
 public class RoomSprite {
@@ -26,19 +23,12 @@ public class RoomSprite {
     private Mesh mesh;
     private Color roomColor;
 
-    public RoomSprite(List<PointF> pPolygon, float pX, float pY) {
-        initialX = pX;
-        initialY = pY;
+    public RoomSprite(List<PointF> pPolygon) {
         polygon = new ArrayList<>();
         polygon.addAll(pPolygon);
         Random rand = new Random();
         roomColor = new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
         reshape(polygon);
-    }
-
-    public RoomSprite(Room  pRoom) {
-       this(Geometry.roomPolygon(MAP.getObjects(),
-               new PointF(pRoom.getX(), pRoom.getY())), pRoom.getX(), pRoom.getY());
     }
 
     public Mesh getMesh() {
@@ -50,6 +40,16 @@ public class RoomSprite {
     }
 
     private void reshape(float[] pBufferData) {
+
+        PointF v1 = new PointF(pBufferData[3] - pBufferData[0],
+                pBufferData[4] - pBufferData[1]);
+        PointF v2 = new PointF(pBufferData[6] - pBufferData[0],
+                pBufferData[7] - pBufferData[1]);
+        v1.offset(v2.x, v2.y);
+        v1.set(v1.x / 4, v1.y / 4);
+        v1.offset(pBufferData[0], pBufferData[1]);
+        initialX = v1.x;
+        initialY = v1.y;
         mesh = new Mesh(0, 0, pBufferData, pBufferData.length / 3,
                 DrawMode.TRIANGLES, vertexBufferObjectManager);
         mesh.setColor(roomColor);
@@ -79,6 +79,21 @@ public class RoomSprite {
 
     public List<PointF> getPolygon() {
         return polygon;
+    }
+
+    public boolean contains(MapObjectLinear object) {
+        polygon.add(polygon.get(0));
+        for (int i = 0; i < polygon.size() - 1; i++) {
+            if (polygon.get(i).equals(object.getPoint1()) &&
+                    polygon.get(i + 1).equals(object.getPoint2()) ||
+                    polygon.get(i).equals(object.getPoint2()) &&
+                    polygon.get(i + 1).equals(object.getPoint1())) {
+                polygon.remove(polygon.size() - 1);
+                return true;
+            }
+        }
+        polygon.remove(polygon.size() - 1);
+        return false;
     }
 
     public boolean onTouch(TouchEvent pSceneTouchEvent) {

@@ -7,6 +7,7 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.input.touch.TouchEvent;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -18,6 +19,8 @@ import ru.spbau.mit.plansnet.data.objects.MapObject;
 import ru.spbau.mit.plansnet.data.objects.Room;
 import ru.spbau.mit.plansnet.data.objects.Wall;
 
+import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.ADD;
+
 public class Map implements Serializable {
 
     private List<MapObjectSprite> objects;
@@ -25,7 +28,7 @@ public class Map implements Serializable {
     private List<MapObjectSprite> removedObjects;
     private List<RoomSprite> removedRooms;
     private HashMap<PointF, HashSet<MapObjectLinear>> linearObjectsByCell;
-    private ConstructorActivity.ActionState touchState;
+    private ConstructorActivity.ActionState touchState = ADD;
     private static int gridSize;
 
     Map() {
@@ -36,7 +39,7 @@ public class Map implements Serializable {
         linearObjectsByCell = new HashMap<>();
     }
 
-    Map(FloorMap pMap) {
+    Map(FloorMap pMap, Scene scene) {
         this();
         for (MapObject o : pMap.getArrayData()) {
             if (o instanceof Door) {
@@ -44,7 +47,7 @@ public class Map implements Serializable {
             } else if (o instanceof Wall) {
                 addObject(new WallSprite((Wall) o));
             } else if (o instanceof Room) {
-                addRoom(new RoomSprite((Room) o));
+                createRoom(((Room) o).getX(), ((Room) o).getY(), scene);
             }
         }
     }
@@ -120,6 +123,18 @@ public class Map implements Serializable {
     public void addRoom(RoomSprite room) {
         removedRooms.remove(room);
         rooms.add(room);
+    }
+
+    public void removeRoomsByObject(MapObjectLinear object) {
+        List<RoomSprite> toRemove = new ArrayList<>();
+        for (RoomSprite room : rooms) {
+            if (room.contains(object)) {
+                toRemove.add(room);
+            }
+        }
+        for (RoomSprite room : toRemove) {
+            removeRoom(room);
+        }
     }
 
     public void removeObject(MapObjectLinear object) {
@@ -207,14 +222,11 @@ public class Map implements Serializable {
     }
 
     public void createRoom(float pX, float pY, Scene pScene) {
-        pX = (float)(Math.floor(pX / gridSize) + 0.5f) * gridSize;
-        pY = (float)(Math.floor(pY / gridSize) + 0.5f) * gridSize;
-
         List<PointF> polygon = Geometry.roomPolygon(objects, new PointF(pX, pY));
         if (polygon == null || !Geometry.isPointInsidePolygon(polygon, new PointF(pX, pY))) {
             return;
         }
-        RoomSprite room = new RoomSprite(polygon, pX, pY);
+        RoomSprite room = new RoomSprite(polygon);
         addRoom(room);
         pScene.attachChild(room.getMesh());
         pScene.sortChildren();

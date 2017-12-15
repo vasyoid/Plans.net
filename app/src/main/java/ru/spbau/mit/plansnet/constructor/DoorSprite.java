@@ -5,8 +5,6 @@ import org.andengine.opengl.texture.region.ITextureRegion;
 
 import ru.spbau.mit.plansnet.data.objects.Door;
 
-import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.DEL;
-
 public class DoorSprite extends MapObjectLinear {
 
     private static ITextureRegion textureRegion;
@@ -30,16 +28,4 @@ public class DoorSprite extends MapObjectLinear {
         textureRegion = texture;
     }
 
-
-    @Override
-    public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
-
-        if (MAP.getTouchState() != DEL) {
-            return false;
-        } else {
-            detachSelf();
-            MAP.removeObject(this);
-        }
-        return true;
-    }
 }

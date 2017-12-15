@@ -276,7 +276,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
         mPinchZoomDetector.setEnabled(true);
 
         if (toOpenMap != null) {
-            map = new Map(toOpenMap);
+            map = new Map(toOpenMap, scene);
         }
         if (map == null) {
             map = new Map();
@@ -289,10 +289,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             scene.registerTouchArea(o);
         }
 
-        for (RoomSprite r : map.getRooms()) {
-            scene.attachChild(r.getMesh());
-        }
-
+        scene.sortChildren();
         return scene;
 	}
 
