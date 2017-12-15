@@ -279,4 +279,15 @@ public class Geometry {
         return vertexData;
     }
 
+    public static PointF getPointInside(float[] pBufferData) {
+        PointF v1 = new PointF(pBufferData[3] - pBufferData[0],
+                pBufferData[4] - pBufferData[1]);
+        PointF v2 = new PointF(pBufferData[6] - pBufferData[0],
+                pBufferData[7] - pBufferData[1]);
+        v1.offset(v2.x, v2.y);
+        v1.set(v1.x / 4, v1.y / 4);
+        v1.offset(pBufferData[0], pBufferData[1]);
+        return v1;
+    }
+
 }

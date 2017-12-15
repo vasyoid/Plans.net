@@ -169,8 +169,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 }
                 if (state == ActionState.COLOR) {
                     if (pSceneTouchEvent.isActionDown()) {
-                        map.createRoom(pSceneTouchEvent.getX(), pSceneTouchEvent.getY(), pScene
-                        );
+                        map.createRoom(pSceneTouchEvent.getX(), pSceneTouchEvent.getY(), pScene);
                     }
                     return false;
                 }

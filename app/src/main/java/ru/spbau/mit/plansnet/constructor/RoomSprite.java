@@ -20,6 +20,7 @@ public class RoomSprite {
     private static Map MAP;
     private List<PointF> polygon;
     private float initialX, initialY;
+    private PointF titlePos;
     private Mesh mesh;
     private Color roomColor;
 
@@ -40,16 +41,9 @@ public class RoomSprite {
     }
 
     private void reshape(float[] pBufferData) {
-
-        PointF v1 = new PointF(pBufferData[3] - pBufferData[0],
-                pBufferData[4] - pBufferData[1]);
-        PointF v2 = new PointF(pBufferData[6] - pBufferData[0],
-                pBufferData[7] - pBufferData[1]);
-        v1.offset(v2.x, v2.y);
-        v1.set(v1.x / 4, v1.y / 4);
-        v1.offset(pBufferData[0], pBufferData[1]);
-        initialX = v1.x;
-        initialY = v1.y;
+        PointF inside = Geometry.getPointInside(pBufferData);
+        initialX = inside.x;
+        initialY = inside.y;
         mesh = new Mesh(0, 0, pBufferData, pBufferData.length / 3,
                 DrawMode.TRIANGLES, vertexBufferObjectManager);
         mesh.setColor(roomColor);
