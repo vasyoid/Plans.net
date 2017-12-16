@@ -4,11 +4,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.support.v4.view.LayoutInflaterCompat;
+import android.text.Layout;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.RelativeLayout;
 
 import java.io.IOException;
 
@@ -305,6 +309,16 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     private void clearField() {
 	    map.clear();
 	    runOnUpdateThread(() -> map.detachRemoved());
+    }
+
+    public void showParams(View v) {
+        findViewById(R.id.renderSurfaceView).setEnabled(false);
+        View paramsView = findViewById(R.id.roomParamsView);
+        paramsView.setVisibility(View.VISIBLE);
+        paramsView.findViewById(R.id.roomParamsOk).setOnClickListener(v1 -> {
+            paramsView.setVisibility(View.GONE);
+            findViewById(R.id.renderSurfaceView).setEnabled(true);
+        });
     }
 
     public void setItem(View v) {
