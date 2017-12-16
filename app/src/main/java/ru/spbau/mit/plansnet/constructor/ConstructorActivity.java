@@ -4,15 +4,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.PointF;
 import android.os.Bundle;
-import android.support.v4.view.LayoutInflaterCompat;
-import android.text.Layout;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.RelativeLayout;
 
 import java.io.IOException;
 
@@ -89,6 +85,8 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
         setCameraResolution();
         GRID_SIZE = (100000 / CAMERA_HEIGHT);
         Map.setGridSize(GRID_SIZE);
+        Map.setGridCols(GRID_COLS);
+        Map.setGridRows(GRID_ROWS);
         MapObjectLinear.setThickness(60000 / CAMERA_HEIGHT);
     	final SmoothCamera camera = new SmoothCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_WIDTH, CAMERA_HEIGHT, 50);
     	camera.setCenter(GRID_SIZE * GRID_COLS / 2, GRID_SIZE * GRID_ROWS / 2);
@@ -191,9 +189,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                     case TouchEvent.ACTION_DOWN:
                         firstX = previousX = currentX;
                         firstY = previousY = currentY;
-                        if (state == ActionState.MOVE_WALL) {
-                            // TODO
-                        } else {
+                        if (state != ActionState.MOVE_WALL) {
                             currentLine.setPosition(firstX, firstY,
                                     currentX, currentY);
                             if (item == 0) {
@@ -212,7 +208,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                                 map.moveObjects(firstPoint, previousPoint, currentPoint);
                                 try {
                                     map.updateRooms(scene);
-                                } catch (com.earcutj.exception.EarcutException e) {}
+                                } catch (com.earcutj.exception.EarcutException ignored) {}
                             }
                         } else {
                             currentLine.setPosition(firstX, firstY, currentX, currentY);
@@ -223,6 +219,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                         break;
                     case TouchEvent.ACTION_UP:
                         if (state == ActionState.MOVE_WALL) {
+                            runOnUpdateThread(() -> map.detachRemoved());
                             if (!firstPoint.equals(currentPoint)) {
                                 if (map.checkIntersections(firstPoint)) {
                                     map.moveObjects(firstPoint, currentPoint, firstPoint);

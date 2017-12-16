@@ -75,13 +75,13 @@ public class RoomSprite {
         return polygon;
     }
 
-    public boolean contains(MapObjectLinear object) {
+    public boolean contains(PointF point1, PointF point2) {
         polygon.add(polygon.get(0));
         for (int i = 0; i < polygon.size() - 1; i++) {
-            if (polygon.get(i).equals(object.getPoint1()) &&
-                    polygon.get(i + 1).equals(object.getPoint2()) ||
-                    polygon.get(i).equals(object.getPoint2()) &&
-                    polygon.get(i + 1).equals(object.getPoint1())) {
+            if (polygon.get(i).equals(point1) &&
+                    polygon.get(i + 1).equals(point2) ||
+                    polygon.get(i).equals(point2) &&
+                    polygon.get(i + 1).equals(point1)) {
                 polygon.remove(polygon.size() - 1);
                 return true;
             }

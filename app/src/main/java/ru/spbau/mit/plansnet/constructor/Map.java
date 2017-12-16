@@ -1,6 +1,7 @@
 package ru.spbau.mit.plansnet.constructor;
 
 import android.graphics.PointF;
+import android.util.Log;
 
 import org.andengine.entity.primitive.Line;
 import org.andengine.entity.scene.Scene;
@@ -29,7 +30,9 @@ public class Map implements Serializable {
     private List<RoomSprite> removedRooms;
     private HashMap<PointF, HashSet<MapObjectLinear>> linearObjectsByCell;
     private ConstructorActivity.ActionState touchState = ADD;
-    private static int gridSize;
+    private static int gridSize = 0;
+    private static int gridCols = 0;
+    private static int gridRows = 0;
 
     Map() {
         objects = new LinkedList<>();
@@ -52,8 +55,27 @@ public class Map implements Serializable {
         }
     }
 
+    public static List<PointF> getGridPolygon() {
+        List<PointF> result = new ArrayList<>();
+        result.add(new PointF(-1.0f, -1.0f));
+        result.add(new PointF(-1.0f, gridRows * gridSize + 1.0f));
+        result.add(new PointF(gridCols * gridSize + 1.0f, gridRows * gridSize + 1.0f));
+        result.add(new PointF(gridCols * gridSize + 1.0f, -1.0f));
+        return result;
+    }
+
     public static void setGridSize(int pSize) {
         gridSize = pSize;
+    }
+    public static void setGridCols(int pCols) {
+        gridCols = pCols;
+    }
+    public static void setGridRows(int pRows) {
+        gridRows = pRows;
+    }
+
+    public static int getGridSize() {
+        return gridSize;
     }
 
     public void setActionState(ConstructorActivity.ActionState state) {
@@ -78,6 +100,20 @@ public class Map implements Serializable {
             linearObjectsByCell.put(key, new HashSet<>());
         }
         linearObjectsByCell.get(point).add(object);
+    }
+
+    private void removeObjectFromHashTable(PointF point, MapObjectLinear object) {
+        PointF key = new PointF(point.x, point.y);
+        if (linearObjectsByCell.containsKey(point)) {
+            linearObjectsByCell.get(point).remove(object);
+        }
+    }
+
+    public void updateMovedObject(PointF firstPoint1, PointF firstPoint2, MapObjectLinear object) {
+        removeObjectFromHashTable(firstPoint1, object);
+        removeObjectFromHashTable(firstPoint2, object);
+        addObjectToHashTable(object.getPoint1(), object);
+        addObjectToHashTable(object.getPoint2(), object);
     }
 
     public void moveObjects(PointF at, PointF from, PointF to) {
@@ -125,14 +161,18 @@ public class Map implements Serializable {
         rooms.add(room);
     }
 
-    public void removeRoomsByObject(MapObjectLinear object) {
-        List<RoomSprite> toRemove = new ArrayList<>();
+    public List<RoomSprite> findRoomsBySection(PointF point1, PointF point2) {
+        List<RoomSprite> result = new ArrayList<>();
         for (RoomSprite room : rooms) {
-            if (room.contains(object)) {
-                toRemove.add(room);
+            if (room.contains(point1, point2)) {
+                result.add(room);
             }
         }
-        for (RoomSprite room : toRemove) {
+        return result;
+    }
+
+    public void removeRoomsBySection(PointF point1, PointF point2) {
+        for (RoomSprite room : findRoomsBySection(point1, point2)) {
             removeRoom(room);
         }
     }
