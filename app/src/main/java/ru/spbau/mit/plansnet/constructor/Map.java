@@ -1,18 +1,18 @@
 package ru.spbau.mit.plansnet.constructor;
 
 import android.graphics.PointF;
+import android.util.Log;
 
-import com.earcutj.Earcut;
-
-import org.andengine.entity.primitive.DrawMode;
 import org.andengine.entity.primitive.Line;
 import org.andengine.entity.scene.Scene;
 import org.andengine.input.touch.TouchEvent;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 
 import ru.spbau.mit.plansnet.data.FloorMap;
 import ru.spbau.mit.plansnet.data.objects.Door;
@@ -20,23 +20,29 @@ import ru.spbau.mit.plansnet.data.objects.MapObject;
 import ru.spbau.mit.plansnet.data.objects.Room;
 import ru.spbau.mit.plansnet.data.objects.Wall;
 
+import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.ADD;
+
 public class Map implements Serializable {
 
     private List<MapObjectSprite> objects;
     private List<RoomSprite> rooms;
     private List<MapObjectSprite> removedObjects;
     private List<RoomSprite> removedRooms;
-    private int touchState;
-    private static int gridSize;
+    private HashMap<PointF, HashSet<MapObjectLinear>> linearObjectsByCell;
+    private ConstructorActivity.ActionState touchState = ADD;
+    private static int gridSize = 0;
+    private static int gridCols = 0;
+    private static int gridRows = 0;
 
     Map() {
         objects = new LinkedList<>();
         rooms = new LinkedList<>();
         removedObjects = new LinkedList<>();
         removedRooms = new LinkedList<>();
+        linearObjectsByCell = new HashMap<>();
     }
 
-    Map(FloorMap pMap) {
+    Map(FloorMap pMap, Scene scene) {
         this();
         for (MapObject o : pMap.getArrayData()) {
             if (o instanceof Door) {
@@ -44,20 +50,39 @@ public class Map implements Serializable {
             } else if (o instanceof Wall) {
                 addObject(new WallSprite((Wall) o));
             } else if (o instanceof Room) {
-                addRoom(new RoomSprite((Room) o));
+                createRoom(((Room) o).getX(), ((Room) o).getY(), scene);
             }
         }
+    }
+
+    public static List<PointF> getGridPolygon() {
+        List<PointF> result = new ArrayList<>();
+        result.add(new PointF(-1.0f, -1.0f));
+        result.add(new PointF(-1.0f, gridRows * gridSize + 1.0f));
+        result.add(new PointF(gridCols * gridSize + 1.0f, gridRows * gridSize + 1.0f));
+        result.add(new PointF(gridCols * gridSize + 1.0f, -1.0f));
+        return result;
     }
 
     public static void setGridSize(int pSize) {
         gridSize = pSize;
     }
+    public static void setGridCols(int pCols) {
+        gridCols = pCols;
+    }
+    public static void setGridRows(int pRows) {
+        gridRows = pRows;
+    }
 
-    public void setTouchState(int state) {
+    public static int getGridSize() {
+        return gridSize;
+    }
+
+    public void setActionState(ConstructorActivity.ActionState state) {
         touchState = state;
     }
 
-    public int getTouchState() {
+    public ConstructorActivity.ActionState getTouchState() {
         return touchState;
     }
 
@@ -69,17 +94,93 @@ public class Map implements Serializable {
         return rooms;
     }
 
-    public void addObject(MapObjectSprite object) {
+    private void addObjectToHashTable(PointF point, MapObjectLinear object) {
+        PointF key = new PointF(point.x, point.y);
+        if (!linearObjectsByCell.containsKey(point)) {
+            linearObjectsByCell.put(key, new HashSet<>());
+        }
+        linearObjectsByCell.get(point).add(object);
+    }
+
+    private void removeObjectFromHashTable(PointF point, MapObjectLinear object) {
+        PointF key = new PointF(point.x, point.y);
+        if (linearObjectsByCell.containsKey(point)) {
+            linearObjectsByCell.get(point).remove(object);
+        }
+    }
+
+    public void updateMovedObject(PointF firstPoint1, PointF firstPoint2, MapObjectLinear object) {
+        removeObjectFromHashTable(firstPoint1, object);
+        removeObjectFromHashTable(firstPoint2, object);
+        addObjectToHashTable(object.getPoint1(), object);
+        addObjectToHashTable(object.getPoint2(), object);
+    }
+
+    public void moveObjects(PointF at, PointF from, PointF to) {
+        if (!linearObjectsByCell.containsKey(at)) {
+            return;
+        }
+        for (MapObjectLinear object : linearObjectsByCell.get(at)) {
+            if (object.getPoint1().equals(from)) {
+                object.setPoint1(to);
+            } else {
+                object.setPoint2(to);
+            }
+        }
+    }
+
+    void updateRooms(Scene pScene) {
+        for (RoomSprite room : rooms) {
+            room.detachSelf();
+            room.updateShape();
+            room.attachSelf(pScene);
+        }
+        pScene.sortChildren();
+    }
+
+    void updateObjects(PointF at) {
+        if (!linearObjectsByCell.containsKey(at)) {
+            return;
+        }
+        for (MapObjectLinear object : linearObjectsByCell.get(at)) {
+            addObjectToHashTable(object.getPoint1(), object);
+            addObjectToHashTable(object.getPoint2(), object);
+        }
+        linearObjectsByCell.get(at).clear();
+    }
+
+    public void addObject(MapObjectLinear object) {
         removedObjects.remove(object);
         objects.add(object);
+        addObjectToHashTable(object.getPoint1(), object);
+        addObjectToHashTable(object.getPoint2(), object);
     }
+
     public void addRoom(RoomSprite room) {
         removedRooms.remove(room);
         rooms.add(room);
     }
 
-    public void removeObject(MapObjectSprite object) {
+    public List<RoomSprite> findRoomsBySection(PointF point1, PointF point2) {
+        List<RoomSprite> result = new ArrayList<>();
+        for (RoomSprite room : rooms) {
+            if (room.contains(point1, point2)) {
+                result.add(room);
+            }
+        }
+        return result;
+    }
+
+    public void removeRoomsBySection(PointF point1, PointF point2) {
+        for (RoomSprite room : findRoomsBySection(point1, point2)) {
+            removeRoom(room);
+        }
+    }
+
+    public void removeObject(MapObjectLinear object) {
         objects.remove(object);
+        linearObjectsByCell.get(object.getPoint1()).remove(object);
+        linearObjectsByCell.get(object.getPoint2()).remove(object);
         removedObjects.add(object);
     }
 
@@ -106,12 +207,27 @@ public class Map implements Serializable {
         rooms.clear();
     }
 
+    public boolean checkIntersections(PointF pPoint) {
+        if (!linearObjectsByCell.containsKey(pPoint)) {
+            return false;
+        }
+        for (MapObjectLinear object : linearObjectsByCell.get(pPoint)) {
+            if (checkIntersections(object)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean checkIntersections(MapObjectLinear pObject) {
         for (MapObjectSprite o : objects) {
             if (!(o instanceof MapObjectLinear)) {
                 continue;
             }
             MapObjectLinear ol = (MapObjectLinear) o;
+            if (ol.equals(pObject)) {
+                continue;
+            }
             if (Geometry.linesIntersect(ol.getPosition(), pObject.getPosition())) {
                 return true;
             }
@@ -119,6 +235,7 @@ public class Map implements Serializable {
         return false;
     }
 
+    @Deprecated
     public void joinAll(MapObjectLinear pObject) {
         for (MapObjectSprite o : objects) {
             if (!(o instanceof MapObjectLinear)) {
@@ -144,19 +261,26 @@ public class Map implements Serializable {
         return false;
     }
 
-    public void createRoom(float pX, float pY, Scene pScene) {
+    public RoomSprite getRoomTouched(TouchEvent pTouchEvent) {
+        PointF touchPoint = new PointF(pTouchEvent.getX(), pTouchEvent.getY());
+        for (RoomSprite r : rooms) {
+            if (Geometry.isPointInsidePolygon(r.getPolygon(), touchPoint)) {
+                return r;
+            }
+        }
+        return null;
+    }
 
-        pX = (float)(Math.floor(pX / gridSize) + 0.5f) * gridSize;
-        pY = (float)(Math.floor(pY / gridSize) + 0.5f) * gridSize;
 
+    public RoomSprite createRoom(float pX, float pY, Scene pScene) {
         List<PointF> polygon = Geometry.roomPolygon(objects, new PointF(pX, pY));
         if (polygon == null || !Geometry.isPointInsidePolygon(polygon, new PointF(pX, pY))) {
-            return;
+            return null;
         }
-
-        RoomSprite room = new RoomSprite(polygon, pX, pY);
+        RoomSprite room = new RoomSprite(polygon);
         addRoom(room);
-        pScene.attachChild(room);
+        room.attachSelf(pScene);
         pScene.sortChildren();
+        return room;
     }
 }

@@ -1,6 +1,7 @@
 package ru.spbau.mit.plansnet.constructor;
 
 import android.graphics.PointF;
+import android.util.Log;
 
 import com.earcutj.Earcut;
 
@@ -13,17 +14,13 @@ public class Geometry {
 
     public static void swap(Line l1, Line l2) {
         Line tmp = copy(l1);
-        l1.setPosition(l2);
-        l2.setPosition(tmp);
+        l1.setPosition(l2.getX1(), l2.getY1(), l2.getX2(), l2.getY2());
+        l2.setPosition(tmp.getX1(), tmp.getY1(), tmp.getX2(), tmp.getY2());
     }
 
     public static Line copy(Line line) {
         return new Line(line.getX1(), line.getY1(), line.getX2(), line.getY2(),
                 line.getVertexBufferObjectManager());
-    }
-
-    public static void changeDirection(Line line) {
-        line.setPosition(line.getX2(), line.getY2(), line.getX1(), line.getY1());
     }
 
     public static float getMinX(Line line) {
@@ -51,7 +48,7 @@ public class Geometry {
     public static boolean linesIntersect(Line l1, Line l2) {
         PointF a = new PointF(l1.getX1(), l1.getY1());
         PointF b = new PointF(l1.getX2(), l1.getY2());
-        return l1.collidesWith(l2) && !linesParallel(l1, l2) &&
+        return linesJoinable(l1, l2) || l1.collidesWith(l2) && !linesParallel(l1, l2) &&
                 !lineStartsWith(l2, a) && !lineEndsWith(l2, a) &&
                 !lineStartsWith(l2, b) && !lineEndsWith(l2, b);
     }
@@ -66,6 +63,7 @@ public class Geometry {
         return getMinX(l1) != getMaxX(l2) && getMaxX(l1) != getMinX(l2);
     }
 
+    @Deprecated
     public static Line join(Line l1, Line l2) {
         if (!linesJoinable(l1, l2)) {
             return null;
@@ -89,23 +87,23 @@ public class Geometry {
         return line.getY1() == line.getY2();
     }
 
-    public static boolean isPointAbove(Line line, PointF point) {
-        PointF tmp = getIntersectionPoint(new Line(point.x, -1e5f,
-                point.x, 1e5f, null), line, false);
-        return tmp != null && point.y > tmp.y;
+    public static boolean isPointAbove(Line line, PointF PointF) {
+        PointF tmp = getIntersectionPoint(new Line(PointF.x, -1e5f,
+                PointF.x, 1e5f, null), line, false);
+        return tmp != null && PointF.y > tmp.y;
     }
 
-    public static boolean lineStartsWith(Line line, PointF point) {
-        return point.equals(line.getX1(), line.getY1());
+    public static boolean lineStartsWith(Line line, PointF PointF) {
+        return PointF.equals(line.getX1(), line.getY1());
     }
-    public static boolean lineEndsWith(Line line, PointF point) {
-        return point.equals(line.getX2(), line.getY2());
+    public static boolean lineEndsWith(Line line, PointF PointF) {
+        return PointF.equals(line.getX2(), line.getY2());
     }
 
-    public static boolean isPointRightward(Line line, PointF point) {
-        PointF tmp = getIntersectionPoint(new Line(-1e5f, point.y,
-                1e5f, point.y, null), line, false);
-        return tmp != null && point.x > tmp.x;
+    public static boolean isPointRightward(Line line, PointF PointF) {
+        PointF tmp = getIntersectionPoint(new Line(-1e5f, PointF.y,
+                1e5f, PointF.y, null), line, false);
+        return tmp != null && PointF.x > tmp.x;
     }
 
     public static float length(Line line) {
@@ -186,34 +184,33 @@ public class Geometry {
         return result;
     }
 
-    public static List<PointF> roomPolygon(List<MapObjectSprite> objects, PointF point) {
+    public static List<PointF> roomPolygon(List<MapObjectSprite> objects, PointF PointF) {
         List<PointF> polygon = new ArrayList<>();
         MapObjectLinear currentObject = null;
         float curX = -1e5f;
-        Line ray = new Line(-1e5f, point.y, point.x, point.y, null);
+        Line ray = new Line(-1e5f, PointF.y, PointF.x, PointF.y, null);
         for (MapObjectSprite o : objects) {
             if (!(o instanceof MapObjectLinear)) {
                 continue;
             }
             MapObjectLinear ol = (MapObjectLinear) o;
-            PointF tmp = getIntersectionPoint(
-                    ray, ol.getPosition(), true);
-            if (tmp != null && curX < tmp.x) {
-                currentObject = (MapObjectLinear) o;
-                curX = tmp.x;
+            PointF tmp = getIntersectionPoint(ray, ol.getPosition(), true);
+            if (tmp != null) {
+                if (curX < tmp.x) {
+                    currentObject = (MapObjectLinear) o;
+                    curX = tmp.x;
+                }
             }
         }
         if (currentObject == null) {
             return null;
         }
         if (currentObject.getPosition().getY1() > currentObject.getPosition().getY2()) {
-            changeDirection(currentObject.getPosition());
+            currentObject.changeDirection();
         }
-        polygon.add(new PointF(currentObject.getPosition().getX1(),
-                currentObject.getPosition().getY1()));
+        polygon.add(currentObject.getPoint1());
         while (true) {
-            PointF curPoint = new PointF(currentObject.getPosition().getX2(),
-                    currentObject.getPosition().getY2());
+            PointF curPoint = currentObject.getPoint2();
             if (curPoint.equals(polygon.get(0))) {
                 break;
             }
@@ -229,7 +226,7 @@ public class Geometry {
                     continue;
                 }
                 if (lineEndsWith(ol.getPosition(), curPoint)) {
-                    changeDirection(ol.getPosition());
+                    ol.changeDirection();
                 }
                 if (lineStartsWith(ol.getPosition(), curPoint)) {
                     if (currentAngle > getAngle(currentObject.getPosition(), ol.getPosition())) {
@@ -246,9 +243,9 @@ public class Geometry {
         return polygon;
     }
 
-    public static boolean isPointInsidePolygon(List<PointF> polygon, PointF point) {
+    public static boolean isPointInsidePolygon(List<PointF> polygon, PointF PointF) {
         int cntIntersections = 0;
-        Line line = new Line(point.x, point.y, point.x, -1e5f, null);
+        Line line = new Line(PointF.x, PointF.y, PointF.x, -1e5f, null);
         polygon.add(polygon.get(0));
         for (int i = 0; i < polygon.size() - 1; i++) {
             Line side = new Line(polygon.get(i).x, polygon.get(i).y,
@@ -257,6 +254,7 @@ public class Geometry {
                 cntIntersections++;
             }
         }
+        polygon.remove(polygon.size() - 1);
         return cntIntersections % 2 == 1;
     }
 
@@ -279,6 +277,17 @@ public class Geometry {
             }
         }
         return vertexData;
+    }
+
+    public static PointF getPointInside(float[] pBufferData) {
+        PointF v1 = new PointF(pBufferData[3] - pBufferData[0],
+                pBufferData[4] - pBufferData[1]);
+        PointF v2 = new PointF(pBufferData[6] - pBufferData[0],
+                pBufferData[7] - pBufferData[1]);
+        v1.offset(v2.x, v2.y);
+        v1.set(v1.x / 4, v1.y / 4);
+        v1.offset(pBufferData[0], pBufferData[1]);
+        return v1;
     }
 
 }

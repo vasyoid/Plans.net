@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/mainView"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -19,14 +20,14 @@
             android:layout_height="wrap_content"
             android:onClick="setItem"
             android:enabled="false"
-            android:text="Cтена" />
+            android:text="@string/wall" />
 
     <Button
         android:id="@+id/buttonDoor"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="setItem"
-        android:text="Дверь" />
+        android:text="@string/door" />
 
     </LinearLayout>
 
@@ -43,21 +44,28 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="setState"
-            android:text="Удалить" />
+            android:text="@string/remove" />
 
         <Button
             android:id="@+id/buttonClear"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="setState"
-            android:text="Очистить" />
+            android:text="@string/clear" />
 
         <Button
             android:id="@+id/buttonMove"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="setState"
-            android:text="Двигать" />
+            android:text="@string/moveMap" />
+
+        <Button
+            android:id="@+id/buttonMoveWall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="setState"
+            android:text="@string/moveWall" />
 
         <Button
             android:id="@+id/buttonAdd"
@@ -65,14 +73,77 @@
             android:layout_height="wrap_content"
             android:enabled="false"
             android:onClick="setState"
-            android:text="Добавить" />
+            android:text="@string/add" />
 
         <Button
             android:id="@+id/buttonColor"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="setState"
-            android:text="Покрасить" />
+            android:text="@string/paint" />
+
+        <Button
+            android:id="@+id/buttonParams"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="setState"
+            android:text="@string/params" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/roomParamsView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        android:background="@android:color/holo_orange_light"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/roomName"
+            android:layout_width="300dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:background="#eeeeee"
+            android:ems="10"
+            android:hint="@string/roomName"
+            android:inputType="text"
+            android:maxLength="30"
+            android:maxLines="1"
+            android:textColor="@android:color/black"
+            android:textColorHint="@android:color/black"
+            android:imeOptions="actionDone" />
+
+        <EditText
+            android:id="@+id/roomDescription"
+            android:layout_width="300dp"
+            android:layout_height="200dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:background="#eeeeee"
+            android:textColorHint="@android:color/black"
+            android:textColor="@android:color/black"
+            android:gravity="top"
+            android:ems="10"
+            android:hint="@string/description"
+            android:inputType="textMultiLine"
+            android:imeOptions="actionDone" />
+
+        <Button
+            android:id="@+id/roomParamsOk"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:layout_gravity="end"
+            android:alpha="255"
+            android:text="@string/ok"
+            android:imeOptions="actionDone"/>
 
     </LinearLayout>
 </RelativeLayout>

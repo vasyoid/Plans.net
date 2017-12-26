@@ -2,15 +2,19 @@ package ru.spbau.mit.plansnet.constructor;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.PointF;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Editable;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
@@ -20,9 +24,10 @@ import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.input.touch.detector.PinchZoomDetector;
+import org.andengine.opengl.font.FontFactory;
 import org.andengine.opengl.texture.region.TextureRegionFactory;
 import org.andengine.ui.activity.SimpleLayoutGameActivity;
-import org.andengine.util.adt.io.in.IInputStreamOpener;
+import org.andengine.util.color.Color;
 import org.andengine.util.debug.Debug;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.options.EngineOptions;
@@ -33,7 +38,7 @@ import org.andengine.opengl.texture.bitmap.BitmapTexture;
 
 import ru.spbau.mit.plansnet.R;
 import ru.spbau.mit.plansnet.data.FloorMap;
-import ru.spbau.mit.plansnet.data.objects.MapObject;
+import ru.spbau.mit.plansnet.data.objects.Room;
 
 public class ConstructorActivity extends SimpleLayoutGameActivity {
 	private static int CAMERA_WIDTH = 0;
@@ -43,7 +48,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     private final static int GRID_ROWS = 20;
     private static int GRID_SIZE;
 
-    private int state = 0;
+    private ActionState state = ActionState.ADD;
     private int item = 0;
     private Map map;
     private FloorMap toOpenMap;
@@ -87,6 +92,8 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
         setCameraResolution();
         GRID_SIZE = (100000 / CAMERA_HEIGHT);
         Map.setGridSize(GRID_SIZE);
+        Map.setGridCols(GRID_COLS);
+        Map.setGridRows(GRID_ROWS);
         MapObjectLinear.setThickness(60000 / CAMERA_HEIGHT);
     	final SmoothCamera camera = new SmoothCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_WIDTH, CAMERA_HEIGHT, 50);
     	camera.setCenter(GRID_SIZE * GRID_COLS / 2, GRID_SIZE * GRID_ROWS / 2);
@@ -98,20 +105,12 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 	@Override
 	protected void onCreateResources() {
         try {
-            ITexture wallTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
-                @Override
-                public InputStream open() throws IOException {
-                    return getAssets().open("wall.png");
-                }
-            });
+            ITexture wallTexture = new BitmapTexture(this.getTextureManager(),
+                    () -> getAssets().open("wall.png"));
             wallTexture.load();
             WallSprite.setTexture(TextureRegionFactory.extractFromTexture(wallTexture));
-            ITexture doorTexture = new BitmapTexture(this.getTextureManager(), new IInputStreamOpener() {
-                @Override
-                public InputStream open() throws IOException {
-                    return getAssets().open("door.png");
-                }
-            });
+            ITexture doorTexture = new BitmapTexture(this.getTextureManager(),
+                    () -> getAssets().open("door.png"));
             doorTexture.load();
             DoorSprite.setTexture(TextureRegionFactory.extractFromTexture(doorTexture));
 
@@ -124,8 +123,12 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 	protected Scene onCreateScene() {
         MapObjectSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
         RoomSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
+        RoomSprite.setFont(FontFactory.create(getEngine().getFontManager(),
+                getEngine().getTextureManager(), 256, 256,
+                Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL),
+                100f, true, Color.WHITE_ABGR_PACKED_INT));
         final Scene scene = new Scene();
-		scene.setBackground(new Background(0.9f, 1, 0.6f));
+		scene.setBackground(new Background(1, 1, 0.7f));
         for (int i = 0; i <= GRID_COLS; i++) {
             Line line = new Line(GRID_SIZE * i, 0,
                     GRID_SIZE * i, GRID_SIZE * GRID_ROWS,
@@ -144,31 +147,25 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             private float mInitialTouchX;
             private float mInitialTouchY;
             private float firstX, firstY;
+            private float previousX, previousY;
             private Line currentLine = new Line(0, 0, 0, 0,
                     getVertexBufferObjectManager());
             private MapObjectLinear currentAdded;
 
             @Override
             public boolean onSceneTouchEvent(final Scene pScene, TouchEvent pSceneTouchEvent) {
-                if (map.checkRoomTouched(pSceneTouchEvent)) {
-                    if (state == 1) {
-                        runOnUpdateThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                map.detachRemoved();
-                            }});
-                        return false;
-                    }    return true;
+                if (!pSceneTouchEvent.isActionMove()) {
+                    RoomSprite room = map.getRoomTouched(pSceneTouchEvent);
+                    if (room != null && state == ActionState.PARAMS) {
+                        runOnUiThread(() -> showParams(room));
+                        return true;
+                    }
                 }
-                if (state == 1) {
-                    runOnUpdateThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        map.detachRemoved();
-                    }});
+                if (state == ActionState.DEL) {
+                    runOnUpdateThread(() -> map.detachRemoved());
                     return false;
                 }
-                if (state == 2) {
+                if (state == ActionState.MOVE) {
                     mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
                     if (pSceneTouchEvent.isActionDown()) {
                         mInitialTouchX = pSceneTouchEvent.getX();
@@ -183,10 +180,13 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                     }
                     return false;
                 }
-                if (state == 3) {
+                if (state == ActionState.COLOR) {
                     if (pSceneTouchEvent.isActionDown()) {
-                        map.createRoom(pSceneTouchEvent.getX(), pSceneTouchEvent.getY(), pScene
-                        );
+                        RoomSprite currentRoom = map.createRoom(pSceneTouchEvent.getX(),
+                                pSceneTouchEvent.getY(), pScene);
+                        if (currentRoom != null) {
+                            runOnUiThread(() -> showParams(currentRoom));
+                        }
                     }
                     return false;
                 }
@@ -196,42 +196,63 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 currentY = Math.min(currentY, GRID_SIZE * GRID_ROWS);
                 currentX = Math.max(currentX, 0);
                 currentY = Math.max(currentY, 0);
+                PointF firstPoint = new PointF(firstX, firstY);
+                PointF previousPoint = new PointF(previousX, previousY);
+                PointF currentPoint = new PointF(currentX, currentY);
+
                 switch (pSceneTouchEvent.getAction()) {
                     case TouchEvent.ACTION_DOWN:
-                        Log.d("VASYOID", "vbom: " + getVertexBufferObjectManager());
-                        firstX = currentX;
-                        firstY = currentY;
-                        currentLine.setPosition(firstX, firstY,
-                                currentX, currentY);
-                        if (item == 0) {
-                            currentAdded = new WallSprite();
-                        } else {
-                            currentAdded = new DoorSprite();
+                        firstX = previousX = currentX;
+                        firstY = previousY = currentY;
+                        if (state != ActionState.MOVE_WALL) {
+                            currentLine.setPosition(firstX, firstY,
+                                    currentX, currentY);
+                            if (item == 0) {
+                                currentAdded = new WallSprite();
+                            } else {
+                                currentAdded = new DoorSprite();
+                            }
+                            currentAdded.setPosition(currentLine);
+                            pScene.attachChild(currentAdded);
+                            pScene.registerTouchArea(currentAdded);
                         }
-                        currentAdded.setPosition(currentLine);
-                        pScene.attachChild(currentAdded);
-                        pScene.registerTouchArea(currentAdded);
                         break;
                     case TouchEvent.ACTION_MOVE:
-                        currentLine.setPosition(firstX, firstY,
-                                currentX, currentY);
-                        currentAdded.setPosition(currentLine);
+                        if (state == ActionState.MOVE_WALL) {
+                            if (!previousPoint.equals(currentPoint)) {
+                                map.moveObjects(firstPoint, previousPoint, currentPoint);
+                                try {
+                                    map.updateRooms(scene);
+                                } catch (com.earcutj.exception.EarcutException ignored) {}
+                            }
+                        } else {
+                            currentLine.setPosition(firstX, firstY, currentX, currentY);
+                            currentAdded.setPosition(currentLine);
+                        }
+                        previousX = currentX;
+                        previousY = currentY;
                         break;
                     case TouchEvent.ACTION_UP:
-                        if ((currentX != firstX || currentY != firstY) &&
-                                !map.checkIntersections(currentAdded)) {
-                            map.joinAll(currentAdded);
-                            map.addObject(currentAdded);
-                            runOnUpdateThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    map.detachRemoved();
+                        if (state == ActionState.MOVE_WALL) {
+                            runOnUpdateThread(() -> map.detachRemoved());
+                            if (!firstPoint.equals(currentPoint)) {
+                                if (map.checkIntersections(firstPoint)) {
+                                    map.moveObjects(firstPoint, currentPoint, firstPoint);
+                                    map.updateRooms(scene);
+                                } else {
+                                    map.updateObjects(firstPoint);
                                 }
-                            });
+                            }
                         } else {
-                            pScene.detachChild(currentAdded);
+                            if ((currentX != firstX || currentY != firstY) &&
+                                    !map.checkIntersections(currentAdded)) {
+                                map.addObject(currentAdded);
+                                runOnUpdateThread(() -> map.detachRemoved());
+                            } else {
+                                pScene.detachChild(currentAdded);
+                            }
+                            currentLine.setPosition(0, 0, 0, 0);
                         }
-                        currentLine.setPosition(0, 0, 0, 0);
                         break;
                 }
                 return false;
@@ -259,7 +280,6 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 mCamera.setZoomFactor(newZoomFactor);
             }
 
-            /* This method is fired when fingers are lifted from the screen */
             @Override
             public void onPinchZoomFinished(PinchZoomDetector pPinchZoomDetector,
                                             TouchEvent pTouchEvent, float pZoomFactor) {
@@ -271,7 +291,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
         mPinchZoomDetector.setEnabled(true);
 
         if (toOpenMap != null) {
-            map = new Map(toOpenMap);
+            map = new Map(toOpenMap, scene);
         }
         if (map == null) {
             map = new Map();
@@ -283,11 +303,8 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             scene.attachChild(o);
             scene.registerTouchArea(o);
         }
-        for (RoomSprite r : map.getRooms()) {
-            scene.attachChild(r);
-        }
 
-
+        scene.sortChildren();
         return scene;
 	}
 
@@ -303,11 +320,37 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 
     private void clearField() {
 	    map.clear();
-	    runOnUpdateThread(new Runnable() {
-            @Override
-            public void run() {
-                map.detachRemoved();
+	    runOnUpdateThread(() -> map.detachRemoved());
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager inputManager = (InputMethodManager)
+                getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (inputManager != null) {
+            View currentFocus = getCurrentFocus();
+            if (currentFocus != null) {
+                inputManager.hideSoftInputFromWindow(currentFocus.getWindowToken(),
+                        InputMethodManager.HIDE_NOT_ALWAYS);
             }
+        }
+    }
+
+    public void showParams(RoomSprite pRoom) {
+        findViewById(R.id.renderSurfaceView).setEnabled(false);
+        View paramsView = findViewById(R.id.roomParamsView);
+        paramsView.setVisibility(View.VISIBLE);
+        EditText roomName = findViewById(R.id.roomName);
+        EditText roomDescription = findViewById(R.id.roomDescription);
+        roomName.setText(pRoom.getTitle());
+        roomDescription.setText(pRoom.getDescription());
+        paramsView.findViewById(R.id.roomParamsOk).setOnClickListener(v1 -> {
+            hideKeyboard();
+            String title = roomName.getText().toString();
+            String description = roomDescription.getText().toString();
+            pRoom.setTitle(title);
+            pRoom.setDescription(description);
+            paramsView.setVisibility(View.GONE);
+            findViewById(R.id.renderSurfaceView).setEnabled(true);
         });
     }
 
@@ -332,33 +375,40 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             findViewById(R.id.buttonColor).setEnabled(true);
             findViewById(R.id.buttonDel).setEnabled(true);
             findViewById(R.id.buttonMove).setEnabled(true);
+            findViewById(R.id.buttonMoveWall).setEnabled(true);
             findViewById(R.id.buttonAdd).setEnabled(true);
+            findViewById(R.id.buttonParams).setEnabled(true);
             v.setEnabled(false);
         }
 
         switch (v.getId()) {
             case R.id.buttonAdd:
-                state = 0;
+                state = ActionState.ADD;
                 break;
             case R.id.buttonDel:
-                state = 1;
+                state = ActionState.DEL;
                 break;
             case R.id.buttonMove:
-                state = 2;
+                state = ActionState.MOVE;
+                break;
+            case R.id.buttonMoveWall:
+                state = ActionState.MOVE_WALL;
                 break;
             case R.id.buttonColor:
-                state = 3;
+                state = ActionState.COLOR;
+                break;
+            case R.id.buttonParams:
+                state = ActionState.PARAMS;
                 break;
             case R.id.buttonClear:
-                runOnUpdateThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        clearField();
-                    }
-                });
+                runOnUpdateThread(this::clearField);
                 break;
         }
-        map.setTouchState(state);
+        map.setActionState(state);
+    }
+
+    public enum ActionState {
+        ADD, DEL, MOVE, MOVE_WALL, COLOR, PARAMS
     }
 
 }
