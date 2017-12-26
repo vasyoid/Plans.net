@@ -5,8 +5,14 @@ import android.util.Log;
 
 import org.andengine.entity.primitive.DrawMode;
 import org.andengine.entity.primitive.Mesh;
+import org.andengine.entity.scene.Scene;
+import org.andengine.entity.text.Text;
+import org.andengine.entity.text.TextOptions;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.font.Font;
+import org.andengine.opengl.font.FontFactory;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
+import org.andengine.util.TextUtils;
 import org.andengine.util.color.Color;
 
 import java.util.ArrayList;
@@ -18,22 +24,61 @@ public class RoomSprite {
 
     private static VertexBufferObjectManager vertexBufferObjectManager;
     private static Map MAP;
+    private static Font font;
     private List<PointF> polygon;
     private float initialX, initialY;
-    private PointF titlePos;
     private Mesh mesh;
     private Color roomColor;
+    private Text title;
+    private String description;
 
     public RoomSprite(List<PointF> pPolygon) {
         polygon = new ArrayList<>();
         polygon.addAll(pPolygon);
         Random rand = new Random();
         roomColor = new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
+        title = new Text(initialX, initialY, font, "", 30, vertexBufferObjectManager);
         reshape(polygon);
+
     }
 
-    public Mesh getMesh() {
-        return mesh;
+    public static void setFont(Font pFont) {
+        font = pFont;
+        font.load();
+    }
+
+    public void setTitle(String pTitle) {
+        title.setText(pTitle);
+        setTitlePosition();
+    }
+
+    public CharSequence getTitle() {
+        return title.getText();
+    }
+
+    public Color getColor() {
+        return roomColor;
+    }
+
+    public CharSequence getDescription() {
+        return description;
+    }
+    public void setDescription(String pDescription) {
+        description = pDescription;
+    }
+
+    public void attachSelf(Scene pScene) {
+        pScene.attachChild(mesh);
+        pScene.attachChild(title);
+    }
+
+    public void detachSelf() {
+        mesh.detachSelf();
+        title.detachSelf();
+    }
+
+    private void setTitlePosition() {
+        title.setPosition(initialX - title.getWidth() / 2, initialY - title.getHeight() / 2);
     }
 
     private void reshape(List<PointF> pPolygon) {
@@ -44,6 +89,7 @@ public class RoomSprite {
         PointF inside = Geometry.getPointInside(pBufferData);
         initialX = inside.x;
         initialY = inside.y;
+        setTitlePosition();
         mesh = new Mesh(0, 0, pBufferData, pBufferData.length / 3,
                 DrawMode.TRIANGLES, vertexBufferObjectManager);
         mesh.setColor(roomColor);

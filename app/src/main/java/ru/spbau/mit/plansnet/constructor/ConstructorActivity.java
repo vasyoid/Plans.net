@@ -3,12 +3,16 @@ package ru.spbau.mit.plansnet.constructor;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PointF;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Editable;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 
 import java.io.IOException;
 
@@ -20,8 +24,10 @@ import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.input.touch.detector.PinchZoomDetector;
+import org.andengine.opengl.font.FontFactory;
 import org.andengine.opengl.texture.region.TextureRegionFactory;
 import org.andengine.ui.activity.SimpleLayoutGameActivity;
+import org.andengine.util.color.Color;
 import org.andengine.util.debug.Debug;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.options.EngineOptions;
@@ -32,6 +38,7 @@ import org.andengine.opengl.texture.bitmap.BitmapTexture;
 
 import ru.spbau.mit.plansnet.R;
 import ru.spbau.mit.plansnet.data.FloorMap;
+import ru.spbau.mit.plansnet.data.objects.Room;
 
 public class ConstructorActivity extends SimpleLayoutGameActivity {
 	private static int CAMERA_WIDTH = 0;
@@ -116,8 +123,12 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 	protected Scene onCreateScene() {
         MapObjectSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
         RoomSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
+        RoomSprite.setFont(FontFactory.create(getEngine().getFontManager(),
+                getEngine().getTextureManager(), 256, 256,
+                Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL),
+                100f, true, Color.WHITE_ABGR_PACKED_INT));
         final Scene scene = new Scene();
-		scene.setBackground(new Background(0.9f, 1, 0.6f));
+		scene.setBackground(new Background(1, 1, 0.7f));
         for (int i = 0; i <= GRID_COLS; i++) {
             Line line = new Line(GRID_SIZE * i, 0,
                     GRID_SIZE * i, GRID_SIZE * GRID_ROWS,
@@ -143,12 +154,12 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 
             @Override
             public boolean onSceneTouchEvent(final Scene pScene, TouchEvent pSceneTouchEvent) {
-                if (!pSceneTouchEvent.isActionMove() && map.checkRoomTouched(pSceneTouchEvent)) {
-                    if (state == ActionState.ADD) {
-                        runOnUpdateThread(() -> map.detachRemoved());
-                        return false;
+                if (!pSceneTouchEvent.isActionMove()) {
+                    RoomSprite room = map.getRoomTouched(pSceneTouchEvent);
+                    if (room != null && state == ActionState.PARAMS) {
+                        runOnUiThread(() -> showParams(room));
+                        return true;
                     }
-                    return true;
                 }
                 if (state == ActionState.DEL) {
                     runOnUpdateThread(() -> map.detachRemoved());
@@ -171,7 +182,11 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 }
                 if (state == ActionState.COLOR) {
                     if (pSceneTouchEvent.isActionDown()) {
-                        map.createRoom(pSceneTouchEvent.getX(), pSceneTouchEvent.getY(), pScene);
+                        RoomSprite currentRoom = map.createRoom(pSceneTouchEvent.getX(),
+                                pSceneTouchEvent.getY(), pScene);
+                        if (currentRoom != null) {
+                            runOnUiThread(() -> showParams(currentRoom));
+                        }
                     }
                     return false;
                 }
@@ -308,11 +323,32 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 	    runOnUpdateThread(() -> map.detachRemoved());
     }
 
-    public void showParams(View v) {
+    private void hideKeyboard() {
+        InputMethodManager inputManager = (InputMethodManager)
+                getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (inputManager != null) {
+            View currentFocus = getCurrentFocus();
+            if (currentFocus != null) {
+                inputManager.hideSoftInputFromWindow(currentFocus.getWindowToken(),
+                        InputMethodManager.HIDE_NOT_ALWAYS);
+            }
+        }
+    }
+
+    public void showParams(RoomSprite pRoom) {
         findViewById(R.id.renderSurfaceView).setEnabled(false);
         View paramsView = findViewById(R.id.roomParamsView);
         paramsView.setVisibility(View.VISIBLE);
+        EditText roomName = findViewById(R.id.roomName);
+        EditText roomDescription = findViewById(R.id.roomDescription);
+        roomName.setText(pRoom.getTitle());
+        roomDescription.setText(pRoom.getDescription());
         paramsView.findViewById(R.id.roomParamsOk).setOnClickListener(v1 -> {
+            hideKeyboard();
+            String title = roomName.getText().toString();
+            String description = roomDescription.getText().toString();
+            pRoom.setTitle(title);
+            pRoom.setDescription(description);
             paramsView.setVisibility(View.GONE);
             findViewById(R.id.renderSurfaceView).setEnabled(true);
         });
@@ -341,6 +377,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             findViewById(R.id.buttonMove).setEnabled(true);
             findViewById(R.id.buttonMoveWall).setEnabled(true);
             findViewById(R.id.buttonAdd).setEnabled(true);
+            findViewById(R.id.buttonParams).setEnabled(true);
             v.setEnabled(false);
         }
 
@@ -360,6 +397,9 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             case R.id.buttonColor:
                 state = ActionState.COLOR;
                 break;
+            case R.id.buttonParams:
+                state = ActionState.PARAMS;
+                break;
             case R.id.buttonClear:
                 runOnUpdateThread(this::clearField);
                 break;
@@ -368,7 +408,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     }
 
     public enum ActionState {
-        ADD, DEL, MOVE, MOVE_WALL, COLOR
+        ADD, DEL, MOVE, MOVE_WALL, COLOR, PARAMS
     }
 
 }

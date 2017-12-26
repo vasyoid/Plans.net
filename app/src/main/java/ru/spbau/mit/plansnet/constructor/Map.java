@@ -131,9 +131,9 @@ public class Map implements Serializable {
 
     void updateRooms(Scene pScene) {
         for (RoomSprite room : rooms) {
-            pScene.detachChild(room.getMesh());
+            room.detachSelf();
             room.updateShape();
-            pScene.attachChild(room.getMesh());
+            room.attachSelf(pScene);
         }
         pScene.sortChildren();
     }
@@ -194,7 +194,7 @@ public class Map implements Serializable {
             o.detachSelf();
         }
         for (RoomSprite r : removedRooms) {
-            r.getMesh().detachSelf();
+            r.detachSelf();
         }
         removedObjects.clear();
         removedRooms.clear();
@@ -261,14 +261,26 @@ public class Map implements Serializable {
         return false;
     }
 
-    public void createRoom(float pX, float pY, Scene pScene) {
+    public RoomSprite getRoomTouched(TouchEvent pTouchEvent) {
+        PointF touchPoint = new PointF(pTouchEvent.getX(), pTouchEvent.getY());
+        for (RoomSprite r : rooms) {
+            if (Geometry.isPointInsidePolygon(r.getPolygon(), touchPoint)) {
+                return r;
+            }
+        }
+        return null;
+    }
+
+
+    public RoomSprite createRoom(float pX, float pY, Scene pScene) {
         List<PointF> polygon = Geometry.roomPolygon(objects, new PointF(pX, pY));
         if (polygon == null || !Geometry.isPointInsidePolygon(polygon, new PointF(pX, pY))) {
-            return;
+            return null;
         }
         RoomSprite room = new RoomSprite(polygon);
         addRoom(room);
-        pScene.attachChild(room.getMesh());
+        room.attachSelf(pScene);
         pScene.sortChildren();
+        return room;
     }
 }
