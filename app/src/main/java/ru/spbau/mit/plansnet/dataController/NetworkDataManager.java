@@ -177,13 +177,17 @@ public class NetworkDataManager {
                                 @Nullable final String buildingName,
                                 @Nullable final String mapName) {
         DatabaseReference ref = databaseReference.child(userAccount.getUid());
+        StorageReference storageRef = storageReference.child(userAccount.getUid());
         if (groupName != null) {
+            storageRef = storageRef.child(groupName);
             ref = ref.child("groups")
                     .child(groupName);
             if (buildingName != null) {
+                storageRef = storageRef.child(buildingName);
                 ref = ref.child("buildings")
                         .child(buildingName);
                 if (mapName != null) {
+                    storageRef = storageRef.child(mapName);
                     ref = ref.child("floors")
                             .child(mapName);
                 }
@@ -191,25 +195,21 @@ public class NetworkDataManager {
         } else {
             return;
         }
+        storageRef.delete();
         ref.removeValue();
-        //TODO remove from storage
     }
 
     public void getGroupsWhichContainsName(@NonNull final String name,
                                            @NonNull final List<SearchResult> ownersAndGroups,
                                            @NonNull CountDownLatch latch) {
         final String searchedName = name.toLowerCase();
-        Log.d("SUPER!", "search " + searchedName);
         databaseReference
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        Log.d("SUPER!", "i'm here");
                         for (DataSnapshot user : dataSnapshot.getChildren()) {
                             for (DataSnapshot group : user.child("groups").getChildren()) {
-                                Log.d("SUPER!", "in... " + group.getKey());
                                 if (group.getKey().toLowerCase().contains(searchedName)) {
-                                    Log.d("SUPER!", "op! " + group.getKey());
                                     ownersAndGroups.add(new SearchResult(user.getKey(),
                                             (String) user.child("name").getValue(),
                                             group.getKey()));
@@ -257,8 +257,4 @@ public class NetworkDataManager {
                     }
                 });
     }
-
-//    public void renameGroup(@NonNull final String groupName, @NonNull final String newName) {
-////        databaseReference.child(userAccount.getUid())
-//    }
 }
