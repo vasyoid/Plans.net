@@ -17,6 +17,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -34,8 +35,6 @@ import ru.spbau.mit.plansnet.data.UsersGroup;
 
 public class DataController {
     @NonNull
-    private final List<FloorMap> listOfMaps;
-    @NonNull
     private NetworkDataManager netManager;
     @NonNull
     private Account userAccount;
@@ -44,11 +43,11 @@ public class DataController {
 
     private static final String DATA_TAG = "DATA_CONTROLLER_FILES";
 
-    public DataController(@NonNull final Context context, @NonNull final FirebaseUser account, @NonNull final List<FloorMap> listOfMaps) {
+    public DataController(@NonNull final Context context,
+                          @NonNull final FirebaseUser account) {
         this.context = context;
         netManager = new NetworkDataManager(context, account);
 
-        this.listOfMaps = listOfMaps;
         userAccount = new Account(account.getDisplayName(), account.getUid());
     }
 
@@ -217,6 +216,7 @@ public class DataController {
     public void saveMap(@NonNull final FloorMap map)
             throws IllegalArgumentException {
         UsersGroup userGroup = userAccount.findByName(map.getGroupName());
+        Log.d("saveMap", "search: " + map.getGroupName());
         if (userGroup == null) {
             throw new IllegalArgumentException("This user haven't group: " + map.getGroupName());
         }
@@ -227,9 +227,6 @@ public class DataController {
                     + "' haven't building: " + map.getBuildingName());
         }
 
-        if (building.findByName(map.getName()) == null) {
-            listOfMaps.add(map);
-        }
         building.setElementToContainer(map);
         Log.d(DATA_TAG, "set new map to account");
 
@@ -275,15 +272,6 @@ public class DataController {
                 building = group.setElementToContainer(new Building(map.getBuildingName()));
             }
 
-            if (building.findByName(map.getName()) == null) {
-                listOfMaps.add(map);
-            } else {
-                for (int i = 0; i < listOfMaps.size(); i++) {
-                    if (listOfMaps.get(i).getName().equals(map.getName())) {
-                        listOfMaps.set(i, map);
-                    }
-                }
-            }
             building.setElementToContainer(map);
 
 
