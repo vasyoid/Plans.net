@@ -35,7 +35,7 @@ import ru.spbau.mit.plansnet.data.UsersGroup;
 
 public class DataController {
     @NonNull
-    private final ArrayList<String> listOfMaps;
+    private final ArrayList<String> groupList;
     @NonNull
     private NetworkDataManager netManager;
     @NonNull
@@ -51,7 +51,7 @@ public class DataController {
         this.context = context;
         netManager = new NetworkDataManager(context, account);
 
-        this.listOfMaps = listOfMaps;
+        this.groupList = listOfMaps;
         userAccount = new Account(account.getDisplayName(), account.getUid());
     }
 
@@ -220,6 +220,7 @@ public class DataController {
     public void saveMap(@NonNull final FloorMap map)
             throws IllegalArgumentException {
         UsersGroup userGroup = userAccount.findByName(map.getGroupName());
+        Log.d("saveMap", "search: " + map.getGroupName());
         if (userGroup == null) {
             throw new IllegalArgumentException("This user haven't group: " + map.getGroupName());
         }
@@ -230,8 +231,8 @@ public class DataController {
                     + "' haven't building: " + map.getBuildingName());
         }
 
-        if (building.findByName(map.getName()) == null) {
-            listOfMaps.add(map.getName());
+        if (!groupList.contains(map.getGroupName())) {
+            groupList.add(map.getGroupName());
         }
         building.setElementToContainer(map);
         Log.d(DATA_TAG, "set new map to account");
@@ -278,14 +279,8 @@ public class DataController {
                 building = group.setElementToContainer(new Building(map.getBuildingName()));
             }
 
-            if (building.findByName(map.getName()) == null) {
-                listOfMaps.add(map.getName());
-            } else {
-                for (int i = 0; i < listOfMaps.size(); i++) {
-                    if (listOfMaps.get(i).equals(map.getName())) {
-                        listOfMaps.set(i, map.getName());
-                    }
-                }
+            if (!groupList.contains(map.getGroupName())) {
+                groupList.add(map.getGroupName());
             }
             building.setElementToContainer(map);
 

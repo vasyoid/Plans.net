@@ -32,8 +32,9 @@ public class FloorMap extends AbstractNamedData implements Serializable {
         return super.getName();
     }
 
-    public FloorMap(@NonNull final String name, @NonNull final String groupName,
+    public FloorMap(@NonNull final String groupName,
                     @NonNull final String buildingName,
+                    @NonNull final String name,
                     @NonNull final ru.spbau.mit.plansnet.constructor.Map map) {
         super(name);
         this.buildingName = buildingName;
@@ -63,8 +64,8 @@ public class FloorMap extends AbstractNamedData implements Serializable {
         objects = new ArrayList<>();
     }
 
-    public FloorMap(@NonNull final String name, @NonNull final String groupName,
-                    @NonNull final String buildingName) {
+    public FloorMap(@NonNull final String groupName,
+                    @NonNull final String buildingName, @NonNull final String name) {
         super(name);
         objects = new ArrayList<>();
 

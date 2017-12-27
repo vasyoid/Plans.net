@@ -8,16 +8,19 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -49,15 +52,21 @@ public class MainActivity extends AppCompatActivity {
     private DataController dataController;
     private FirebaseUser user;
 
+    @Nullable
     private UsersGroup currentGroup;
+    @Nullable
     private Building currentBuilding;
+    @Nullable
     private FloorMap currentMap;
 
-    private GoogleSignInClient mGoogleSignOutClient;
+//    private GoogleSignInClient mGoogleSignOutClient;
 
-    private ArrayList<String> groupList;
-    private ArrayList<String> buildingList;
-    private ArrayList<String> floorList;
+    @NonNull
+    private final ArrayList<String> groupList = new ArrayList<>();
+    @NonNull
+    private final ArrayList<String> buildingList = new ArrayList<>();
+    @NonNull
+    private final ArrayList<String> floorList = new ArrayList<>();
     private ArrayAdapter<String> groupListAdapter;
     private ArrayAdapter<String> buildingListAdapter;
     private ArrayAdapter<String> floorListAdapter;
@@ -71,6 +80,10 @@ public class MainActivity extends AppCompatActivity {
 
         newGroupDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
             final String newGroupName = groupNameInput.getText().toString();
+            if (dataController.getAccount().findByName(newGroupName) != null) {
+                Toast.makeText(MainActivity.this, "This group already exists", Toast.LENGTH_LONG).show();
+                return;
+            }
             dataController.addGroup(new UsersGroup(newGroupName));
             groupList.add(newGroupName);
             groupListAdapter.notifyDataSetChanged();
@@ -92,7 +105,12 @@ public class MainActivity extends AppCompatActivity {
 
         newBuildingDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
             final String newBuildingName = buildingNameInput.getText().toString();
-            chosenGroup.addData(new Building(newBuildingName));
+            if (chosenGroup.findByName(newBuildingName) != null) {
+                Toast.makeText(MainActivity.this, "This building already exists", Toast.LENGTH_LONG).show();
+                return;
+            }
+            dataController.addBuildingToGroup(new Building(newBuildingName), chosenGroup);
+            buildingListAdapter.notifyDataSetChanged();
         });
 
         newBuildingDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
@@ -104,18 +122,24 @@ public class MainActivity extends AppCompatActivity {
 
     private void createNewMapDialog(UsersGroup chosenGroup, Building chosenBuilding) {
         AlertDialog newMapDialog = new AlertDialog.Builder(MainActivity.this).create();
-        newMapDialog.setTitle("enter name of new map");
+        newMapDialog.setTitle("enter name of new floor");
 
         final EditText mapNameInput = new EditText(MainActivity.this);
         newMapDialog.setView(mapNameInput);
 
         newMapDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
             final String newMapName = mapNameInput.getText().toString();
-            chosenBuilding.addData(new FloorMap(
+            if (chosenBuilding.findByName(newMapName) != null) {
+                Toast.makeText(MainActivity.this, "This floor already exists", Toast.LENGTH_LONG).show();
+                return;
+            }
+            floorListAdapter.notifyDataSetChanged();
+            FloorMap floor = new FloorMap(
                     chosenGroup.getName(),
                     chosenBuilding.getName(),
                     newMapName
-            ));
+            );
+            dataController.saveMap(floor);
         });
 
         newMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
@@ -182,17 +206,75 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Button btnLogOut = findViewById(R.id.btnLogOut);
+//        Button btnLogOut = findViewById(R.id.btnLogOut);
         Button btnAddGroup = findViewById(R.id.btnAddGroup);
         FloatingActionButton btnAddMap = findViewById(R.id.btnAddMap);
-        ExpandableListView buildingListView = findViewById(R.id.buildingListView);
-        ExpandableListView floorListView = findViewById(R.id.floorListView);
+        ListView groupListView = findViewById(R.id.groupListView);
+        Spinner buildingSpinnerView = findViewById(R.id.buildingSpinnerView);
+        Spinner floorSpinnerView = findViewById(R.id.floorSpinnerView);
+
+        groupListAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1,
+                groupList);
+
+        buildingListAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1,
+                buildingList);
+
+        floorListAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1,
+                floorList);
+
+        buildingSpinnerView.setAdapter(buildingListAdapter);
+        floorSpinnerView.setAdapter(floorListAdapter);
 
 
-//        btnLogOut.setOnClickListener(v -> mGoogleSignOutClient.signOut()
-//                .addOnCompleteListener(MainActivity.this, task ->
-//                        Toast.makeText(MainActivity.this, "You logged out.",
-//                                Toast.LENGTH_SHORT).show()));
+        groupListView.setAdapter(groupListAdapter);
+        Log.d("ID", "id: " + groupListView.getId());
+
+        groupListView.setOnItemClickListener((parent, view, position, id) -> {
+            currentGroup = dataController.getAccount().findByName(groupList.get(position));
+            assert currentGroup != null;
+
+            buildingList.clear();
+            buildingList.addAll(currentGroup.getListOfNames());
+            buildingListAdapter.notifyDataSetChanged();
+        });
+
+        buildingSpinnerView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                floorList.clear();
+                if (currentGroup == null) {
+                    return;
+                }
+                currentBuilding = currentGroup.findByName(buildingList.get(i));
+                assert currentBuilding != null;
+                floorList.addAll(currentBuilding.getListOfNames());
+                floorListAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                floorList.clear();
+                floorListAdapter.notifyDataSetChanged();
+            }
+        });
+
+        floorSpinnerView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (currentBuilding == null) {
+                    return;
+                }
+                currentMap = currentBuilding.findByName(floorList.get(i));
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
 
         btnAddGroup.setOnClickListener(groupView -> createNewGroupDialog());
 
@@ -256,28 +338,10 @@ public class MainActivity extends AppCompatActivity {
     private void afterAuth() {
         dataController = new DataController(getApplicationContext(), user, groupList);
 
-        groupList = dataController.getAccount().getListOfNames();
-        groupListAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_1,
-                groupList);
-
-        ListView groupListView = findViewById(R.id.listOfMaps);
-        groupListView.setAdapter(groupListAdapter);
-
-        groupListView.setOnItemClickListener((parent, view, position, id) -> {
-            currentGroup = dataController.getAccount().findByName(groupList.get(position));
-            //TODO change lists
-        });
-
-
         DownloadMapsAsyncTask downloadTask = new DownloadMapsAsyncTask(this);
         downloadTask.execute();
     }
     // [END handle_sign_in_result]
-
-    public void onServerDataLoaded() {
-
-    }
 
     @SuppressLint("StaticFieldLeak")
     private class LoadMapsAsyncTask extends AsyncTask<Void, Void, Void> {
