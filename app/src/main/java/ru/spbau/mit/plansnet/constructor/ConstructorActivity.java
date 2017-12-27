@@ -109,11 +109,14 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                     () -> getAssets().open("wall.png"));
             wallTexture.load();
             WallSprite.setTexture(TextureRegionFactory.extractFromTexture(wallTexture));
+            ITexture windowTexture = new BitmapTexture(this.getTextureManager(),
+                    () -> getAssets().open("window.png"));
+            windowTexture.load();
+            WindowSprite.setTexture(TextureRegionFactory.extractFromTexture(windowTexture));
             ITexture doorTexture = new BitmapTexture(this.getTextureManager(),
                     () -> getAssets().open("door.png"));
             doorTexture.load();
             DoorSprite.setTexture(TextureRegionFactory.extractFromTexture(doorTexture));
-
         } catch (IOException e) {
             Debug.e(e);
         }
@@ -156,9 +159,17 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             public boolean onSceneTouchEvent(final Scene pScene, TouchEvent pSceneTouchEvent) {
                 if (!pSceneTouchEvent.isActionMove()) {
                     RoomSprite room = map.getRoomTouched(pSceneTouchEvent);
-                    if (room != null && state == ActionState.PARAMS) {
-                        runOnUiThread(() -> showParams(room));
-                        return true;
+                    if (room != null) {
+                        switch (state) {
+                            case DEL:
+                                map.removeRoom(room);
+                                return false;
+                            case COLOR:
+                                return true;
+                            case PARAMS:
+                                runOnUiThread(() -> showParams(room));
+                                return false;
+                        }
                     }
                 }
                 if (state == ActionState.DEL) {
@@ -209,12 +220,16 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                                     currentX, currentY);
                             if (item == 0) {
                                 currentAdded = new WallSprite();
-                            } else {
+                            } else if (item == 1) {
                                 currentAdded = new DoorSprite();
+                            } else {
+                                currentAdded = new WindowSprite();
                             }
                             currentAdded.setPosition(currentLine);
                             pScene.attachChild(currentAdded);
                             pScene.registerTouchArea(currentAdded);
+                        } else {
+                            map.setScaleByPoint(currentPoint, 1.0f, 1.4f);
                         }
                         break;
                     case TouchEvent.ACTION_MOVE:
@@ -235,6 +250,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                     case TouchEvent.ACTION_UP:
                         if (state == ActionState.MOVE_WALL) {
                             runOnUpdateThread(() -> map.detachRemoved());
+                            map.setScaleByPoint(firstPoint, 1.0f, 1.0f);
                             if (!firstPoint.equals(currentPoint)) {
                                 if (map.checkIntersections(firstPoint)) {
                                     map.moveObjects(firstPoint, currentPoint, firstPoint);
@@ -355,16 +371,19 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     }
 
     public void setItem(View v) {
+        findViewById(R.id.buttonDoor).setEnabled(true);
+        findViewById(R.id.buttonWall).setEnabled(true);
+        findViewById(R.id.buttonWindow).setEnabled(true);
+        v.setEnabled(false);
         switch (v.getId()) {
             case R.id.buttonWall:
                 item = 0;
-                v.setEnabled(false);
-                findViewById(R.id.buttonDoor).setEnabled(true);
                 break;
             case R.id.buttonDoor:
                 item = 1;
-                v.setEnabled(false);
-                findViewById(R.id.buttonWall).setEnabled(true);
+                break;
+            case R.id.buttonWindow:
+                item = 2;
                 break;
         }
     }

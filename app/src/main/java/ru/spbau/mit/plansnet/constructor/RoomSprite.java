@@ -135,16 +135,4 @@ public class RoomSprite {
         polygon.remove(polygon.size() - 1);
         return false;
     }
-
-    public boolean onTouch(TouchEvent pSceneTouchEvent) {
-        switch (MAP.getTouchState()) {
-            case DEL:
-                MAP.removeRoom(this);
-                return false;
-            case COLOR:
-                return true;
-            default:
-                return false;
-        }
-    }
 }

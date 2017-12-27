@@ -29,6 +29,13 @@
         android:onClick="setItem"
         android:text="@string/door" />
 
+    <Button
+        android:id="@+id/buttonWindow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="setItem"
+        android:text="@string/window" />
+
     </LinearLayout>
 
 

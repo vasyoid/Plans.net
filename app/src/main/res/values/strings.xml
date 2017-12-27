@@ -12,5 +12,6 @@
     <string name="params">Свойства</string>
     <string name="roomName">Название комнаты</string>
     <string name="description">Описание</string>
-    <string name="ok">Окей</string>>
+    <string name="ok">Окей</string>
+    <string name="window">Окно</string>>
 </resources>
