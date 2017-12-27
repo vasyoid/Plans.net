@@ -116,6 +116,15 @@ public class Map implements Serializable {
         addObjectToHashTable(object.getPoint2(), object);
     }
 
+    public void setScaleByPoint(PointF at, float sx, float sy) {
+        if (!linearObjectsByCell.containsKey(at)) {
+            return;
+        }
+        for (MapObjectLinear object : linearObjectsByCell.get(at)) {
+            object.setScale(sx, sy);
+        }
+    }
+
     public void moveObjects(PointF at, PointF from, PointF to) {
         if (!linearObjectsByCell.containsKey(at)) {
             return;
@@ -251,16 +260,6 @@ public class Map implements Serializable {
         objects.removeAll(removedObjects);
     }
 
-    public boolean checkRoomTouched(TouchEvent pTouchEvent) {
-        PointF touchPoint = new PointF(pTouchEvent.getX(), pTouchEvent.getY());
-        for (RoomSprite r : rooms) {
-            if (Geometry.isPointInsidePolygon(r.getPolygon(), touchPoint)) {
-                return r.onTouch(pTouchEvent);
-            }
-        }
-        return false;
-    }
-
     public RoomSprite getRoomTouched(TouchEvent pTouchEvent) {
         PointF touchPoint = new PointF(pTouchEvent.getX(), pTouchEvent.getY());
         for (RoomSprite r : rooms) {
@@ -270,7 +269,6 @@ public class Map implements Serializable {
         }
         return null;
     }
-
 
     public RoomSprite createRoom(float pX, float pY, Scene pScene) {
         List<PointF> polygon = Geometry.roomPolygon(objects, new PointF(pX, pY));
