@@ -16,8 +16,8 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ExpandableListView;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -49,79 +49,154 @@ public class MainActivity extends AppCompatActivity {
     private DataController dataController;
     private FirebaseUser user;
 
-    private Button btnLogOut;
-    private Button btnAddGroup;
-
-    private FloatingActionButton btnAddMap;
-
-    private FloorMap currentMap;
     private UsersGroup currentGroup;
+    private Building currentBuilding;
+    private FloorMap currentMap;
 
     private GoogleSignInClient mGoogleSignOutClient;
 
     private ArrayList<String> groupList;
+    private ArrayList<String> buildingList;
+    private ArrayList<String> floorList;
     private ArrayAdapter<String> groupListAdapter;
-    private ArrayAdapter buildingListAdapter;
-    private ArrayAdapter floorListAdapter;
+    private ArrayAdapter<String> buildingListAdapter;
+    private ArrayAdapter<String> floorListAdapter;
+
+    private void createNewGroupDialog() {
+        AlertDialog newGroupDialog = new AlertDialog.Builder(MainActivity.this).create();
+        newGroupDialog.setTitle("enter name of new group");
+
+        final EditText groupNameInput = new EditText(MainActivity.this);
+        newGroupDialog.setView(groupNameInput);
+
+        newGroupDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
+            final String newGroupName = groupNameInput.getText().toString();
+            dataController.addGroup(new UsersGroup(newGroupName));
+            groupList.add(newGroupName);
+            groupListAdapter.notifyDataSetChanged();
+        });
+
+        newGroupDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
+                (dialog, which) -> {
+                });
+
+        newGroupDialog.show();
+    }
+
+    private void createNewBuildingDialog(UsersGroup chosenGroup) {
+        AlertDialog newBuildingDialog = new AlertDialog.Builder(MainActivity.this).create();
+        newBuildingDialog.setTitle("enter name of new building");
+
+        final EditText buildingNameInput = new EditText(MainActivity.this);
+        newBuildingDialog.setView(buildingNameInput);
+
+        newBuildingDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
+            final String newBuildingName = buildingNameInput.getText().toString();
+            chosenGroup.addData(new Building(newBuildingName));
+        });
+
+        newBuildingDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
+                (dialog, which) -> {
+                });
+
+        newBuildingDialog.show();
+    }
+
+    private void createNewMapDialog(UsersGroup chosenGroup, Building chosenBuilding) {
+        AlertDialog newMapDialog = new AlertDialog.Builder(MainActivity.this).create();
+        newMapDialog.setTitle("enter name of new map");
+
+        final EditText mapNameInput = new EditText(MainActivity.this);
+        newMapDialog.setView(mapNameInput);
+
+        newMapDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
+            final String newMapName = mapNameInput.getText().toString();
+            chosenBuilding.addData(new FloorMap(
+                    chosenGroup.getName(),
+                    chosenBuilding.getName(),
+                    newMapName
+            ));
+        });
+
+        newMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
+                (dialog, which) -> {
+                });
+
+        newMapDialog.show();
+    }
+
+    private void createChooseBuildingForNewMapDialog(UsersGroup chosenGroup) {
+        AlertDialog chooseBuildingsForNewMapDialog = new AlertDialog.Builder(MainActivity.this).create();
+        chooseBuildingsForNewMapDialog.setTitle("select building");
+
+        final ListView buildingsSuggestedList = new ListView(MainActivity.this);
+        chooseBuildingsForNewMapDialog.setView(buildingsSuggestedList);
+
+        ArrayList<String> buildingList = chosenGroup.getListOfNames();
+        ArrayAdapter<String> buildingAdapter = new ArrayAdapter<>(MainActivity.this,
+                android.R.layout.simple_list_item_1, buildingList);
+
+        buildingsSuggestedList.setAdapter(buildingAdapter);
+        buildingsSuggestedList.setOnItemClickListener((adapterView, view, i, l) -> {
+            Building chosenBuilding = chosenGroup.findByName(buildingList.get(i));
+            chooseBuildingsForNewMapDialog.cancel();
+            createNewMapDialog(chosenGroup, chosenBuilding);
+        });
+
+        chooseBuildingsForNewMapDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Add new building",
+                (dialog, which) -> createNewBuildingDialog(chosenGroup));
+        chooseBuildingsForNewMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
+                (dialog, which) -> {
+                });
+
+        chooseBuildingsForNewMapDialog.show();
+    }
+
+    private void createChooseGroupForNewMapDialog() {
+        AlertDialog chooseGroupForNewMapDialog = new AlertDialog.Builder(MainActivity.this).create();
+        chooseGroupForNewMapDialog.setTitle("select group");
+
+        final ListView groupsSuggestedList = new ListView(MainActivity.this);
+        chooseGroupForNewMapDialog.setView(groupsSuggestedList);
+
+        ArrayAdapter<String> groupAdapter = new ArrayAdapter<>(MainActivity.this,
+                android.R.layout.simple_list_item_1, groupList);
+
+        groupsSuggestedList.setAdapter(groupAdapter);
+        groupsSuggestedList.setOnItemClickListener((adapterView, view, i, l) -> {
+            UsersGroup chosenGroup = dataController.getGroup(groupList.get(i));
+            chooseGroupForNewMapDialog.cancel();
+            createChooseBuildingForNewMapDialog(chosenGroup);
+        });
+
+        groupAdapter.notifyDataSetChanged();
+        chooseGroupForNewMapDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Add new group",
+                (dialog, which) -> createNewGroupDialog());
+        chooseGroupForNewMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
+                (dialog, which) -> {
+                });
+        chooseGroupForNewMapDialog.show();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        btnLogOut = findViewById(R.id.btnLogOut);
-        btnAddGroup = findViewById(R.id.btnAddGroup);
-        btnAddMap = findViewById(R.id.btnAddMap);
-        btnLogOut.setOnClickListener(v -> mGoogleSignOutClient.signOut()
-                .addOnCompleteListener(MainActivity.this, task ->
-                        Toast.makeText(MainActivity.this, "You logged out.",
-                                Toast.LENGTH_SHORT).show()));
-
-        btnAddGroup.setOnClickListener(groupView -> {
-            AlertDialog newGroupDialog = new AlertDialog.Builder(MainActivity.this).create();
-            newGroupDialog.setTitle("new group");
-
-            final EditText groupNameInput = new EditText(MainActivity.this);
-            newGroupDialog.setView(groupNameInput);
-
-            newGroupDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
-                final String nameOfNewMap = groupNameInput.getText().toString();
-
-                dataController.addBuildingToGroup(new Building("default"),
-                        dataController.addGroup(new UsersGroup("default")));
-                dataController.saveMap(new FloorMap(nameOfNewMap,
-                        "default", "default"));
-                groupListAdapter.notifyDataSetChanged();
-            });
-
-            newGroupDialog.show();
-        });
-
-        btnAddMap.setOnClickListener(v -> {
-            if (currentGroup == null) {
-                return;
-            }
-            AlertDialog dialogNameOfNewMap = new AlertDialog.Builder(MainActivity.this).create();
-            dialogNameOfNewMap.setTitle("Give me new name of Map");
-
-            final EditText input = new EditText(MainActivity.this);
-            dialogNameOfNewMap.setView(input);
-
-            dialogNameOfNewMap.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
-                final String nameOfNewMap = input.getText().toString();
-
-                dataController.addBuildingToGroup(new Building("default"),
-                        dataController.addGroup(new UsersGroup("default")));
-                dataController.saveMap(new FloorMap(nameOfNewMap,
-                        "default", "default"));
-                groupListAdapter.notifyDataSetChanged();
-            });
+        Button btnLogOut = findViewById(R.id.btnLogOut);
+        Button btnAddGroup = findViewById(R.id.btnAddGroup);
+        FloatingActionButton btnAddMap = findViewById(R.id.btnAddMap);
+        ExpandableListView buildingListView = findViewById(R.id.buildingListView);
+        ExpandableListView floorListView = findViewById(R.id.floorListView);
 
 
-            dialogNameOfNewMap.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", (dialog, which) -> {
+//        btnLogOut.setOnClickListener(v -> mGoogleSignOutClient.signOut()
+//                .addOnCompleteListener(MainActivity.this, task ->
+//                        Toast.makeText(MainActivity.this, "You logged out.",
+//                                Toast.LENGTH_SHORT).show()));
 
-            });
-            dialogNameOfNewMap.show();
-        });
+        btnAddGroup.setOnClickListener(groupView -> createNewGroupDialog());
+
+        btnAddMap.setOnClickListener(v -> createChooseGroupForNewMapDialog());
 
 
     }
@@ -179,6 +254,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void afterAuth() {
+        dataController = new DataController(getApplicationContext(), user, groupList);
+
         groupList = dataController.getAccount().getListOfNames();
         groupListAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1,
@@ -192,7 +269,6 @@ public class MainActivity extends AppCompatActivity {
             //TODO change lists
         });
 
-        dataController = new DataController(getApplicationContext(), user, groupList);
 
         DownloadMapsAsyncTask downloadTask = new DownloadMapsAsyncTask(this);
         downloadTask.execute();
