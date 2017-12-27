@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
-import android.media.Image;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -83,7 +82,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
-        toOpenMap = (FloorMap) intent.getSerializableExtra("toOpenMap");
+        toOpenMap = (FloorMap) intent.getSerializableExtra("currentMap");
     }
 
     @Override
@@ -92,8 +91,8 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             Log.d("VASYOID", "map is null!");
         } else {
             Intent intent = new Intent();
-            intent.putExtra("toSaveMap", new FloorMap(toOpenMap.getName(),
-                    toOpenMap.getGroupName(), toOpenMap.getBuildingName(), map));
+            intent.putExtra("toSaveMap", new FloorMap(toOpenMap.getGroupName(),
+                    toOpenMap.getBuildingName(), toOpenMap.getName(), map));
             setResult(1, intent);
         }
         super.onBackPressed();

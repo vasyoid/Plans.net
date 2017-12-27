@@ -9,7 +9,7 @@
     <string name="moveWall">Move walls</string>
     <string name="add">Add</string>
     <string name="paint">Create room</string>
-    <string name="params">Свойства</string>
+    <string name="params">Room properties</string>
     <string name="roomName">Room title</string>
     <string name="description">Room description</string>
     <string name="ok">Okay</string>
