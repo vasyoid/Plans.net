@@ -158,8 +158,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("MYTEST", "firebase auth");
 
                         user = auth.getCurrentUser();
-                        dataController = new DataController(getApplicationContext(), user,
-                                adapter, myMaps);
+                        dataController = new DataController(getApplicationContext(), user, myMaps);
 
                         DownloadMapsAsyncTask downloadTask = new DownloadMapsAsyncTask(this);
                         downloadTask.execute();

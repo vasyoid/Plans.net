@@ -9,7 +9,7 @@ import java.io.Serializable;
 import ru.spbau.mit.plansnet.constructor.RoomSprite;
 
 /**
- * Created by kostya55516 on 26.11.17.
+ * Room class for map
  */
 
 public class Room extends MapObject implements Serializable {
