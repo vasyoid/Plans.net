@@ -3,16 +3,19 @@ package ru.spbau.mit.plansnet.constructor;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PointF;
+import android.graphics.PorterDuff;
 import android.graphics.Typeface;
+import android.media.Image;
 import android.os.Bundle;
-import android.text.Editable;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 
 import java.io.IOException;
 
@@ -25,6 +28,7 @@ import org.andengine.entity.scene.background.Background;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.input.touch.detector.PinchZoomDetector;
 import org.andengine.opengl.font.FontFactory;
+import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TextureRegionFactory;
 import org.andengine.ui.activity.SimpleLayoutGameActivity;
 import org.andengine.util.color.Color;
@@ -38,7 +42,15 @@ import org.andengine.opengl.texture.bitmap.BitmapTexture;
 
 import ru.spbau.mit.plansnet.R;
 import ru.spbau.mit.plansnet.data.FloorMap;
-import ru.spbau.mit.plansnet.data.objects.Room;
+
+import static android.graphics.Color.BLACK;
+import static android.graphics.Color.GREEN;
+import static android.graphics.Color.RED;
+import static android.graphics.Color.TRANSPARENT;
+import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.EXIT;
+import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.LIFT;
+import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.STAIRS;
+import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.WC;
 
 public class ConstructorActivity extends SimpleLayoutGameActivity {
 	private static int CAMERA_WIDTH = 0;
@@ -50,6 +62,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 
     private ActionState state = ActionState.ADD;
     private int item = 0;
+    private StickerSprite.StickerType currentSticker = EXIT;
     private Map map;
     private FloorMap toOpenMap;
     private PinchZoomDetector mPinchZoomDetector;
@@ -69,8 +82,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-                Intent intent = getIntent();
+        Intent intent = getIntent();
         toOpenMap = (FloorMap) intent.getSerializableExtra("toOpenMap");
     }
 
@@ -117,6 +129,23 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                     () -> getAssets().open("door.png"));
             doorTexture.load();
             DoorSprite.setTexture(TextureRegionFactory.extractFromTexture(doorTexture));
+            ITexture stickersTextures[] = new ITexture[] {
+                new BitmapTexture(this.getTextureManager(),
+                        () -> getAssets().open("exit.png")),
+                new BitmapTexture(this.getTextureManager(),
+                        () -> getAssets().open("lift.png")),
+                new BitmapTexture(this.getTextureManager(),
+                        () -> getAssets().open("stairs.png")),
+                new BitmapTexture(this.getTextureManager(),
+                        () -> getAssets().open("wc.png"))
+            };
+            ITextureRegion[] stickersTextureRegions = new ITextureRegion[4];
+            for (int i = 0; i < 4; i++) {
+                stickersTextures[i].load();
+                stickersTextureRegions[i] = TextureRegionFactory
+                        .extractFromTexture(stickersTextures[i]);
+            }
+            StickerSprite.setTextureRegions(stickersTextureRegions);
         } catch (IOException e) {
             Debug.e(e);
         }
@@ -124,6 +153,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 
 	@Override
 	protected Scene onCreateScene() {
+        ((ImageView) (findViewById(R.id.imageExit))).setColorFilter(GREEN, PorterDuff.Mode.ADD);
         MapObjectSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
         RoomSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
         RoomSprite.setFont(FontFactory.create(getEngine().getFontManager(),
@@ -176,6 +206,9 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                     runOnUpdateThread(() -> map.detachRemoved());
                     return false;
                 }
+                if (state == ActionState.MOVE_STICKER) {
+                    return false;
+                }
                 if (state == ActionState.MOVE) {
                     mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
                     if (pSceneTouchEvent.isActionDown()) {
@@ -210,14 +243,22 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 PointF firstPoint = new PointF(firstX, firstY);
                 PointF previousPoint = new PointF(previousX, previousY);
                 PointF currentPoint = new PointF(currentX, currentY);
-
+                if (state == ActionState.ADD && item == 3) {
+                    if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
+                        StickerSprite sticker = new StickerSprite(currentSticker, currentPoint);
+                        map.addObject(sticker);
+                        pScene.attachChild(sticker);
+                        pScene.registerTouchArea(sticker);
+                        pScene.sortChildren();
+                    }
+                    return false;
+                }
                 switch (pSceneTouchEvent.getAction()) {
                     case TouchEvent.ACTION_DOWN:
                         firstX = previousX = currentX;
                         firstY = previousY = currentY;
                         if (state != ActionState.MOVE_WALL) {
-                            currentLine.setPosition(firstX, firstY,
-                                    currentX, currentY);
+                            currentLine.setPosition(firstX, firstY, currentX, currentY);
                             if (item == 0) {
                                 currentAdded = new WallSprite();
                             } else if (item == 1) {
@@ -228,6 +269,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                             currentAdded.setPosition(currentLine);
                             pScene.attachChild(currentAdded);
                             pScene.registerTouchArea(currentAdded);
+                            pScene.sortChildren();
                         } else {
                             map.setScaleByPoint(currentPoint, 1.0f, 1.4f);
                         }
@@ -263,6 +305,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                             if ((currentX != firstX || currentY != firstY) &&
                                     !map.checkIntersections(currentAdded)) {
                                 map.addObject(currentAdded);
+                                pScene.sortChildren();
                                 runOnUpdateThread(() -> map.detachRemoved());
                             } else {
                                 pScene.detachChild(currentAdded);
@@ -370,11 +413,41 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
         });
     }
 
+    public void setSticker(View v) {
+        ((ImageView) findViewById(R.id.imageExit)).setColorFilter(TRANSPARENT);
+        ((ImageView) findViewById(R.id.imageLift)).setColorFilter(TRANSPARENT);
+        ((ImageView) findViewById(R.id.imageStairs)).setColorFilter(TRANSPARENT);
+        ((ImageView) findViewById(R.id.imageWC)).setColorFilter(TRANSPARENT);
+        ((ImageView) v).setColorFilter(GREEN, PorterDuff.Mode.ADD);
+        switch (v.getId()) {
+            case R.id.imageExit:
+                currentSticker = EXIT;
+                break;
+            case R.id.imageLift:
+                currentSticker = LIFT;
+                break;
+            case R.id.imageStairs:
+                currentSticker = STAIRS;
+                break;
+            case R.id.imageWC:
+                currentSticker = WC;
+                break;
+        }
+    }
+
     public void setItem(View v) {
-        findViewById(R.id.buttonDoor).setEnabled(true);
-        findViewById(R.id.buttonWall).setEnabled(true);
-        findViewById(R.id.buttonWindow).setEnabled(true);
-        v.setEnabled(false);
+        if (v.getId() != R.id.buttonSticker) {
+            findViewById(R.id.stickersLayout).setVisibility(View.GONE);
+        } else {
+            findViewById(R.id.stickersLayout).setVisibility(View.VISIBLE);
+        }
+
+        ((Button) findViewById(R.id.buttonDoor)).setTextColor(BLACK);
+        ((Button) findViewById(R.id.buttonWall)).setTextColor(BLACK);
+        ((Button) findViewById(R.id.buttonWindow)).setTextColor(BLACK);
+        ((Button) findViewById(R.id.buttonSticker)).setTextColor(BLACK);
+        ((Button) v).setTextColor(RED);
+
         switch (v.getId()) {
             case R.id.buttonWall:
                 item = 0;
@@ -385,21 +458,28 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             case R.id.buttonWindow:
                 item = 2;
                 break;
+            case R.id.buttonSticker:
+                item = 3;
+                break;
         }
     }
 
     public void setState(View v) {
-
-        if (v.getId() != R.id.buttonClear) {
-            findViewById(R.id.buttonColor).setEnabled(true);
-            findViewById(R.id.buttonDel).setEnabled(true);
-            findViewById(R.id.buttonMove).setEnabled(true);
-            findViewById(R.id.buttonMoveWall).setEnabled(true);
-            findViewById(R.id.buttonAdd).setEnabled(true);
-            findViewById(R.id.buttonParams).setEnabled(true);
-            v.setEnabled(false);
+        if (v.getId() != R.id.buttonAdd) {
+            findViewById(R.id.itemsLayout).setVisibility(View.GONE);
+        } else {
+            findViewById(R.id.itemsLayout).setVisibility(View.VISIBLE);
         }
-
+        if (v.getId() != R.id.buttonClear) {
+            ((Button) findViewById(R.id.buttonColor)).setTextColor(BLACK);
+            ((Button) findViewById(R.id.buttonDel)).setTextColor(BLACK);
+            ((Button) findViewById(R.id.buttonMove)).setTextColor(BLACK);
+            ((Button) findViewById(R.id.buttonMoveWall)).setTextColor(BLACK);
+            ((Button) findViewById(R.id.buttonAdd)).setTextColor(BLACK);
+            ((Button) findViewById(R.id.buttonParams)).setTextColor(BLACK);
+            ((Button) findViewById(R.id.buttonMoveSticker)).setTextColor(BLACK);
+            ((Button) v).setTextColor(RED);
+        }
         switch (v.getId()) {
             case R.id.buttonAdd:
                 state = ActionState.ADD;
@@ -412,6 +492,9 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 break;
             case R.id.buttonMoveWall:
                 state = ActionState.MOVE_WALL;
+                break;
+            case R.id.buttonMoveSticker:
+                state = ActionState.MOVE_STICKER;
                 break;
             case R.id.buttonColor:
                 state = ActionState.COLOR;
@@ -427,7 +510,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     }
 
     public enum ActionState {
-        ADD, DEL, MOVE, MOVE_WALL, COLOR, PARAMS
+        ADD, DEL, MOVE, MOVE_WALL, MOVE_STICKER, COLOR, PARAMS
     }
 
 }

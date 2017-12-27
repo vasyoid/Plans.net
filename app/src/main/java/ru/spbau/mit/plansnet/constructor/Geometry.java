@@ -100,10 +100,13 @@ public class Geometry {
         return PointF.equals(line.getX2(), line.getY2());
     }
 
-    public static boolean isPointRightward(Line line, PointF PointF) {
-        PointF tmp = getIntersectionPoint(new Line(-1e5f, PointF.y,
-                1e5f, PointF.y, null), line, false);
-        return tmp != null && PointF.x > tmp.x;
+    public static boolean isPointAtCorner(PointF point, PointF ld, PointF ru, double bounds) {
+        return (point.x <= bounds && (point.y <= bounds || point.y >= ru.y - bounds)) ||
+               (point.x >= ru.x - bounds && (point.y <= bounds || point.y >= ru.y - bounds));
+    }
+
+    public static float distance(PointF p1, PointF p2) {
+        return length(new Line(p1.x, p1.y, p2.x, p2.y, null));
     }
 
     public static float length(Line line) {
