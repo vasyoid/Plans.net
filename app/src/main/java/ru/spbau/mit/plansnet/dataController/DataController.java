@@ -35,8 +35,6 @@ import ru.spbau.mit.plansnet.data.UsersGroup;
 
 public class DataController {
     @NonNull
-    private final ArrayList<String> groupList;
-    @NonNull
     private NetworkDataManager netManager;
     @NonNull
     private Account userAccount;
@@ -46,12 +44,10 @@ public class DataController {
     private static final String DATA_TAG = "DATA_CONTROLLER_FILES";
 
     public DataController(@NonNull final Context context,
-                          @NonNull final FirebaseUser account,
-                          @NonNull final ArrayList<String> listOfMaps) {
+                          @NonNull final FirebaseUser account) {
         this.context = context;
         netManager = new NetworkDataManager(context, account);
 
-        this.groupList = listOfMaps;
         userAccount = new Account(account.getDisplayName(), account.getUid());
     }
 
@@ -231,9 +227,6 @@ public class DataController {
                     + "' haven't building: " + map.getBuildingName());
         }
 
-        if (!groupList.contains(map.getGroupName())) {
-            groupList.add(map.getGroupName());
-        }
         building.setElementToContainer(map);
         Log.d(DATA_TAG, "set new map to account");
 
@@ -279,9 +272,6 @@ public class DataController {
                 building = group.setElementToContainer(new Building(map.getBuildingName()));
             }
 
-            if (!groupList.contains(map.getGroupName())) {
-                groupList.add(map.getGroupName());
-            }
             building.setElementToContainer(map);
 
 

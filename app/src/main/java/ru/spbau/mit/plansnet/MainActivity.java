@@ -336,7 +336,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void afterAuth() {
-        dataController = new DataController(getApplicationContext(), user, groupList);
+        dataController = new DataController(getApplicationContext(), user);
 
         DownloadMapsAsyncTask downloadTask = new DownloadMapsAsyncTask(this);
         downloadTask.execute();
@@ -375,7 +375,11 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("AsyncWork", "dismiss load async task");
                 dialog.dismiss();
             }
+            groupList.clear();
+            groupList.addAll(dataController.getAccount().getListOfNames());
             groupListAdapter.notifyDataSetChanged();
+            buildingListAdapter.notifyDataSetChanged();
+            floorListAdapter.notifyDataSetChanged();
 
 //
 //            SearchTask st = new SearchTask(MainActivity.this);
@@ -499,7 +503,7 @@ public class MainActivity extends AppCompatActivity {
                 FloorMap toSaveMap = (FloorMap) data.getSerializableExtra("toSaveMap");
                 if (toSaveMap != null) {
                     dataController.saveMap(toSaveMap);
-                    groupListAdapter.notifyDataSetChanged();
+                    floorListAdapter.notifyDataSetChanged();
                 }
                 currentMap = toSaveMap;
                 groupList.clear();
