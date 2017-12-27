@@ -3,7 +3,10 @@ package ru.spbau.mit.plansnet.data;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -18,6 +21,15 @@ public abstract class AbstractDataContainer<T extends AbstractNamedData>
     public AbstractDataContainer(@NonNull String name) {
         super(name);
         data = new HashMap<>();
+    }
+
+    @NotNull
+    public ArrayList<String> getListOfNames() {
+        ArrayList<String> list = new ArrayList<>();
+        for (Object name : data.keySet().toArray())  {
+            list.add((String) name);
+        }
+        return list;
     }
 
     @NonNull

@@ -17,6 +17,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -34,7 +35,7 @@ import ru.spbau.mit.plansnet.data.UsersGroup;
 
 public class DataController {
     @NonNull
-    private final List<FloorMap> listOfMaps;
+    private final ArrayList<String> listOfMaps;
     @NonNull
     private NetworkDataManager netManager;
     @NonNull
@@ -44,7 +45,9 @@ public class DataController {
 
     private static final String DATA_TAG = "DATA_CONTROLLER_FILES";
 
-    public DataController(@NonNull final Context context, @NonNull final FirebaseUser account, @NonNull final List<FloorMap> listOfMaps) {
+    public DataController(@NonNull final Context context,
+                          @NonNull final FirebaseUser account,
+                          @NonNull final ArrayList<String> listOfMaps) {
         this.context = context;
         netManager = new NetworkDataManager(context, account);
 
@@ -228,7 +231,7 @@ public class DataController {
         }
 
         if (building.findByName(map.getName()) == null) {
-            listOfMaps.add(map);
+            listOfMaps.add(map.getName());
         }
         building.setElementToContainer(map);
         Log.d(DATA_TAG, "set new map to account");
@@ -276,11 +279,11 @@ public class DataController {
             }
 
             if (building.findByName(map.getName()) == null) {
-                listOfMaps.add(map);
+                listOfMaps.add(map.getName());
             } else {
                 for (int i = 0; i < listOfMaps.size(); i++) {
-                    if (listOfMaps.get(i).getName().equals(map.getName())) {
-                        listOfMaps.set(i, map);
+                    if (listOfMaps.get(i).equals(map.getName())) {
+                        listOfMaps.set(i, map.getName());
                     }
                 }
             }

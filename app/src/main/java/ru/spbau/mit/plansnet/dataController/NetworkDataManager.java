@@ -162,7 +162,7 @@ public class NetworkDataManager {
                                     progressDialog.incrementProgressBy(1);
                                     Log.d("LOAD", progressDialog.getProgress() + " : " + progressDialog.getMax());
                                     if (progressDialog.getProgress() == floorsPaths.size()) {
-                                        progressDialog.dismiss();
+                                        progressDialog.setMax(0);
                                     }
                                     Log.d(STORAGE_TAG, progressDialog.getProgress() + " get file from storage: " + mapFile.getName());
                                 }).addOnFailureListener(e -> {

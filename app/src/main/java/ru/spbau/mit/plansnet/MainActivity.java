@@ -50,34 +50,56 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseUser user;
 
     private Button btnLogOut;
-    private Button btnSettings;
+    private Button btnAddGroup;
 
     private FloatingActionButton btnAddMap;
 
-    private FloorMap toOpenMap;
-    private TextView txtNameOfSlectedMap;
+    private FloorMap currentMap;
+    private UsersGroup currentGroup;
 
     private GoogleSignInClient mGoogleSignOutClient;
 
-    private ArrayList<FloorMap> myMaps = new ArrayList<>();
-    private ArrayAdapter adapter;
-
-    private int mapCount;
+    private ArrayList<String> groupList;
+    private ArrayAdapter<String> groupListAdapter;
+    private ArrayAdapter buildingListAdapter;
+    private ArrayAdapter floorListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         btnLogOut = findViewById(R.id.btnLogOut);
-        btnSettings = findViewById(R.id.btnSettings);
-        txtNameOfSlectedMap = findViewById(R.id.nameOfSlectedMap);
+        btnAddGroup = findViewById(R.id.btnAddGroup);
         btnAddMap = findViewById(R.id.btnAddMap);
         btnLogOut.setOnClickListener(v -> mGoogleSignOutClient.signOut()
                 .addOnCompleteListener(MainActivity.this, task ->
                         Toast.makeText(MainActivity.this, "You logged out.",
                                 Toast.LENGTH_SHORT).show()));
 
+        btnAddGroup.setOnClickListener(groupView -> {
+            AlertDialog newGroupDialog = new AlertDialog.Builder(MainActivity.this).create();
+            newGroupDialog.setTitle("new group");
+
+            final EditText groupNameInput = new EditText(MainActivity.this);
+            newGroupDialog.setView(groupNameInput);
+
+            newGroupDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
+                final String nameOfNewMap = groupNameInput.getText().toString();
+
+                dataController.addBuildingToGroup(new Building("default"),
+                        dataController.addGroup(new UsersGroup("default")));
+                dataController.saveMap(new FloorMap(nameOfNewMap,
+                        "default", "default"));
+                groupListAdapter.notifyDataSetChanged();
+            });
+
+            newGroupDialog.show();
+        });
+
         btnAddMap.setOnClickListener(v -> {
+            if (currentGroup == null) {
+                return;
+            }
             AlertDialog dialogNameOfNewMap = new AlertDialog.Builder(MainActivity.this).create();
             dialogNameOfNewMap.setTitle("Give me new name of Map");
 
@@ -91,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
                         dataController.addGroup(new UsersGroup("default")));
                 dataController.saveMap(new FloorMap(nameOfNewMap,
                         "default", "default"));
+                groupListAdapter.notifyDataSetChanged();
             });
 
 
@@ -100,14 +123,7 @@ public class MainActivity extends AppCompatActivity {
             dialogNameOfNewMap.show();
         });
 
-        ListView listOfMaps = findViewById(R.id.listOfMaps);
-        adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, myMaps);
-        listOfMaps.setAdapter(adapter);
 
-        listOfMaps.setOnItemClickListener((parent, view, position, id) -> {
-            toOpenMap = myMaps.get(position);
-            txtNameOfSlectedMap.setText("Current map: " + toOpenMap.getName());
-        });
     }
 
     @Override
@@ -156,14 +172,30 @@ public class MainActivity extends AppCompatActivity {
                         // Sign in success, update UI with the signed-in user's information
                         Log.d(LOG_IN_TAG, "signInWithCredential:success");
                         Log.d("MYTEST", "firebase auth");
-
                         user = auth.getCurrentUser();
-                        dataController = new DataController(getApplicationContext(), user, myMaps);
-
-                        DownloadMapsAsyncTask downloadTask = new DownloadMapsAsyncTask(this);
-                        downloadTask.execute();
+                        afterAuth();
                     }
                 });
+    }
+
+    private void afterAuth() {
+        groupList = dataController.getAccount().getListOfNames();
+        groupListAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1,
+                groupList);
+
+        ListView groupListView = findViewById(R.id.listOfMaps);
+        groupListView.setAdapter(groupListAdapter);
+
+        groupListView.setOnItemClickListener((parent, view, position, id) -> {
+            currentGroup = dataController.getAccount().findByName(groupList.get(position));
+            //TODO change lists
+        });
+
+        dataController = new DataController(getApplicationContext(), user, groupList);
+
+        DownloadMapsAsyncTask downloadTask = new DownloadMapsAsyncTask(this);
+        downloadTask.execute();
     }
     // [END handle_sign_in_result]
 
@@ -203,11 +235,11 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("AsyncWork", "dismiss load async task");
                 dialog.dismiss();
             }
-            adapter.notifyDataSetChanged();
+            groupListAdapter.notifyDataSetChanged();
 
-
-            SearchTask st = new SearchTask(MainActivity.this);
-            st.execute("aul");
+//
+//            SearchTask st = new SearchTask(MainActivity.this);
+//            st.execute("aul");
 
         }
     }
@@ -233,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
 
         protected Void doInBackground(Void... args) {
             dataController.downloadMaps(dialog);
-            while(dialog.getProgress() < dialog.getMax()) {
+            while (dialog.getProgress() < dialog.getMax()) {
                 SystemClock.sleep(200);
             }
             return null;
@@ -254,6 +286,7 @@ public class MainActivity extends AppCompatActivity {
     //helper structure for search results
     public static class SearchResult {
         public String ownerName, ownerId, groupName;
+
         public SearchResult(String ownerId, String ownerName, String groupName) {
             this.ownerName = ownerName;
             this.ownerId = ownerId;
@@ -324,14 +357,12 @@ public class MainActivity extends AppCompatActivity {
         } else if (requestCode == CONSTRUCTOR_TOKEN) {
             if (data != null) {
                 FloorMap toSaveMap = (FloorMap) data.getSerializableExtra("toSaveMap");
-//                Log.d("VASYOID", toOpenMap.getGroupName());
-//                Log.d("VASYOID", toOpenMap.getName());
                 if (toSaveMap != null) {
                     dataController.saveMap(toSaveMap);
-                    adapter.notifyDataSetChanged();
+                    groupListAdapter.notifyDataSetChanged();
                 }
-                toOpenMap = toSaveMap;
-                myMaps.clear();
+                currentMap = toSaveMap;
+                groupList.clear();
             } else {
                 Toast.makeText(this, "Nothing to save", Toast.LENGTH_LONG).show();
             }
@@ -341,8 +372,8 @@ public class MainActivity extends AppCompatActivity {
     public void openConstructor(View v) {
         Intent intent = new Intent(MainActivity.this,
                 ConstructorActivity.class);
-        if (toOpenMap != null) {
-            intent.putExtra("toOpenMap", toOpenMap);
+        if (currentMap != null) {
+            intent.putExtra("currentMap", currentMap);
         }
         startActivityForResult(intent, CONSTRUCTOR_TOKEN);
     }
