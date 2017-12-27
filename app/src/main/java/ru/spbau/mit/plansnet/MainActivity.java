@@ -12,13 +12,14 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputFilter;
+import android.text.Spanned;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ExpandableListView;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -37,6 +38,9 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 import ru.spbau.mit.plansnet.constructor.ConstructorActivity;
 import ru.spbau.mit.plansnet.data.Building;
@@ -51,6 +55,18 @@ public class MainActivity extends AppCompatActivity {
 
     private DataController dataController;
     private FirebaseUser user;
+
+    private final Pattern allowedStringPattern = Pattern.compile("[a-zA-Zа-яА-ЯёЁ][a-zA-Zа-яА-ЯёЁ_ ]*");
+
+    InputFilter filter = new InputFilter() {
+        @Override
+        public CharSequence filter(CharSequence charSequence, int i, int i1, Spanned spanned, int i2, int i3) {
+            if (charSequence != null && !allowedStringPattern.matcher(charSequence).matches()) {
+                return "";
+            }
+            return null;
+        }
+    };
 
     @Nullable
     private UsersGroup currentGroup;
@@ -76,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
         newGroupDialog.setTitle("enter name of new group");
 
         final EditText groupNameInput = new EditText(MainActivity.this);
+        groupNameInput.setFilters(new InputFilter[]{ filter });
         newGroupDialog.setView(groupNameInput);
 
         newGroupDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
@@ -101,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
         newBuildingDialog.setTitle("enter name of new building");
 
         final EditText buildingNameInput = new EditText(MainActivity.this);
+        buildingNameInput.setFilters(new InputFilter[]{ filter });
         newBuildingDialog.setView(buildingNameInput);
 
         newBuildingDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
@@ -129,6 +147,7 @@ public class MainActivity extends AppCompatActivity {
         newMapDialog.setTitle("enter name of new floor");
 
         final EditText mapNameInput = new EditText(MainActivity.this);
+        mapNameInput.setFilters(new InputFilter[]{ filter });
         newMapDialog.setView(mapNameInput);
 
         newMapDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
