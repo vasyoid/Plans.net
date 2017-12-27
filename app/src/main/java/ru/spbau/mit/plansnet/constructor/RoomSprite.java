@@ -47,6 +47,11 @@ public class RoomSprite {
         font.load();
     }
 
+    public void setColor(Color pColor) {
+        roomColor = pColor;
+        mesh.setColor(roomColor);
+    }
+
     public void setTitle(String pTitle) {
         title.setText(pTitle);
         setTitlePosition();

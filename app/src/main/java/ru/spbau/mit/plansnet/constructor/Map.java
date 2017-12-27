@@ -50,7 +50,11 @@ public class Map implements Serializable {
             } else if (o instanceof Wall) {
                 addObject(new WallSprite((Wall) o));
             } else if (o instanceof Room) {
-                createRoom(((Room) o).getX(), ((Room) o).getY(), scene);
+                Room room = (Room) o;
+                RoomSprite roomSprite = createRoom(room.getX(), room.getY(), scene);
+                roomSprite.setTitle(room.getTitle().toString());
+                roomSprite.setDescription(room.getDescription().toString());
+                roomSprite.setColor(room.getColor());
             }
         }
     }
@@ -158,11 +162,14 @@ public class Map implements Serializable {
         linearObjectsByCell.get(at).clear();
     }
 
-    public void addObject(MapObjectLinear object) {
+    public void addObject(MapObjectSprite object) {
         removedObjects.remove(object);
         objects.add(object);
-        addObjectToHashTable(object.getPoint1(), object);
-        addObjectToHashTable(object.getPoint2(), object);
+        if (object instanceof MapObjectLinear) {
+            MapObjectLinear objectLinear = (MapObjectLinear) object;
+            addObjectToHashTable(objectLinear.getPoint1(), objectLinear);
+            addObjectToHashTable(objectLinear.getPoint2(), objectLinear);
+        }
     }
 
     public void addRoom(RoomSprite room) {
@@ -186,10 +193,13 @@ public class Map implements Serializable {
         }
     }
 
-    public void removeObject(MapObjectLinear object) {
+    public void removeObject(MapObjectSprite object) {
         objects.remove(object);
-        linearObjectsByCell.get(object.getPoint1()).remove(object);
-        linearObjectsByCell.get(object.getPoint2()).remove(object);
+        if (object instanceof MapObjectLinear) {
+        MapObjectLinear objectLinear = (MapObjectLinear) object;
+            linearObjectsByCell.get(objectLinear.getPoint1()).remove(object);
+            linearObjectsByCell.get(objectLinear.getPoint2()).remove(object);
+        }
         removedObjects.add(object);
     }
 
