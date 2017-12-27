@@ -5,7 +5,6 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
-import android.util.Pair;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
@@ -22,7 +21,6 @@ import java.util.concurrent.CountDownLatch;
 
 import ru.spbau.mit.plansnet.MainActivity;
 import ru.spbau.mit.plansnet.data.AbstractDataContainer;
-import ru.spbau.mit.plansnet.data.AbstractNamedData;
 import ru.spbau.mit.plansnet.data.Account;
 import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;

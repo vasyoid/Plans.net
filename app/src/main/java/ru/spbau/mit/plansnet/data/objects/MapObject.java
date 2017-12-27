@@ -1,7 +1,5 @@
 package ru.spbau.mit.plansnet.data.objects;
 
-import org.andengine.entity.primitive.Line;
-
 import java.io.Serializable;
 
 /**

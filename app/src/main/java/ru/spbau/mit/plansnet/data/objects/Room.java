@@ -2,7 +2,6 @@ package ru.spbau.mit.plansnet.data.objects;
 
 import android.support.annotation.NonNull;
 
-import org.andengine.entity.text.Text;
 import org.andengine.util.color.Color;
 
 import java.io.Serializable;
