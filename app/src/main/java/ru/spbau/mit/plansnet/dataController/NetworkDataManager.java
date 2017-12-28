@@ -24,8 +24,10 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Function;
 
 import ru.spbau.mit.plansnet.MainActivity.SearchResult;
+import ru.spbau.mit.plansnet.data.Account;
 import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
 import ru.spbau.mit.plansnet.data.UsersGroup;
@@ -122,10 +124,7 @@ public class NetworkDataManager {
                             }
                         }
 
-                        progressDialog.setMax(floorsPaths.size());
-                        Log.d(STORAGE_TAG, "progress dialog size updated: " + progressDialog.getMax());
-
-                        downloadByPaths(floorsPaths, progressDialog);
+                        downloadByPaths(floorsPaths, progressDialog, userAccount.getUid());
                     }
 
                     @Override
@@ -139,13 +138,15 @@ public class NetworkDataManager {
                 });
     }
 
-    private void downloadByPaths(List<String> floorsPaths, ProgressDialog progressDialog) {
+    private void downloadByPaths(List<String> floorsPaths, ProgressDialog progressDialog, String owner) {
         for (final String path : floorsPaths) {
+            progressDialog.setMax(floorsPaths.size());
             storageReference.child(path).getMetadata().addOnCompleteListener(
                     task -> {
+                        String newPath = path.replace(owner, userAccount.getUid());
                         Log.d(STORAGE_TAG, "downloading file: " + path);
                         final File mapFile = new File(context.getApplicationContext()
-                                .getFilesDir(), path);
+                                .getFilesDir(), newPath);
 
                         if (mapFile.exists() && mapFile.lastModified() > task.getResult().getUpdatedTimeMillis()) {
                             Log.d(STORAGE_TAG,
@@ -255,11 +256,12 @@ public class NetworkDataManager {
                             for (DataSnapshot floorShot : buildingShot.child("floors").getChildren()) {
                                 FloorMap map = new FloorMap(group, building.getName(), floorShot.getKey());
                                 building.addData(map);
-                                floorsPaths.add((String) floorShot.child("path").getValue());
+                                String path = (String) floorShot.child("path").getValue();
+                                floorsPaths.add(path);
                             }
                         }
 
-                        downloadByPaths(floorsPaths, progressDialog);
+                        downloadByPaths(floorsPaths, progressDialog, owner);
                     }
 
                     @Override

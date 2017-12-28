@@ -21,6 +21,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.SearchView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -60,14 +61,11 @@ public class MainActivity extends AppCompatActivity {
 
     private final Pattern allowedStringPattern = Pattern.compile("[a-zA-Zа-яА-ЯёЁ][a-zA-Zа-яА-ЯёЁ_ ]*");
 
-    InputFilter filter = new InputFilter() {
-        @Override
-        public CharSequence filter(CharSequence charSequence, int i, int i1, Spanned spanned, int i2, int i3) {
-            if (charSequence != null && !allowedStringPattern.matcher(charSequence).matches()) {
-                return "";
-            }
-            return null;
+    InputFilter filter = (charSequence, i, i1, spanned, i2, i3) -> {
+        if (charSequence != null && !allowedStringPattern.matcher(charSequence).matches()) {
+            return "";
         }
+        return null;
     };
 
     @Nullable
@@ -382,6 +380,23 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void setUpFindListView() {
+        ListView findListView = findViewById(R.id.findListView);
+        findListAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1,
+                findList);
+
+        findListView.setAdapter(findListAdapter);
+
+        findListView.setOnItemClickListener((parent, view, i, id) -> {
+            SearchResult searchResult = findList.get(i);
+            findList.clear();
+            findListAdapter.notifyDataSetChanged();
+            GroupDownloadMapsAsyncTask task = new GroupDownloadMapsAsyncTask(MainActivity.this);
+            task.execute(searchResult);
+        });
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -389,31 +404,36 @@ public class MainActivity extends AppCompatActivity {
 //        Button btnLogOut = findViewById(R.id.btnLogOut);
         Button btnAddGroup = findViewById(R.id.btnAddGroup);
         FloatingActionButton btnAddMap = findViewById(R.id.btnAddMap);
+        SearchView searchView = findViewById(R.id.searchView);
 
         setUpGroupListView();
         setUpBuildingSpinnerView();
         setUpFloorSpinnerView();
+        setUpFindListView();
 
         btnAddGroup.setOnClickListener(groupView -> createNewGroupDialog());
 
         btnAddMap.setOnClickListener(v -> createChooseGroupForNewMapDialog());
 
-        ListView findListView = findViewById(R.id.findListView);
-        findListAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_1,
-                findList);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String text) {
+                SearchTask st = new SearchTask(MainActivity.this);
+                st.execute(text);
+                return false;
+            }
 
-        findListView.setAdapter(groupListAdapter);
-
-        findListView.setOnItemClickListener((parent, view, position, id) -> {
-            currentGroup = dataController.getAccount().findByName(groupList.get(position));
-            assert currentGroup != null;
-
-            buildingList.clear();
-            buildingList.addAll(currentGroup.getListOfNames());
-            buildingListAdapter.notifyDataSetChanged();
+            @Override
+            public boolean onQueryTextChange(String s) {
+                return false;
+            }
         });
 
+        searchView.setOnCloseListener(() -> {
+            findList.clear();
+            findListAdapter.notifyDataSetChanged();
+            return false;
+        });
 
     }
 
@@ -615,19 +635,57 @@ public class MainActivity extends AppCompatActivity {
                 dialog.dismiss();
             }
 
-            groupList.clear();  //warning, we clear all data
-            groupListAdapter.notifyDataSetChanged();
-
             findList.clear();
             findList.addAll(list);
             findListAdapter.notifyDataSetChanged();
 
-//            for (SearchResult x : list) {
-////                dataController.addGroupByRef(x.ownerId, x.ownerName); // download found groups
-////                findList.add(x.groupName);
-//                Log.d("AsyncWork!!", "in list: " + x.ownerName + " --> " + x.groupName);
-//            }
+            for (SearchResult x : list) {
+//                dataController.addGroupByRef(x.ownerId, x.ownerName); // download found groups
+//                groupList.add(x.groupName);
+                Log.d("AsyncWork!!", "in list: " + x);
+//                groupListAdapter.notifyDataSetChanged();
 
+            }
+
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class GroupDownloadMapsAsyncTask extends AsyncTask<SearchResult, Void, Void> {
+        private ProgressDialog dialog;
+
+        public GroupDownloadMapsAsyncTask(MainActivity activity) {
+            dialog = new ProgressDialog(activity);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            Log.d("AsyncWork", "starts group download async task");
+            dialog.setTitle("Loading group from server");
+            dialog.setCancelable(false);
+            dialog.setMessage("Loading...");
+            dialog.setMax(1);
+            dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            dialog.show();
+        }
+
+        protected Void doInBackground(SearchResult... args) {
+            dataController.addGroupByRef(args[0].ownerId, args[0].groupName, dialog);
+            while (dialog.getProgress() < dialog.getMax()) {
+                SystemClock.sleep(200);
+            }
+            return null;
+        }
+
+        protected void onPostExecute(Void result) {
+            // do UI work here
+            Log.d("AsyncWork", "ends download async task");
+            if (dialog.isShowing()) {
+                Log.d("AsyncWork", "dismiss download async task");
+                dialog.dismiss();
+            }
+            LoadMapsAsyncTask task = new LoadMapsAsyncTask(MainActivity.this);
+            task.execute();
         }
     }
 
