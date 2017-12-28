@@ -13,7 +13,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputFilter;
-import android.text.Spanned;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -37,11 +36,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
-import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
@@ -76,8 +73,6 @@ public class MainActivity extends AppCompatActivity {
     @Nullable
     private FloorMap currentMap;
 
-//    private GoogleSignInClient mGoogleSignOutClient;
-
     @NonNull
     private final ArrayList<String> groupList = new ArrayList<>();
     @NonNull
@@ -91,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
     @NonNull
     private final ArrayList<SearchResult> findList = new ArrayList<>();
     private ArrayAdapter<SearchResult> findListAdapter;
+    private GoogleSignInClient mGoogleSignInClient;
 
     private void createNewGroupDialog() {
         AlertDialog newGroupDialog = new AlertDialog.Builder(MainActivity.this).create();
@@ -402,7 +398,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-//        Button btnLogOut = findViewById(R.id.btnLogOut);
+        Button btnLogOut = findViewById(R.id.btnLogOut);
         Button btnAddGroup = findViewById(R.id.btnAddGroup);
         FloatingActionButton btnAddMap = findViewById(R.id.btnAddMap);
         SearchView searchView = findViewById(R.id.searchView);
@@ -436,6 +432,10 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
+        btnLogOut.setOnClickListener(v -> {
+            signOut();
+            Toast.makeText(MainActivity.this, "Logged out", Toast.LENGTH_SHORT).show();
+        });
     }
 
     @Override
@@ -453,7 +453,7 @@ public class MainActivity extends AppCompatActivity {
                 .requestEmail()
                 .build();
 
-        GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
 
@@ -488,6 +488,10 @@ public class MainActivity extends AppCompatActivity {
                         afterAuth();
                     }
                 });
+    }
+
+    private void signOut() {
+        mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> logIn());
     }
 
     private void afterAuth() {
