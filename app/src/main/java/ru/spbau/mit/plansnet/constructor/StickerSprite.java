@@ -6,6 +6,8 @@ import android.util.Log;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
 
+import ru.spbau.mit.plansnet.data.objects.Sticker;
+
 import static org.andengine.input.touch.TouchEvent.ACTION_DOWN;
 import static org.andengine.input.touch.TouchEvent.ACTION_MOVE;
 import static org.andengine.input.touch.TouchEvent.ACTION_UP;
@@ -26,9 +28,14 @@ public class StickerSprite extends MapObjectSprite {
         this(pType, pPosition, 0.5f);
     }
 
+    public StickerSprite(Sticker pSticker) {
+        this(StickerType.fromValue(pSticker.getType()),
+                new PointF(pSticker.getPosition().getX(), pSticker.getPosition().getY()),
+                pSticker.getSize());
+    }
+
     public StickerSprite(StickerType pType, PointF pPosition, float pSize) {
         super(textureRegions[pType.getValue()], vertexBufferObjectManager);
-        Log.d("VASYOID", pType.getValue() + "");
         type = pType;
         size = pSize;
         position = new PointF(pPosition.x, pPosition.y);

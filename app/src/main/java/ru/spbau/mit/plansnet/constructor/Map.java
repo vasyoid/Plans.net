@@ -18,7 +18,9 @@ import ru.spbau.mit.plansnet.data.FloorMap;
 import ru.spbau.mit.plansnet.data.objects.Door;
 import ru.spbau.mit.plansnet.data.objects.MapObject;
 import ru.spbau.mit.plansnet.data.objects.Room;
+import ru.spbau.mit.plansnet.data.objects.Sticker;
 import ru.spbau.mit.plansnet.data.objects.Wall;
+import ru.spbau.mit.plansnet.data.objects.Window;
 
 import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.ADD;
 
@@ -49,6 +51,10 @@ public class Map implements Serializable {
                 addObject(new DoorSprite((Door) o));
             } else if (o instanceof Wall) {
                 addObject(new WallSprite((Wall) o));
+            } else if (o instanceof Window) {
+                addObject(new WindowSprite((Window) o));
+            } else if (o instanceof Sticker) {
+                addObject(new StickerSprite((Sticker) o));
             } else if (o instanceof Room) {
                 Room room = (Room) o;
                 RoomSprite roomSprite = createRoom(room.getX(), room.getY(), scene);

@@ -9,11 +9,15 @@ import java.util.List;
 import ru.spbau.mit.plansnet.constructor.DoorSprite;
 import ru.spbau.mit.plansnet.constructor.MapObjectSprite;
 import ru.spbau.mit.plansnet.constructor.RoomSprite;
+import ru.spbau.mit.plansnet.constructor.StickerSprite;
 import ru.spbau.mit.plansnet.constructor.WallSprite;
+import ru.spbau.mit.plansnet.constructor.WindowSprite;
 import ru.spbau.mit.plansnet.data.objects.Door;
 import ru.spbau.mit.plansnet.data.objects.MapObject;
 import ru.spbau.mit.plansnet.data.objects.Room;
+import ru.spbau.mit.plansnet.data.objects.Sticker;
 import ru.spbau.mit.plansnet.data.objects.Wall;
+import ru.spbau.mit.plansnet.data.objects.Window;
 
 /**
  * Created by kostya55516 on 14.10.17.
@@ -51,6 +55,10 @@ public class FloorMap extends AbstractNamedData implements Serializable {
                 objects.add(new Wall((WallSprite) obj));
             } else if (obj instanceof DoorSprite) {
                 objects.add(new Door((DoorSprite) obj));
+            } else if (obj instanceof WindowSprite) {
+                objects.add(new Window((WindowSprite) obj));
+            } else if (obj instanceof StickerSprite) {
+                objects.add(new Sticker((StickerSprite) obj));
             }
         }
         for (ru.spbau.mit.plansnet.constructor.RoomSprite room : roomList) {
