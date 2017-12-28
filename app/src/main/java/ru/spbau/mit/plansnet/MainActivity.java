@@ -501,6 +501,15 @@ public class MainActivity extends AppCompatActivity {
             groupList.clear();
             groupList.addAll(dataController.getAccount().getListOfNames());
 
+            buildingList.clear();
+            floorList.clear();
+
+            groupListAdapter.notifyDataSetChanged();
+            buildingListAdapter.notifyDataSetChanged();
+            floorListAdapter.notifyDataSetChanged();
+
+
+
 //            findListAdapter.notifyDataSetChanged();
 //
 //            SearchTask st = new SearchTask(MainActivity.this);
