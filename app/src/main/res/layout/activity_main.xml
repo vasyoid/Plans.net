@@ -18,8 +18,10 @@
             android:layout_height="30dp">
 
             <ListView
+                android:id="@+id/findListView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:visibility="invisible" />
         </SearchView>
 
         <TextView

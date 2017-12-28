@@ -71,6 +71,10 @@ public class MainActivity extends AppCompatActivity {
     private ArrayAdapter<String> buildingListAdapter;
     private ArrayAdapter<String> floorListAdapter;
 
+    @NonNull
+    private final ArrayList<SearchResult> findList = new ArrayList<>();
+    private ArrayAdapter<SearchResult> findListAdapter;
+
     private void createNewGroupDialog() {
         AlertDialog newGroupDialog = new AlertDialog.Builder(MainActivity.this).create();
         newGroupDialog.setTitle("enter name of new group");
@@ -302,6 +306,22 @@ public class MainActivity extends AppCompatActivity {
 
         btnAddMap.setOnClickListener(v -> createChooseGroupForNewMapDialog());
 
+        ListView findListView = findViewById(R.id.findListView);
+        findListAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1,
+                findList);
+
+        findListView.setAdapter(groupListAdapter);
+
+        findListView.setOnItemClickListener((parent, view, position, id) -> {
+            currentGroup = dataController.getAccount().findByName(groupList.get(position));
+            assert currentGroup != null;
+
+            buildingList.clear();
+            buildingList.addAll(currentGroup.getListOfNames());
+            buildingListAdapter.notifyDataSetChanged();
+        });
+
 
     }
 
@@ -397,12 +417,11 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("AsyncWork", "dismiss load async task");
                 dialog.dismiss();
             }
+
             groupList.clear();
             groupList.addAll(dataController.getAccount().getListOfNames());
-            groupListAdapter.notifyDataSetChanged();
-            buildingListAdapter.notifyDataSetChanged();
-            floorListAdapter.notifyDataSetChanged();
 
+//            findListAdapter.notifyDataSetChanged();
 //
 //            SearchTask st = new SearchTask(MainActivity.this);
 //            st.execute("aul");
@@ -501,10 +520,22 @@ public class MainActivity extends AppCompatActivity {
             if (dialog.isShowing()) {
                 dialog.dismiss();
             }
-            for (SearchResult x : list) {
-//                dataController.addGroupByRef(x.ownerId, x.ownerName); // download found groups
-                Log.d("AsyncWork!!", "in list: " + x.ownerName + " --> " + x.groupName);
-            }
+
+            groupList.clear();  //warning, we clear all data
+            groupListAdapter.notifyDataSetChanged();
+
+
+   //         dataController.getAccount().getListOfNames();
+
+            findList.clear();
+            findList.addAll(list);
+
+//            for (SearchResult x : list) {
+////                dataController.addGroupByRef(x.ownerId, x.ownerName); // download found groups
+////                findList.add(x.groupName);
+//                Log.d("AsyncWork!!", "in list: " + x.ownerName + " --> " + x.groupName);
+//            }
+
         }
     }
 
