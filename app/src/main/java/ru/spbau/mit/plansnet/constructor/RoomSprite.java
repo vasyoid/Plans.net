@@ -36,11 +36,12 @@ public class RoomSprite {
         polygon = new ArrayList<>();
         polygon.addAll(pPolygon);
         Random rand = new Random();
-        roomColor = new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
+        roomColor = new Color(rand.nextFloat() * 0.5f + 0.5f,
+                rand.nextFloat() * 0.5f + 0.5f, rand.nextFloat() * 0.5f + 0.5f);
         title = new Text(initialX, initialY, font, "", 30, vertexBufferObjectManager);
         title.setZIndex(2);
+        title.setColor(Color.BLACK);
         reshape(polygon);
-
     }
 
     public static void setFont(Font pFont) {
