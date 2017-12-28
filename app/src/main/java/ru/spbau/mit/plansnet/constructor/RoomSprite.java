@@ -38,6 +38,7 @@ public class RoomSprite {
         Random rand = new Random();
         roomColor = new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
         title = new Text(initialX, initialY, font, "", 30, vertexBufferObjectManager);
+        title.setZIndex(1);
         reshape(polygon);
 
     }

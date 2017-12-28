@@ -43,7 +43,7 @@ public class StickerSprite extends MapObjectSprite {
         setScale(size);
         super.setPosition(position.x - TEXTURE_SIZE / 2,
                 position.y - TEXTURE_SIZE / 2);
-        setZIndex(1);
+        setZIndex(2);
     }
 
     public static void setTextureRegions(ITextureRegion[] pTextureRegions) {
