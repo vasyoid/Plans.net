@@ -45,11 +45,15 @@
             android:onClick="setItem"
             android:text="@string/sticker" />
 
+        <ScrollView
+            android:layout_height="match_parent"
+            android:layout_width="match_parent" >
+
         <LinearLayout
             android:visibility="gone"
             android:id="@+id/stickersLayout"
             android:orientation="vertical"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_width="match_parent">
 
             <ImageView
@@ -86,14 +90,19 @@
                 android:contentDescription="@string/sticker" />
 
         </LinearLayout>
+        </ScrollView>
 
     </LinearLayout>
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
+        android:layout_alignParentTop="true" >
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:orientation="vertical">
 
         <Button
@@ -155,13 +164,15 @@
 
     </LinearLayout>
 
+    </ScrollView>
+
     <LinearLayout
         android:orientation="vertical"
         android:id="@+id/roomParamsView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="10dp"
         android:background="@android:color/holo_orange_light"
         android:visibility="gone">
 
