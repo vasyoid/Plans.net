@@ -1,6 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-</android.support.constraint.ConstraintLayout>
+    <org.andengine.opengl.view.RenderSurfaceView
+        android:id="@+id/viewerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/roomPropertiesView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        android:background="@android:color/holo_orange_light"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/roomPropertiesName"
+            android:layout_width="300dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:background="#eeeeee"
+            android:ems="10"
+            android:textColor="@android:color/black" />
+
+        <TextView
+            android:id="@+id/roomPropertiesDescription"
+            android:layout_width="300dp"
+            android:layout_height="200dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:background="#eeeeee"
+            android:textColorHint="@android:color/black"
+            android:textColor="@android:color/black"
+            android:gravity="top"
+            android:ems="10" />
+
+        <Button
+            android:id="@+id/roomPropertiesOk"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:layout_gravity="end"
+            android:alpha="255"
+            android:text="@string/ok" />
+
+    </LinearLayout>
+
+</RelativeLayout>

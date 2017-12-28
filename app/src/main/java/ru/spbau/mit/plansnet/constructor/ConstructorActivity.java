@@ -160,7 +160,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL),
                 100f, true, Color.WHITE_ABGR_PACKED_INT));
         final Scene scene = new Scene();
-		scene.setBackground(new Background(1, 1, 0.7f));
+		scene.setBackground(new Background(0.95f, 0.95f, 1f));
         for (int i = 0; i <= GRID_COLS; i++) {
             Line line = new Line(GRID_SIZE * i, 0,
                     GRID_SIZE * i, GRID_SIZE * GRID_ROWS,
@@ -373,7 +373,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 
     @Override
     protected int getRenderSurfaceViewID() {
-        return R.id.renderSurfaceView;
+        return R.id.constructorView;
     }
 
     private void clearField() {
@@ -394,7 +394,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     }
 
     public void showParams(RoomSprite pRoom) {
-        findViewById(R.id.renderSurfaceView).setEnabled(false);
+        findViewById(R.id.constructorView).setEnabled(false);
         View paramsView = findViewById(R.id.roomParamsView);
         paramsView.setVisibility(View.VISIBLE);
         EditText roomName = findViewById(R.id.roomName);
@@ -408,7 +408,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             pRoom.setTitle(title);
             pRoom.setDescription(description);
             paramsView.setVisibility(View.GONE);
-            findViewById(R.id.renderSurfaceView).setEnabled(true);
+            findViewById(R.id.constructorView).setEnabled(true);
         });
     }
 

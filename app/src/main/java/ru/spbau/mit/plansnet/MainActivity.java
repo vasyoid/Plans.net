@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import ru.spbau.mit.plansnet.constructor.ConstructorActivity;
+import ru.spbau.mit.plansnet.constructor.ViewerActivity;
 import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
 import ru.spbau.mit.plansnet.data.UsersGroup;
@@ -535,9 +536,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void openViewer(View v) {
+        Intent intent = new Intent(MainActivity.this, ViewerActivity.class);
+        if (currentMap != null) {
+            intent.putExtra("currentMap", currentMap);
+            startActivity(intent);
+        }
+        else Toast.makeText(this, "No map chosen", Toast.LENGTH_LONG).show();
+    }
+
+
     public void openConstructor(View v) {
-        Intent intent = new Intent(MainActivity.this,
-                ConstructorActivity.class);
+        Intent intent = new Intent(MainActivity.this, ConstructorActivity.class);
         if (currentMap != null) {
             intent.putExtra("currentMap", currentMap);
         }
