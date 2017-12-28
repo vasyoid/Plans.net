@@ -277,32 +277,12 @@ public class MainActivity extends AppCompatActivity {
         deleteDialog.show();
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-//        Button btnLogOut = findViewById(R.id.btnLogOut);
-        Button btnAddGroup = findViewById(R.id.btnAddGroup);
-        FloatingActionButton btnAddMap = findViewById(R.id.btnAddMap);
+    private void setUpGroupListView() {
         ListView groupListView = findViewById(R.id.groupListView);
-        Spinner buildingSpinnerView = findViewById(R.id.buildingSpinnerView);
-        Spinner floorSpinnerView = findViewById(R.id.floorSpinnerView);
 
         groupListAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1,
                 groupList);
-
-        buildingListAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_1,
-                buildingList);
-
-        floorListAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_1,
-                floorList);
-
-        buildingSpinnerView.setAdapter(buildingListAdapter);
-        floorSpinnerView.setAdapter(floorListAdapter);
-
 
         groupListView.setAdapter(groupListAdapter);
         Log.d("ID", "id: " + groupListView.getId());
@@ -329,6 +309,16 @@ public class MainActivity extends AppCompatActivity {
             createDeleteDialog(group.getName(), null, null);
             return true;
         });
+    }
+
+    private void setUpBuildingSpinnerView() {
+        Spinner buildingSpinnerView = findViewById(R.id.buildingSpinnerView);
+
+        buildingListAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1,
+                buildingList);
+
+        buildingSpinnerView.setAdapter(buildingListAdapter);
 
         buildingSpinnerView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -362,6 +352,15 @@ public class MainActivity extends AppCompatActivity {
 //
             return true;
         });
+    }
+
+    private void setUpFloorSpinnerView() {
+        Spinner floorSpinnerView = findViewById(R.id.floorSpinnerView);
+        floorListAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1,
+                floorList);
+
+        floorSpinnerView.setAdapter(floorListAdapter);
 
         floorSpinnerView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -381,6 +380,19 @@ public class MainActivity extends AppCompatActivity {
 //                floorListAdapter.notifyDataSetChanged();
             }
         });
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+//        Button btnLogOut = findViewById(R.id.btnLogOut);
+        Button btnAddGroup = findViewById(R.id.btnAddGroup);
+        FloatingActionButton btnAddMap = findViewById(R.id.btnAddMap);
+
+        setUpGroupListView();
+        setUpBuildingSpinnerView();
+        setUpFloorSpinnerView();
 
         btnAddGroup.setOnClickListener(groupView -> createNewGroupDialog());
 
@@ -508,13 +520,6 @@ public class MainActivity extends AppCompatActivity {
             buildingListAdapter.notifyDataSetChanged();
             floorListAdapter.notifyDataSetChanged();
 
-
-
-//            findListAdapter.notifyDataSetChanged();
-//
-//            SearchTask st = new SearchTask(MainActivity.this);
-//            st.execute("aul");
-
         }
     }
 
@@ -613,11 +618,9 @@ public class MainActivity extends AppCompatActivity {
             groupList.clear();  //warning, we clear all data
             groupListAdapter.notifyDataSetChanged();
 
-
-   //         dataController.getAccount().getListOfNames();
-
             findList.clear();
             findList.addAll(list);
+            findListAdapter.notifyDataSetChanged();
 
 //            for (SearchResult x : list) {
 ////                dataController.addGroupByRef(x.ownerId, x.ownerName); // download found groups
