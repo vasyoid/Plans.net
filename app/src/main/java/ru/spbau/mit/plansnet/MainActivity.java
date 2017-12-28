@@ -114,6 +114,10 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             dataController.addBuildingToGroup(new Building(newBuildingName), chosenGroup);
+            buildingList.clear();
+            if (currentGroup == chosenGroup) {
+                buildingList.addAll(currentGroup.getListOfNames());
+            }
             buildingListAdapter.notifyDataSetChanged();
         });
 
@@ -137,13 +141,17 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "This floor already exists", Toast.LENGTH_LONG).show();
                 return;
             }
-            floorListAdapter.notifyDataSetChanged();
             FloorMap floor = new FloorMap(
                     chosenGroup.getName(),
                     chosenBuilding.getName(),
                     newMapName
             );
             dataController.saveMap(floor);
+            floorList.clear();
+            if (currentBuilding == chosenBuilding) {
+                floorList.addAll(currentBuilding.getListOfNames());
+            }
+            floorListAdapter.notifyDataSetChanged();
         });
 
         newMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
@@ -243,6 +251,13 @@ public class MainActivity extends AppCompatActivity {
             buildingList.clear();
             buildingList.addAll(currentGroup.getListOfNames());
             buildingListAdapter.notifyDataSetChanged();
+
+            floorList.clear();
+            if (buildingList.size() > 0) {
+                currentBuilding = currentGroup.findByName(buildingList.get(0));
+                floorList.addAll(currentBuilding.getListOfNames());
+            }
+            floorListAdapter.notifyDataSetChanged();
         });
 
         buildingSpinnerView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -250,6 +265,8 @@ public class MainActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 floorList.clear();
                 if (currentGroup == null) {
+                    groupList.clear();
+                    groupListAdapter.notifyDataSetChanged();
                     return;
                 }
                 currentBuilding = currentGroup.findByName(buildingList.get(i));
@@ -260,8 +277,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
-                floorList.clear();
-                floorListAdapter.notifyDataSetChanged();
+                Log.d("Spinner", "OnNothingSelected in building");
+//                floorList.clear();
+//                floorListAdapter.notifyDataSetChanged();
             }
         });
 
@@ -269,6 +287,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 if (currentBuilding == null) {
+                    floorList.clear();
+                    floorListAdapter.notifyDataSetChanged();
                     return;
                 }
                 currentMap = currentBuilding.findByName(floorList.get(i));
@@ -276,7 +296,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
-
+                Log.d("Spinner", "OnNothingSelected in floor");
+//                floorList.clear();
+//                floorListAdapter.notifyDataSetChanged();
             }
         });
 
