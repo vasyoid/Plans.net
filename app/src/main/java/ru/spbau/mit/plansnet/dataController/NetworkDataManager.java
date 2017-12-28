@@ -139,8 +139,8 @@ public class NetworkDataManager {
     }
 
     private void downloadByPaths(List<String> floorsPaths, ProgressDialog progressDialog, String owner) {
+        progressDialog.setMax(floorsPaths.size());
         for (final String path : floorsPaths) {
-            progressDialog.setMax(floorsPaths.size());
             storageReference.child(path).getMetadata().addOnCompleteListener(
                     task -> {
                         String newPath = path.replace(owner, userAccount.getUid());

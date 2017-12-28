@@ -55,7 +55,7 @@
                 android:layout_height="match_parent"
                 android:background="@android:drawable/progress_horizontal"
                 android:text="Esc"
-                android:textize="12sp" />
+                android:textSize="12sp" />
 
             <Space
                 android:layout_width="30dp"
