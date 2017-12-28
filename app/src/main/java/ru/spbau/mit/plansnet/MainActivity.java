@@ -1,4 +1,3 @@
-
 package ru.spbau.mit.plansnet;
 
 import android.annotation.SuppressLint;
@@ -57,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private DataController dataController;
     private FirebaseUser user;
 
-    private final Pattern allowedStringPattern = Pattern.compile("[a-zA-Zа-яА-ЯёЁ][a-zA-Zа-яА-ЯёЁ_ ]*");
+    private final Pattern allowedStringPattern = Pattern.compile("[a-zA-Zа-яА-ЯёЁ0-9][a-zA-Zа-яА-ЯёЁ0-9_ ]*");
 
     InputFilter filter = (charSequence, i, i1, spanned, i2, i3) -> {
         if (charSequence != null && !allowedStringPattern.matcher(charSequence).matches()) {
