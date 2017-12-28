@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -71,11 +72,13 @@ public class NetworkDataManager {
                 .child("floors")//need to add some order in future
                 .child(map.getName());
 
-        String pathInStorage = userAccount.getUid() + "/"
+        String pathInStorage = "/" + userAccount.getUid() + "/"
                 + map.getGroupName() + "/"
                 + map.getBuildingName() + "/"
                 + map.getName() + ".plannet";
         floorsRef.child("path").setValue(pathInStorage);
+
+        Log.d("Storage upload", pathInStorage);
 
         //put on storage
         StorageReference storageMapRef = storageReference.child(pathInStorage);
@@ -195,7 +198,15 @@ public class NetworkDataManager {
         } else {
             return;
         }
-        storageRef.delete();
+//        Log.d("STORAGE_DELETE", storageRef.getPath());
+//        storageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+//            @Override
+//            public void onSuccess(Void aVoid) {
+//                Log.d("STORAGE_DELET", "deleted");
+//            }
+//        }).addOnFailureListener(runnable -> {
+//            runnable.printStackTrace();
+//        });
         ref.removeValue();
     }
 

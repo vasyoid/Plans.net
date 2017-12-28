@@ -71,15 +71,17 @@ public class DataController {
                              @Nullable final String mapName)
             throws IllegalArgumentException {
         AbstractDataContainer ref = userAccount;
-        File mapFile = new File(context.getApplicationContext().getFilesDir(),
-                userAccount.getID() + File.pathSeparator + groupName);
+
+        File mapFile = new File(context.getApplicationContext().getFilesDir().getAbsolutePath() +
+                "/" + userAccount.getID() + "/" + groupName);
         AbstractDataContainer next = (AbstractDataContainer) ref.findByName(groupName);
         if (next == null) {
             throw new IllegalArgumentException("Doesn't exists group: " + groupName);
         }
         if (buildingName == null) {
-            mapFile.delete();
+            deleteRecursive(mapFile);
             ref.getAllData().remove(groupName);
+            netManager.deleteReference(groupName, null, null);
             return;
         }
 
@@ -90,8 +92,9 @@ public class DataController {
             throw new IllegalArgumentException("Doesn't exists building: " + buildingName);
         }
         if (mapName == null) {
-            mapFile.delete();
+            deleteRecursive(mapFile);
             ref.getAllData().remove(buildingName);
+            netManager.deleteReference(groupName, buildingName, null);
             return;
         }
 
@@ -102,7 +105,7 @@ public class DataController {
             throw new IllegalArgumentException("Doesn't exists map: " + mapName);
         }
         ref.getAllData().remove(mapName);
-        mapFile.delete();
+        deleteRecursive(mapFile);
 
         netManager.deleteReference(groupName, buildingName, mapName);
     }
@@ -114,12 +117,12 @@ public class DataController {
      */
     public void deleteMap(@NonNull final FloorMap map) {
         File mapFile = new File(context.getApplicationContext().getFilesDir(),
-                userAccount.getID() + File.pathSeparator
-                        + map.getGroupName() + File.pathSeparator
-                        + map.getBuildingName() + File.pathSeparator
+                userAccount.getID() + "/"
+                        + map.getGroupName() + "/"
+                        + map.getBuildingName() + "/"
                         + map.getName() + ".plannet");
         if (mapFile.exists()) {
-            mapFile.delete();
+            deleteRecursive(mapFile);
         }
 
         userAccount.findByName(map.getGroupName())
@@ -240,9 +243,9 @@ public class DataController {
     //private function for writing map to file
     private void writeMap(@NonNull final FloorMap map) {
         File accountFile = new File(context.getApplicationContext().getFilesDir(),
-                userAccount.getID() + File.pathSeparator
-                        + map.getGroupName() + File.pathSeparator
-                        + map.getBuildingName() + File.pathSeparator
+                userAccount.getID() + "/"
+                        + map.getGroupName() + "/"
+                        + map.getBuildingName() + "/"
                         + map.getName() + ".plannet");
         accountFile.getParentFile().mkdirs();
 
@@ -280,5 +283,13 @@ public class DataController {
             Log.d(DATA_TAG, "map can't be read");
             exception.printStackTrace();
         }
+    }
+
+    private void deleteRecursive(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory())
+            for (File child : fileOrDirectory.listFiles())
+                deleteRecursive(child);
+
+        fileOrDirectory.delete();
     }
 }
