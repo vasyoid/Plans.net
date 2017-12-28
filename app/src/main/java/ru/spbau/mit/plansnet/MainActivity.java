@@ -22,6 +22,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -35,6 +36,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
+import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -92,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         newGroupDialog.setTitle("enter name of new group");
 
         final EditText groupNameInput = new EditText(MainActivity.this);
-        groupNameInput.setFilters(new InputFilter[]{ filter });
+        groupNameInput.setFilters(new InputFilter[]{filter});
         newGroupDialog.setView(groupNameInput);
 
         newGroupDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
@@ -118,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
         newBuildingDialog.setTitle("enter name of new building");
 
         final EditText buildingNameInput = new EditText(MainActivity.this);
-        buildingNameInput.setFilters(new InputFilter[]{ filter });
+        buildingNameInput.setFilters(new InputFilter[]{filter});
         newBuildingDialog.setView(buildingNameInput);
 
         newBuildingDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
@@ -147,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
         newMapDialog.setTitle("enter name of new floor");
 
         final EditText mapNameInput = new EditText(MainActivity.this);
-        mapNameInput.setFilters(new InputFilter[]{ filter });
+        mapNameInput.setFilters(new InputFilter[]{filter});
         newMapDialog.setView(mapNameInput);
 
         newMapDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
@@ -229,6 +231,48 @@ public class MainActivity extends AppCompatActivity {
         chooseGroupForNewMapDialog.show();
     }
 
+    private void createDeleteDialog(@NonNull String groupName, @Nullable String buildingName,
+                                    @Nullable String floorName) {
+        AlertDialog deleteDialog = new AlertDialog.Builder(MainActivity.this).create();
+        StringBuilder strBuilder = new StringBuilder(groupName);
+        if (buildingName != null) {
+            strBuilder.append(" : ").append(buildingName);
+        }
+        if (floorName != null) {
+            strBuilder.append(" : ").append(floorName);
+        }
+        deleteDialog.setTitle(strBuilder.toString());
+
+        final TextView questionText = new TextView(MainActivity.this);
+        questionText.setText("Do you want to delete this?");
+        deleteDialog.setView(questionText);
+
+        deleteDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
+            dataController.deleteByPath(groupName, buildingName, floorName);
+            groupList.clear();
+            groupList.addAll(dataController.getAccount().getListOfNames());
+            groupListAdapter.notifyDataSetChanged();
+
+            if (currentGroup != null && groupName.equals(currentGroup.getName())) {
+                currentGroup = null;
+                currentBuilding = null;
+                currentMap = null;
+
+                buildingList.clear();
+                floorList.clear();
+
+                buildingListAdapter.notifyDataSetChanged();
+                floorListAdapter.notifyDataSetChanged();
+            }
+        });
+
+        deleteDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
+                (dialog, which) -> {
+                });
+
+        deleteDialog.show();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -259,8 +303,8 @@ public class MainActivity extends AppCompatActivity {
         groupListView.setAdapter(groupListAdapter);
         Log.d("ID", "id: " + groupListView.getId());
 
-        groupListView.setOnItemClickListener((parent, view, position, id) -> {
-            currentGroup = dataController.getAccount().findByName(groupList.get(position));
+        groupListView.setOnItemClickListener((parent, view, i, id) -> {
+            currentGroup = dataController.getAccount().findByName(groupList.get(i));
             assert currentGroup != null;
 
             buildingList.clear();
@@ -275,6 +319,13 @@ public class MainActivity extends AppCompatActivity {
             floorListAdapter.notifyDataSetChanged();
         });
 
+        groupListView.setOnItemLongClickListener((adapterView, view, i, l) -> {
+            UsersGroup group = dataController.getAccount().findByName(groupList.get(i));
+            assert group != null;
+            createDeleteDialog(group.getName(), null, null);
+            return true;
+        });
+
         buildingSpinnerView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
@@ -284,6 +335,7 @@ public class MainActivity extends AppCompatActivity {
                     groupListAdapter.notifyDataSetChanged();
                     return;
                 }
+
                 currentBuilding = currentGroup.findByName(buildingList.get(i));
                 assert currentBuilding != null;
                 floorList.addAll(currentBuilding.getListOfNames());
@@ -296,6 +348,15 @@ public class MainActivity extends AppCompatActivity {
 //                floorList.clear();
 //                floorListAdapter.notifyDataSetChanged();
             }
+        });
+
+        buildingSpinnerView.setOnItemLongClickListener((adapterView, view, i, l) -> {
+//            assert currentGroup != null;
+//            Building building = currentGroup.findByName(groupList.get(i));
+//            assert building != null;
+//            createDeleteDialog(currentGroup.getName(), building.getName(), null);
+//
+            return true;
         });
 
         floorSpinnerView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
