@@ -3,6 +3,10 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion 26
 
+    lintOptions {
+        abortOnError false
+    }
+
     useLibrary  'org.apache.http.legacy'
 
     defaultConfig {

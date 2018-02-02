@@ -116,11 +116,7 @@ public class DataController {
      * @param map map which will be deleted
      */
     public void deleteMap(@NonNull final FloorMap map) {
-        File mapFile = new File(context.getApplicationContext().getFilesDir(),
-                userAccount.getID() + "/"
-                        + map.getGroupName() + "/"
-                        + map.getBuildingName() + "/"
-                        + map.getName() + ".plannet");
+        File mapFile = formingFileFromMap(map);
         if (mapFile.exists()) {
             deleteRecursive(mapFile);
         }
@@ -242,11 +238,7 @@ public class DataController {
 
     //private function for writing map to file
     private void writeMap(@NonNull final FloorMap map) {
-        File accountFile = new File(context.getApplicationContext().getFilesDir(),
-                userAccount.getID() + "/"
-                        + map.getGroupName() + "/"
-                        + map.getBuildingName() + "/"
-                        + map.getName() + ".plannet");
+        File accountFile = formingFileFromMap(map);
         accountFile.getParentFile().mkdirs();
 
         try (ObjectOutputStream ous = new ObjectOutputStream(new FileOutputStream(accountFile))) {
@@ -286,10 +278,22 @@ public class DataController {
     }
 
     private void deleteRecursive(File fileOrDirectory) {
-        if (fileOrDirectory.isDirectory())
-            for (File child : fileOrDirectory.listFiles())
+        if (fileOrDirectory.isDirectory()) {
+            for (File child : fileOrDirectory.listFiles()) {
                 deleteRecursive(child);
+            }
+        }
 
         fileOrDirectory.delete();
     }
+
+    private File formingFileFromMap(@NonNull final FloorMap map) {
+        return new File(context.getApplicationContext().getFilesDir(),
+                userAccount.getID() + "/"
+                        + map.getGroupName() + "/"
+                        + map.getBuildingName() + "/"
+                        + map.getName() + ".plannet"
+        );
+    }
+
 }

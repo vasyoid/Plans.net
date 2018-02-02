@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Generic abstract class which contains HashMap of type T and works with this data
@@ -16,7 +17,7 @@ import java.util.HashMap;
 public abstract class AbstractDataContainer<T extends AbstractNamedData>
         extends AbstractNamedData implements Serializable {
     @NonNull
-    private final HashMap<String, T> data;
+    private final Map<String, T> data;
 
     public AbstractDataContainer(@NonNull String name) {
         super(name);
@@ -33,7 +34,7 @@ public abstract class AbstractDataContainer<T extends AbstractNamedData>
     }
 
     @NonNull
-    public HashMap<String, T> getAllData() {
+    public Map<String, T> getAllData() {
         return data;
     }
 
