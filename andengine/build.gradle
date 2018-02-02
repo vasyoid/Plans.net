@@ -4,7 +4,7 @@ android {
     compileSdkVersion 26
 
     lintOptions {
-        abortOnError false
+        abortOnError false //TODO: what the hell is going on with it?
     }
 
     useLibrary  'org.apache.http.legacy'

@@ -73,17 +73,17 @@ public class MainActivity extends AppCompatActivity {
     private FloorMap currentMap;
 
     @NonNull
-    private final ArrayList<String> groupList = new ArrayList<>();
+    private final List<String> groupList = new ArrayList<>();
     @NonNull
-    private final ArrayList<String> buildingList = new ArrayList<>();
+    private final List<String> buildingList = new ArrayList<>();
     @NonNull
-    private final ArrayList<String> floorList = new ArrayList<>();
+    private final List<String> floorList = new ArrayList<>();
     private ArrayAdapter<String> groupListAdapter;
     private ArrayAdapter<String> buildingListAdapter;
     private ArrayAdapter<String> floorListAdapter;
 
     @NonNull
-    private final ArrayList<SearchResult> findList = new ArrayList<>();
+    private final List<SearchResult> findList = new ArrayList<>();
     private ArrayAdapter<SearchResult> findListAdapter;
     private GoogleSignInClient mGoogleSignInClient;
 
@@ -91,12 +91,12 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog newGroupDialog = new AlertDialog.Builder(MainActivity.this).create();
         newGroupDialog.setTitle("enter name of new group");
 
-        final EditText groupNameInput = new EditText(MainActivity.this);
+        EditText groupNameInput = new EditText(MainActivity.this);
         groupNameInput.setFilters(new InputFilter[]{filter});
         newGroupDialog.setView(groupNameInput);
 
         newGroupDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
-            final String newGroupName = groupNameInput.getText().toString();
+            String newGroupName = groupNameInput.getText().toString();
             if (dataController.getAccount().findByName(newGroupName) != null) {
                 Toast.makeText(MainActivity.this, "This group already exists", Toast.LENGTH_LONG).show();
                 return;
@@ -107,8 +107,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         newGroupDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
-                (dialog, which) -> {
-                });
+                (dialog, which) -> {});
 
         newGroupDialog.show();
     }
@@ -117,12 +116,12 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog newBuildingDialog = new AlertDialog.Builder(MainActivity.this).create();
         newBuildingDialog.setTitle("enter name of new building");
 
-        final EditText buildingNameInput = new EditText(MainActivity.this);
+        EditText buildingNameInput = new EditText(MainActivity.this);
         buildingNameInput.setFilters(new InputFilter[]{filter});
         newBuildingDialog.setView(buildingNameInput);
 
         newBuildingDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
-            final String newBuildingName = buildingNameInput.getText().toString();
+            String newBuildingName = buildingNameInput.getText().toString();
             if (chosenGroup.findByName(newBuildingName) != null) {
                 Toast.makeText(MainActivity.this, "This building already exists", Toast.LENGTH_LONG).show();
                 return;
@@ -136,8 +135,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         newBuildingDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
-                (dialog, which) -> {
-                });
+                (dialog, which) -> {});
 
         newBuildingDialog.show();
     }
@@ -146,12 +144,12 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog newMapDialog = new AlertDialog.Builder(MainActivity.this).create();
         newMapDialog.setTitle("enter name of new floor");
 
-        final EditText mapNameInput = new EditText(MainActivity.this);
+        EditText mapNameInput = new EditText(MainActivity.this);
         mapNameInput.setFilters(new InputFilter[]{filter});
         newMapDialog.setView(mapNameInput);
 
         newMapDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
-            final String newMapName = mapNameInput.getText().toString();
+            String newMapName = mapNameInput.getText().toString();
             if (chosenBuilding.findByName(newMapName) != null) {
                 Toast.makeText(MainActivity.this, "This floor already exists", Toast.LENGTH_LONG).show();
                 return;
@@ -170,8 +168,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         newMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
-                (dialog, which) -> {
-                });
+                (dialog, which) -> {});
 
         newMapDialog.show();
     }
@@ -180,10 +177,10 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog chooseBuildingsForNewMapDialog = new AlertDialog.Builder(MainActivity.this).create();
         chooseBuildingsForNewMapDialog.setTitle("select building");
 
-        final ListView buildingsSuggestedList = new ListView(MainActivity.this);
+        ListView buildingsSuggestedList = new ListView(MainActivity.this);
         chooseBuildingsForNewMapDialog.setView(buildingsSuggestedList);
 
-        ArrayList<String> buildingList = chosenGroup.getListOfNames();
+        final List<String> buildingList = chosenGroup.getListOfNames();
         ArrayAdapter<String> buildingAdapter = new ArrayAdapter<>(MainActivity.this,
                 android.R.layout.simple_list_item_1, buildingList);
 
@@ -197,8 +194,7 @@ public class MainActivity extends AppCompatActivity {
         chooseBuildingsForNewMapDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Add new building",
                 (dialog, which) -> createNewBuildingDialog(chosenGroup));
         chooseBuildingsForNewMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
-                (dialog, which) -> {
-                });
+                (dialog, which) -> {});
 
         chooseBuildingsForNewMapDialog.show();
     }
@@ -207,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog chooseGroupForNewMapDialog = new AlertDialog.Builder(MainActivity.this).create();
         chooseGroupForNewMapDialog.setTitle("select group");
 
-        final ListView groupsSuggestedList = new ListView(MainActivity.this);
+        ListView groupsSuggestedList = new ListView(MainActivity.this);
         chooseGroupForNewMapDialog.setView(groupsSuggestedList);
 
         ArrayAdapter<String> groupAdapter = new ArrayAdapter<>(MainActivity.this,
@@ -224,24 +220,23 @@ public class MainActivity extends AppCompatActivity {
         chooseGroupForNewMapDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Add new group",
                 (dialog, which) -> createNewGroupDialog());
         chooseGroupForNewMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
-                (dialog, which) -> {
-                });
+                (dialog, which) -> {});
         chooseGroupForNewMapDialog.show();
     }
 
     private void createDeleteDialog(@NonNull String groupName, @Nullable String buildingName,
                                     @Nullable String floorName) {
         AlertDialog deleteDialog = new AlertDialog.Builder(MainActivity.this).create();
-        StringBuilder strBuilder = new StringBuilder(groupName);
+        String title = groupName;
         if (buildingName != null) {
-            strBuilder.append(" : ").append(buildingName);
+            title += " : " + buildingName;
         }
         if (floorName != null) {
-            strBuilder.append(" : ").append(floorName);
+            title += " : " + floorName;
         }
-        deleteDialog.setTitle(strBuilder.toString());
+        deleteDialog.setTitle(title);
 
-        final TextView questionText = new TextView(MainActivity.this);
+        TextView questionText = new TextView(MainActivity.this);
         questionText.setText("Do you want to delete this?");
         deleteDialog.setView(questionText);
 
@@ -265,8 +260,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         deleteDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
-                (dialog, which) -> {
-                });
+                (dialog, which) -> {});
 
         deleteDialog.show();
     }
@@ -479,13 +473,15 @@ public class MainActivity extends AppCompatActivity {
         AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
         auth.signInWithCredential(credential)
                 .addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) {
-                        // Sign in success, update UI with the signed-in user's information
-                        Log.d(LOG_IN_TAG, "signInWithCredential:success");
-                        Log.d("MYTEST", "firebase auth");
-                        user = auth.getCurrentUser();
-                        afterAuth();
+                    if (!task.isSuccessful()) {
+                        return;
                     }
+
+                    // Sign in success, update UI with the signed-in user's information
+                    Log.d(LOG_IN_TAG, "signInWithCredential:success");
+                    Log.d("MYTEST", "firebase auth");
+                    user = auth.getCurrentUser();
+                    afterAuth();
                 });
     }
 
@@ -519,7 +515,7 @@ public class MainActivity extends AppCompatActivity {
             dialog.show();
         }
 
-        protected Void doInBackground(Void... args) {
+        protected Void doInBackground(Void... args) { //TODO: think about void in this function
             Log.d("AsyncWork", "load async starts work");
             dataController.loadLocalFiles();
             Log.d("AsyncWork", "load async task done");
@@ -605,11 +601,10 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("StaticFieldLeak")
     private class SearchTask extends AsyncTask<String, Void, Void> {
         private ProgressDialog dialog;
-        private List<SearchResult> list; // list with <OwnerId, OwnerName, Group>. It is keys in Database
+        private List<SearchResult> list = new ArrayList<>(); // list with <OwnerId, OwnerName, Group>. It is keys in Database
 
         public SearchTask(MainActivity activity) {
             dialog = new ProgressDialog(activity);
-            list = new ArrayList<>();
         }
 
         @Override
@@ -618,7 +613,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         protected Void doInBackground(String... args) {
-            if (args.length < 1) {
+            if (args.length == 0) {
                 Log.d("AsyncWork", "nothing to search");
                 return null;
             }
@@ -725,8 +720,9 @@ public class MainActivity extends AppCompatActivity {
         if (currentMap != null) {
             intent.putExtra("currentMap", currentMap);
             startActivity(intent);
+        } else {
+            Toast.makeText(this, "No map chosen", Toast.LENGTH_LONG).show();
         }
-        else Toast.makeText(this, "No map chosen", Toast.LENGTH_LONG).show();
     }
 
 
