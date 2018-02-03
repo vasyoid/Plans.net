@@ -100,7 +100,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     }
 
     @Override
-	public EngineOptions onCreateEngineOptions() {
+    public EngineOptions onCreateEngineOptions() {
         setCameraResolution();
         GRID_SIZE = (100000 / CAMERA_HEIGHT);
         Map.setGridSize(GRID_SIZE);
@@ -112,10 +112,10 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     	camera.setBounds(0, 0, GRID_SIZE * GRID_COLS, GRID_SIZE * GRID_ROWS);
     	camera.setBoundsEnabled(true);
     	return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new FillResolutionPolicy(), camera);
-	}
+    }
 
-	@Override
-	protected void onCreateResources() {
+    @Override
+    protected void onCreateResources() {
         try {
             ITexture wallTexture = new BitmapTexture(this.getTextureManager(),
                     () -> getAssets().open("wall.png"));
@@ -151,8 +151,8 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
         }
     }
 
-	@Override
-	protected Scene onCreateScene() {
+    @Override
+    protected Scene onCreateScene() {
         ((ImageView) (findViewById(R.id.imageExit))).setColorFilter(GREEN, PorterDuff.Mode.ADD);
         MapObjectSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
         RoomSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
@@ -161,7 +161,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL),
                 100f, true, Color.WHITE_ABGR_PACKED_INT));
         final Scene scene = new Scene();
-		scene.setBackground(new Background(0.95f, 0.95f, 1f));
+        scene.setBackground(new Background(0.95f, 0.95f, 1f));
         for (int i = 0; i <= GRID_COLS; i++) {
             Line line = new Line(GRID_SIZE * i, 0,
                     GRID_SIZE * i, GRID_SIZE * GRID_ROWS,
@@ -323,7 +323,6 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                         break;
                     default:
                         break;
-
                 }
                 return false;
             }
@@ -376,7 +375,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 
         scene.sortChildren();
         return scene;
-	}
+    }
 
     @Override
     protected int getLayoutID() {
@@ -389,8 +388,8 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     }
 
     private void clearField() {
-	    map.clear();
-	    map.detachRemoved(mEngine);
+        map.clear();
+        map.detachRemoved(mEngine);
     }
 
     private void hideKeyboard() {
@@ -543,5 +542,4 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     private enum MapItem {
         WALL, DOOR, WINDOW, STICKER
     }
-
 }
