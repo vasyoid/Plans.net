@@ -63,11 +63,6 @@ public class StickerSprite extends MapObjectSprite {
     }
 
     @Override
-    public MapObjectSprite copy() {
-        return new StickerSprite(type, position, size);
-    }
-
-    @Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent,
                                  float pTouchAreaLocalX, float pTouchAreaLocalY) {
         if (MAP.getTouchState() == ConstructorActivity.ActionState.MOVE_STICKER) {
@@ -109,6 +104,8 @@ public class StickerSprite extends MapObjectSprite {
                     setScale(size);
                     firstTouch = previousTouch = null;
                     break;
+                default:
+                    break;
             }
         } else if (MAP.getTouchState() == ConstructorActivity.ActionState.DEL &&
                 pSceneTouchEvent.getAction() == ACTION_DOWN) {
@@ -141,8 +138,9 @@ public class StickerSprite extends MapObjectSprite {
                     return STAIRS;
                 case 3:
                     return WC;
+                default:
+                    return null;
             }
-            return null;
         }
 
     }

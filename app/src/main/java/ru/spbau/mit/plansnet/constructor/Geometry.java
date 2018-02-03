@@ -114,9 +114,10 @@ public class Geometry {
                 (line.getY2() - line.getY1()) * (line.getY2() - line.getY1()));
     }
 
-    public static void normalize(Line line) {
+    public static Line normalize(Line line) {
         float len = length(line);
-        line.setPosition(0, 0, line.getX2() / len, line.getY2() / len);
+        return new Line(0, 0, line.getX2() / len, line.getY2() / len,
+                line.getVertexBufferObjectManager());
     }
 
     public static float getAngle(Line l1, Line l2) {
@@ -127,8 +128,8 @@ public class Geometry {
         if (isOnePoint(l1) || isOnePoint(l2) || linesJoinable(l1, l2)) {
             return 0;
         }
-        normalize(l1);
-        normalize(l2);
+        l1 = normalize(l1);
+        l2 = normalize(l2);
         float result = (float) Math.acos(l1.getX2() * l2.getX2() + l1.getY2() * l2.getY2());
         if (l1.getX2() * l2.getY2() - l1.getY2() * l2.getX2() < 0) {
             result *= -1;

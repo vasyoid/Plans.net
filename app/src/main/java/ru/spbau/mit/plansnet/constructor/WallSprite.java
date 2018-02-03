@@ -8,12 +8,6 @@ public class WallSprite extends MapObjectLinear {
 
     private static ITextureRegion textureRegion;
 
-    public MapObjectSprite copy() {
-        MapObjectSprite result = new WallSprite();
-        result.setPosition(getPosition());
-        return result;
-    }
-
     public WallSprite() {
         super(textureRegion);
     }

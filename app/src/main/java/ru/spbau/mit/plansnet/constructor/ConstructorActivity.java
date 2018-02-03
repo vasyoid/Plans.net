@@ -17,6 +17,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 
 import java.io.IOException;
+import java.util.concurrent.Semaphore;
 
 import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
@@ -60,7 +61,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     private static int GRID_SIZE;
 
     private ActionState state = ActionState.ADD;
-    private int item = 0;
+    private MapItem item = MapItem.WALL;
     private StickerSprite.StickerType currentSticker = EXIT;
     private Map map;
     private FloorMap toOpenMap;
@@ -138,8 +139,8 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 new BitmapTexture(this.getTextureManager(),
                         () -> getAssets().open("wc.png"))
             };
-            ITextureRegion[] stickersTextureRegions = new ITextureRegion[4];
-            for (int i = 0; i < 4; i++) {
+            ITextureRegion[] stickersTextureRegions = new ITextureRegion[stickersTextures.length];
+            for (int i = 0; i < stickersTextures.length; i++) {
                 stickersTextures[i].load();
                 stickersTextureRegions[i] = TextureRegionFactory
                         .extractFromTexture(stickersTextures[i]);
@@ -196,13 +197,15 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                             case COLOR:
                                 return true;
                             case PARAMS:
-                                runOnUiThread(() -> showParams(room));
+                                showParams(room);
                                 return false;
+                            default:
+                                Log.e("VASYOID", "wrong state in onSceneTouchEvent function");
                         }
                     }
                 }
                 if (state == ActionState.DEL) {
-                    runOnUpdateThread(() -> map.detachRemoved());
+                    map.detachRemoved(mEngine);
                     return false;
                 }
                 if (state == ActionState.MOVE_STICKER) {
@@ -228,7 +231,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                         RoomSprite currentRoom = map.createRoom(pSceneTouchEvent.getX(),
                                 pSceneTouchEvent.getY(), pScene);
                         if (currentRoom != null) {
-                            runOnUiThread(() -> showParams(currentRoom));
+                            showParams(currentRoom);
                         }
                     }
                     return false;
@@ -242,7 +245,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 PointF firstPoint = new PointF(firstX, firstY);
                 PointF previousPoint = new PointF(previousX, previousY);
                 PointF currentPoint = new PointF(currentX, currentY);
-                if (state == ActionState.ADD && item == 3) {
+                if (state == ActionState.ADD && item == MapItem.STICKER) {
                     if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
                         StickerSprite sticker = new StickerSprite(currentSticker, currentPoint);
                         map.addObject(sticker);
@@ -258,12 +261,18 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                         firstY = previousY = currentY;
                         if (state != ActionState.MOVE_WALL) {
                             currentLine.setPosition(firstX, firstY, currentX, currentY);
-                            if (item == 0) {
-                                currentAdded = new WallSprite();
-                            } else if (item == 1) {
-                                currentAdded = new DoorSprite();
-                            } else {
-                                currentAdded = new WindowSprite();
+                            switch (item) {
+                                case WALL:
+                                    currentAdded = new WallSprite();
+                                    break;
+                                case DOOR:
+                                    currentAdded = new DoorSprite();
+                                    break;
+                                case WINDOW:
+                                    currentAdded = new WindowSprite();
+                                    break;
+                                default:
+                                    Log.e("VASYOID", "wrong item in onSceneTouchEvent function");
                             }
                             currentAdded.setPosition(currentLine);
                             pScene.attachChild(currentAdded);
@@ -290,10 +299,10 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                         break;
                     case TouchEvent.ACTION_UP:
                         if (state == ActionState.MOVE_WALL) {
-                            runOnUpdateThread(() -> map.detachRemoved());
+                            map.detachRemoved(mEngine);
                             map.setScaleByPoint(firstPoint, 1.0f, 1.0f);
                             if (!firstPoint.equals(currentPoint)) {
-                                if (map.checkIntersections(firstPoint)) {
+                                if (map.hasIntersections(firstPoint)) {
                                     map.moveObjects(firstPoint, currentPoint, firstPoint);
                                     map.updateRooms(scene);
                                 } else {
@@ -302,16 +311,19 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                             }
                         } else {
                             if ((currentX != firstX || currentY != firstY) &&
-                                    !map.checkIntersections(currentAdded)) {
+                                    !map.hasIntersections(currentAdded)) {
                                 map.addObject(currentAdded);
                                 pScene.sortChildren();
-                                runOnUpdateThread(() -> map.detachRemoved());
+                                map.detachRemoved(mEngine);
                             } else {
                                 pScene.detachChild(currentAdded);
                             }
                             currentLine.setPosition(0, 0, 0, 0);
                         }
                         break;
+                    default:
+                        break;
+
                 }
                 return false;
             }
@@ -378,7 +390,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 
     private void clearField() {
 	    map.clear();
-	    runOnUpdateThread(() -> map.detachRemoved());
+	    map.detachRemoved(mEngine);
     }
 
     private void hideKeyboard() {
@@ -394,22 +406,31 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     }
 
     public void showParams(RoomSprite pRoom) {
-        findViewById(R.id.constructorView).setEnabled(false);
-        View paramsView = findViewById(R.id.roomParamsView);
-        paramsView.setVisibility(View.VISIBLE);
-        EditText roomName = findViewById(R.id.roomName);
-        EditText roomDescription = findViewById(R.id.roomDescription);
-        roomName.setText(pRoom.getTitle());
-        roomDescription.setText(pRoom.getDescription());
-        paramsView.findViewById(R.id.roomParamsOk).setOnClickListener(v1 -> {
-            hideKeyboard();
-            String title = roomName.getText().toString();
-            String description = roomDescription.getText().toString();
-            pRoom.setTitle(title);
-            pRoom.setDescription(description);
-            paramsView.setVisibility(View.GONE);
-            findViewById(R.id.constructorView).setEnabled(true);
+        Semaphore mutex = new Semaphore(1);
+        runOnUiThread(() -> {
+            findViewById(R.id.constructorView).setEnabled(false);
+            View paramsView = findViewById(R.id.roomParamsView);
+            paramsView.setVisibility(View.VISIBLE);
+            EditText roomName = findViewById(R.id.roomName);
+            EditText roomDescription = findViewById(R.id.roomDescription);
+            roomName.setText(pRoom.getTitle());
+            roomDescription.setText(pRoom.getDescription());
+            paramsView.findViewById(R.id.roomParamsOk).setOnClickListener(v1 -> {
+                hideKeyboard();
+                String title = roomName.getText().toString();
+                String description = roomDescription.getText().toString();
+                pRoom.setTitle(title);
+                pRoom.setDescription(description);
+                paramsView.setVisibility(View.GONE);
+                findViewById(R.id.constructorView).setEnabled(true);
+            });
+            mutex.release();
         });
+        try {
+            mutex.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void setSticker(View v) {
@@ -431,6 +452,9 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             case R.id.imageWC:
                 currentSticker = WC;
                 break;
+            default:
+                Log.e("VASYOID", "wrong view id in setSticker function");
+
         }
     }
 
@@ -449,17 +473,19 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 
         switch (v.getId()) {
             case R.id.buttonWall:
-                item = 0;
+                item = MapItem.WALL;
                 break;
             case R.id.buttonDoor:
-                item = 1;
+                item = MapItem.DOOR;
                 break;
             case R.id.buttonWindow:
-                item = 2;
+                item = MapItem.WINDOW;
                 break;
             case R.id.buttonSticker:
-                item = 3;
+                item = MapItem.STICKER;
                 break;
+            default:
+                Log.e("VASYOID", "wrong view id setItem function");
         }
     }
 
@@ -502,14 +528,20 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 state = ActionState.PARAMS;
                 break;
             case R.id.buttonClear:
-                runOnUpdateThread(this::clearField);
+                clearField();
                 break;
+            default:
+                Log.e("VASYOID", "wrong view id in setState function");
         }
         map.setActionState(state);
     }
 
     public enum ActionState {
         ADD, DEL, MOVE, MOVE_WALL, MOVE_STICKER, COLOR, PARAMS
+    }
+
+    private enum MapItem {
+        WALL, DOOR, WINDOW, STICKER
     }
 
 }

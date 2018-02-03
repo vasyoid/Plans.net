@@ -2,15 +2,12 @@ package ru.spbau.mit.plansnet.constructor;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.andengine.engine.camera.Camera;
@@ -38,9 +35,6 @@ import java.io.IOException;
 
 import ru.spbau.mit.plansnet.R;
 import ru.spbau.mit.plansnet.data.FloorMap;
-
-import static org.andengine.input.touch.TouchEvent.ACTION_DOWN;
-import static org.andengine.input.touch.TouchEvent.ACTION_MOVE;
 
 public class ViewerActivity extends SimpleLayoutGameActivity {
     private static int CAMERA_WIDTH = 0;
@@ -163,7 +157,7 @@ public class ViewerActivity extends SimpleLayoutGameActivity {
             if (pSceneTouchEvent.isActionDown()) {
                 RoomSprite room = map.getRoomTouched(pSceneTouchEvent);
                 if (room != null) {
-                    runOnUiThread(() -> showProperties(room));
+                    runOnUiThread(() -> showParams(room));
                 }
                 mInitialTouchX = pSceneTouchEvent.getX();
                 mInitialTouchY = pSceneTouchEvent.getY();
@@ -235,7 +229,7 @@ public class ViewerActivity extends SimpleLayoutGameActivity {
         return R.id.viewerView;
     }
 
-    public void showProperties(RoomSprite pRoom) {
+    public void showParams(RoomSprite pRoom) {
         findViewById(R.id.viewerView).setEnabled(false);
         View paramsView = findViewById(R.id.roomPropertiesView);
         paramsView.setVisibility(View.VISIBLE);

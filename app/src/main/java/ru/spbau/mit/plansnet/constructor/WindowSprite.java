@@ -9,12 +9,6 @@ public class WindowSprite extends MapObjectLinear {
 
     private static ITextureRegion textureRegion;
 
-    public MapObjectSprite copy() {
-        MapObjectSprite result = new WindowSprite();
-        result.setPosition(getPosition());
-        return result;
-    }
-
     public WindowSprite() {
         super(textureRegion);
     }
