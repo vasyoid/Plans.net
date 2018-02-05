@@ -1,8 +1,8 @@
 package ru.spbau.mit.plansnet.constructor;
 
 import android.graphics.PointF;
-import android.util.Log;
 
+import org.andengine.engine.Engine;
 import org.andengine.entity.primitive.Line;
 import org.andengine.entity.scene.Scene;
 import org.andengine.input.touch.TouchEvent;
@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import ru.spbau.mit.plansnet.data.FloorMap;
 import ru.spbau.mit.plansnet.data.objects.Door;
@@ -26,26 +27,19 @@ import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.
 
 public class Map implements Serializable {
 
-    private List<MapObjectSprite> objects;
-    private List<RoomSprite> rooms;
-    private List<MapObjectSprite> removedObjects;
-    private List<RoomSprite> removedRooms;
-    private HashMap<PointF, HashSet<MapObjectLinear>> linearObjectsByCell;
+    private List<MapObjectSprite> objects = new LinkedList<>();
+    private List<RoomSprite> rooms = new LinkedList<>();
+    private List<MapObjectSprite> removedObjects = new LinkedList<>();
+    private List<RoomSprite> removedRooms = new LinkedList<>();
+    private HashMap<PointF, HashSet<MapObjectLinear>> linearObjectsByCell = new HashMap<>();
     private ConstructorActivity.ActionState touchState = ADD;
     private static int gridSize = 0;
     private static int gridCols = 0;
     private static int gridRows = 0;
 
-    Map() {
-        objects = new LinkedList<>();
-        rooms = new LinkedList<>();
-        removedObjects = new LinkedList<>();
-        removedRooms = new LinkedList<>();
-        linearObjectsByCell = new HashMap<>();
-    }
+    Map() { }
 
     Map(FloorMap pMap, Scene scene) {
-        this();
         for (MapObject o : pMap.getArrayData()) {
             if (o instanceof Door) {
                 addObject(new DoorSprite((Door) o));
@@ -214,15 +208,24 @@ public class Map implements Serializable {
         removedRooms.add(room);
     }
 
-    public void detachRemoved() {
-        for (MapObjectSprite o : removedObjects) {
-            o.detachSelf();
+    public void detachRemoved(Engine pEngine) {
+        Semaphore mutex = new Semaphore(1);
+        pEngine.runOnUpdateThread(() -> {
+            for (MapObjectSprite o : removedObjects) {
+                o.detachSelf();
+            }
+            for (RoomSprite r : removedRooms) {
+                r.detachSelf();
+            }
+            removedObjects.clear();
+            removedRooms.clear();
+            mutex.release();
+        });
+        try {
+            mutex.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        for (RoomSprite r : removedRooms) {
-            r.detachSelf();
-        }
-        removedObjects.clear();
-        removedRooms.clear();
     }
 
     public void clear() {
@@ -232,19 +235,19 @@ public class Map implements Serializable {
         rooms.clear();
     }
 
-    public boolean checkIntersections(PointF pPoint) {
+    public boolean hasIntersections(PointF pPoint) {
         if (!linearObjectsByCell.containsKey(pPoint)) {
             return false;
         }
         for (MapObjectLinear object : linearObjectsByCell.get(pPoint)) {
-            if (checkIntersections(object)) {
+            if (hasIntersections(object)) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean checkIntersections(MapObjectLinear pObject) {
+    public boolean hasIntersections(MapObjectLinear pObject) {
         for (MapObjectSprite o : objects) {
             if (!(o instanceof MapObjectLinear)) {
                 continue;

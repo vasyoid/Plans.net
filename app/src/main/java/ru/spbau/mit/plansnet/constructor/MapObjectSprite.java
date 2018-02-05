@@ -14,8 +14,6 @@ public abstract class MapObjectSprite extends Sprite {
         vertexBufferObjectManager = pVertexBufferObjectManager;
     }
 
-    public abstract MapObjectSprite copy();
-
     public MapObjectSprite(ITextureRegion pTextureRegion, VertexBufferObjectManager pVertexBufferObjectManager) {
         this(0, 0, pTextureRegion, pVertexBufferObjectManager);
     }
