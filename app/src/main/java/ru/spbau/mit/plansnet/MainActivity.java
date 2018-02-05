@@ -387,24 +387,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Button btnLogOut = findViewById(R.id.btnLogOut);
-        Button btnAddGroup = findViewById(R.id.btnAddGroup);
-        FloatingActionButton btnAddMap = findViewById(R.id.btnAddMap);
+    private void setUpSearchView() {
         SearchView searchView = findViewById(R.id.searchView);
-
-        setUpGroupListView();
-        setUpBuildingSpinnerView();
-        setUpFloorSpinnerView();
-        setUpFindListView();
-
-        btnAddGroup.setOnClickListener(groupView -> createNewGroupDialog());
-
-        btnAddMap.setOnClickListener(v -> createChooseGroupForNewMapDialog());
-
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String text) {
@@ -424,6 +408,25 @@ public class MainActivity extends AppCompatActivity {
             findListAdapter.notifyDataSetChanged();
             return false;
         });
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        Button btnLogOut = findViewById(R.id.btnLogOut);
+        Button btnAddGroup = findViewById(R.id.btnAddGroup);
+        FloatingActionButton btnAddMap = findViewById(R.id.btnAddMap);
+
+        setUpGroupListView();
+        setUpBuildingSpinnerView();
+        setUpFloorSpinnerView();
+        setUpFindListView();
+        setUpSearchView();
+
+        btnAddGroup.setOnClickListener(groupView -> createNewGroupDialog());
+
+        btnAddMap.setOnClickListener(v -> createChooseGroupForNewMapDialog());
 
         btnLogOut.setOnClickListener(v -> {
             signOut();
@@ -692,26 +695,30 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == RC_GET_TOKEN) {
+        switch (requestCode) {
+        case RC_GET_TOKEN:
             // [START get_id_token]
             // This task is always completed immediately, there is no need to attach an
             // asynchronous listener.
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             handleSignInResult(task);
             // [END get_id_token]
-        } else if (requestCode == CONSTRUCTOR_TOKEN) {
-            if (data != null) {
-                FloorMap toSaveMap = (FloorMap) data.getSerializableExtra("toSaveMap");
-                if (toSaveMap != null) {
-                    dataController.saveMap(toSaveMap);
-                    floorListAdapter.notifyDataSetChanged();
-                }
-                currentMap = toSaveMap;
-                groupList.clear();
-            } else {
+            break;
+
+        case CONSTRUCTOR_TOKEN:
+            if (data == null) {
                 Toast.makeText(this, "Nothing to save", Toast.LENGTH_LONG).show();
+                break;
             }
+
+            FloorMap toSaveMap = (FloorMap) data.getSerializableExtra("toSaveMap");
+            if (toSaveMap != null) {
+                dataController.saveMap(toSaveMap);
+                floorListAdapter.notifyDataSetChanged();
+            }
+            currentMap = toSaveMap;
+            groupList.clear();
+            break;
         }
     }
 
