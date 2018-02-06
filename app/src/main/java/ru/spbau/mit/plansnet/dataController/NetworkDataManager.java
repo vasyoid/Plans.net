@@ -7,7 +7,6 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -24,10 +23,8 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.function.Function;
 
 import ru.spbau.mit.plansnet.MainActivity.SearchResult;
-import ru.spbau.mit.plansnet.data.Account;
 import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
 import ru.spbau.mit.plansnet.data.UsersGroup;
@@ -36,7 +33,7 @@ import ru.spbau.mit.plansnet.data.UsersGroup;
  * Manager of network data
  */
 
-public class NetworkDataManager {
+class NetworkDataManager {
     @NonNull
     private Context context;
     @NonNull
@@ -48,7 +45,7 @@ public class NetworkDataManager {
 
     private static final String STORAGE_TAG = "FIREBASE_STORAGE";
 
-    public NetworkDataManager(@NonNull final Context context,
+    NetworkDataManager(@NonNull final Context context,
                               @NonNull final FirebaseUser currentUser) {
         this.context = context;
         userAccount = currentUser;
@@ -60,7 +57,7 @@ public class NetworkDataManager {
         databaseReference = database.getReference();
     }
 
-    public void putMapOnServer(@NonNull final FloorMap map) {
+    void putMapOnServer(@NonNull final FloorMap map) {
         //put on database
         DatabaseReference userRef = databaseReference.child(userAccount.getUid());
         userRef.child("mail").setValue(userAccount.getEmail());
@@ -107,7 +104,7 @@ public class NetworkDataManager {
      * Get all tree from database and download this to the phone,
      * create an account from it
      */
-    public void downloadMaps(@NonNull final ProgressDialog progressDialog) {
+    void downloadMaps(@NonNull final ProgressDialog progressDialog) {
         final ArrayList<String> floorsPaths = new ArrayList<>();
 
         databaseReference
@@ -125,6 +122,7 @@ public class NetworkDataManager {
                         }
 
                         downloadByPaths(floorsPaths, progressDialog, userAccount.getUid());
+                        //Invalid UI component
                     }
 
                     @Override
@@ -140,7 +138,7 @@ public class NetworkDataManager {
 
     private void downloadByPaths(List<String> floorsPaths, ProgressDialog progressDialog, String owner) {
         progressDialog.setMax(floorsPaths.size());
-        for (final String path : floorsPaths) {
+        for (final String path : floorsPaths) {//atomicInteger заводим, пусть будет сколько осталось скачать
             storageReference.child(path).getMetadata().addOnCompleteListener(
                     task -> {
                         String newPath = path.replace(owner, userAccount.getUid());
@@ -177,7 +175,7 @@ public class NetworkDataManager {
         }
     }
 
-    public void deleteReference(@Nullable final String groupName,
+    void deleteReference(@Nullable final String groupName,
                                 @Nullable final String buildingName,
                                 @Nullable final String mapName) {
         DatabaseReference ref = databaseReference.child(userAccount.getUid());
@@ -198,7 +196,7 @@ public class NetworkDataManager {
             }
         } else {
             return;
-        }
+        } //TODO: make recursive delete
 //        Log.d("STORAGE_DELETE", storageRef.getPath());
 //        storageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
 //            @Override
@@ -211,7 +209,7 @@ public class NetworkDataManager {
         ref.removeValue();
     }
 
-    public void getGroupsWhichContainsName(@NonNull final String name,
+    void getGroupsWhichContainsName(@NonNull final String name,
                                            @NonNull final List<SearchResult> ownersAndGroups,
                                            @NonNull CountDownLatch latch) {
         final String searchedName = name.toLowerCase();
@@ -238,7 +236,7 @@ public class NetworkDataManager {
                 });
     }
 
-    public void downloadGroup(@NonNull final String owner, @NonNull final String group,
+    void downloadGroup(@NonNull final String owner, @NonNull final String group,
                               @NonNull final ProgressDialog progressDialog) {
         final UsersGroup userGroup = new UsersGroup(group + "_" + owner);
         databaseReference
