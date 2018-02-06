@@ -56,9 +56,9 @@ public class MainActivity extends AppCompatActivity {
     private DataController dataController;
     private FirebaseUser user;
 
-    private final Pattern allowedStringPattern = Pattern.compile("[a-zA-Zа-яА-ЯёЁ0-9][a-zA-Zа-яА-ЯёЁ0-9_ ]*");
+    private final Pattern allowedStringPattern = Pattern.compile("[a-zA-Zа-яА-ЯёЁ0-9_ ]*");
 
-    InputFilter filter = (charSequence, i, i1, spanned, i2, i3) -> {
+    InputFilter filter = (charSequence, i, i1, spanned, i2, i3) -> {//TODO: why spaces doesn't works?
         if (charSequence != null && !allowedStringPattern.matcher(charSequence).matches()) {
             return "";
         }
@@ -280,7 +280,9 @@ public class MainActivity extends AppCompatActivity {
             assert currentGroup != null;
 
             buildingList.clear();
-            buildingList.addAll(currentGroup.getListOfNames());
+            if (currentGroup != null) {
+                buildingList.addAll(currentGroup.getListOfNames());
+            }
             buildingListAdapter.notifyDataSetChanged();
 
             floorList.clear();
@@ -327,8 +329,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
                 Log.d("Spinner", "OnNothingSelected in building");
-//                floorList.clear();
-//                floorListAdapter.notifyDataSetChanged();
             }
         });
 
@@ -418,9 +418,9 @@ public class MainActivity extends AppCompatActivity {
         Button btnAddGroup = findViewById(R.id.btnAddGroup);
         FloatingActionButton btnAddMap = findViewById(R.id.btnAddMap);
 
-        setUpGroupListView();
         setUpBuildingSpinnerView();
         setUpFloorSpinnerView();
+        setUpGroupListView();
         setUpFindListView();
         setUpSearchView();
 
@@ -521,6 +521,8 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(Void... args) { //TODO: think about void in this function
             Log.d("AsyncWork", "load async starts work");
             dataController.loadLocalFiles();
+            //#1 можно сделать, чтобы эта функция возвращала массив прочитанных групп и в
+            // onPostExecute его записывала.
             Log.d("AsyncWork", "load async task done");
             return null;
         }
@@ -642,11 +644,7 @@ public class MainActivity extends AppCompatActivity {
             findListAdapter.notifyDataSetChanged();
 
             for (SearchResult x : list) {
-//                dataController.addGroupByRef(x.ownerId, x.ownerName); // download found groups
-//                groupList.add(x.groupName);
                 Log.d("AsyncWork!!", "in list: " + x);
-//                groupListAdapter.notifyDataSetChanged();
-
             }
 
         }
