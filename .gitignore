@@ -25,6 +25,7 @@ build
 app/build
 
 #local files
+app/app.iml
 local.properties
 *.iml
 
