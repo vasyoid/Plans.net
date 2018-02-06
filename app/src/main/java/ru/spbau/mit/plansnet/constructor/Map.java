@@ -45,6 +45,7 @@ public class Map implements Serializable {
                 addObject(new DoorSprite((Door) o));
             } else if (o instanceof Wall) {
                 addObject(new WallSprite((Wall) o));
+                WallSprite ws = new WallSprite((Wall) o);
             } else if (o instanceof Window) {
                 addObject(new WindowSprite((Window) o));
             } else if (o instanceof Sticker) {
@@ -52,6 +53,9 @@ public class Map implements Serializable {
             } else if (o instanceof Room) {
                 Room room = (Room) o;
                 RoomSprite roomSprite = createRoom(room.getX(), room.getY(), scene);
+                if (roomSprite == null) {
+                    continue;
+                }
                 roomSprite.setTitle(room.getTitle().toString());
                 roomSprite.setDescription(room.getDescription().toString());
                 roomSprite.setColor(room.getColor());

@@ -1,5 +1,6 @@
 package ru.spbau.mit.plansnet.constructor;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PointF;
@@ -37,11 +38,6 @@ public class ConstructorActivity extends BaseConstructorActivity {
     private ActionState state = ActionState.ADD;
     private MapItem item = MapItem.WALL;
     private StickerSprite.StickerType currentSticker = EXIT;
-
-    private void clearField() {
-        map.clear();
-        map.detachRemoved(mEngine);
-    }
 
     private void createGrid(Scene pScene) {
         for (int i = 0; i <= GRID_COLS; i++) {
@@ -376,16 +372,14 @@ public class ConstructorActivity extends BaseConstructorActivity {
         } else {
             findViewById(R.id.itemsLayout).setVisibility(View.VISIBLE);
         }
-        if (v.getId() != R.id.buttonClear) {
-            ((Button) findViewById(R.id.buttonColor)).setTextColor(BLACK);
-            ((Button) findViewById(R.id.buttonDel)).setTextColor(BLACK);
-            ((Button) findViewById(R.id.buttonMove)).setTextColor(BLACK);
-            ((Button) findViewById(R.id.buttonMoveWall)).setTextColor(BLACK);
-            ((Button) findViewById(R.id.buttonAdd)).setTextColor(BLACK);
-            ((Button) findViewById(R.id.buttonParams)).setTextColor(BLACK);
-            ((Button) findViewById(R.id.buttonMoveSticker)).setTextColor(BLACK);
-            ((Button) v).setTextColor(RED);
-        }
+        ((Button) findViewById(R.id.buttonColor)).setTextColor(BLACK);
+        ((Button) findViewById(R.id.buttonDel)).setTextColor(BLACK);
+        ((Button) findViewById(R.id.buttonMove)).setTextColor(BLACK);
+        ((Button) findViewById(R.id.buttonMoveWall)).setTextColor(BLACK);
+        ((Button) findViewById(R.id.buttonAdd)).setTextColor(BLACK);
+        ((Button) findViewById(R.id.buttonParams)).setTextColor(BLACK);
+        ((Button) findViewById(R.id.buttonMoveSticker)).setTextColor(BLACK);
+        ((Button) v).setTextColor(RED);
         switch (v.getId()) {
             case R.id.buttonAdd:
                 state = ActionState.ADD;
@@ -408,14 +402,22 @@ public class ConstructorActivity extends BaseConstructorActivity {
             case R.id.buttonParams:
                 state = ActionState.SHOW_PARAMS;
                 break;
-            case R.id.buttonClear:
-                clearField();
-                break;
             default:
                 Log.e("VASYOID", "wrong view id in setState function");
         }
         map.setActionState(state);
     }
+
+    public void clearField(View v) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Clear the map?").setTitle("Clear").setPositiveButton(R.string.ok,
+                (dialog, which) -> {
+                    map.clear();
+                    map.detachRemoved(mEngine);
+                }).setNegativeButton(R.string.cancel, (dialog, which) -> {}).create().show();
+    }
+
+
 
     public enum ActionState {
         ADD, DEL, MOVE_MAP, MOVE_WALL, MOVE_STICKER, CREATE_ROOM, SHOW_PARAMS

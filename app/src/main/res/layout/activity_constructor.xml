@@ -116,7 +116,7 @@
             android:id="@+id/buttonClear"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:onClick="setState"
+            android:onClick="clearField"
             android:text="@string/clear" />
 
         <Button
