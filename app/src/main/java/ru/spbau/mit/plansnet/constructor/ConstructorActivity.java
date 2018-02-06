@@ -64,90 +64,91 @@ public class ConstructorActivity extends BaseConstructorActivity {
         pScene.setOnSceneTouchListener(new IOnSceneTouchListener() {
             private float mInitialTouchX;
             private float mInitialTouchY;
-            private float firstX, firstY;
-            private float previousX, previousY;
+            private PointF firstPoint = new PointF();
+            private PointF currentPoint = new PointF();
+            private PointF previousPoint = new PointF();
             private Line currentLine = new Line(0, 0, 0, 0,
                     getVertexBufferObjectManager());
             private MapObjectLinear currentAdded;
 
-            @Override
-            public boolean onSceneTouchEvent(final Scene pScene, TouchEvent pSceneTouchEvent) {
+            private void moveMap(TouchEvent pSceneTouchEvent) {
+                mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
                 if (pSceneTouchEvent.isActionDown()) {
-                    RoomSprite room = map.getRoomTouched(pSceneTouchEvent);
-                    if (room != null) {
-                        switch (state) {
-                            case DEL:
-                                map.removeRoom(room);
-                                return false;
-                            case COLOR:
-                                return true;
-                            case PARAMS:
-                                showParams(room);
-                                return false;
-                            default:
-                                break;
-                        }
-                    }
+                    mInitialTouchX = pSceneTouchEvent.getX();
+                    mInitialTouchY = pSceneTouchEvent.getY();
+                } else if (pSceneTouchEvent.isActionMove()){
+                    final float touchOffsetX = mInitialTouchX - pSceneTouchEvent.getX();
+                    final float touchOffsetY = mInitialTouchY - pSceneTouchEvent.getY();
+                    Camera mCamera = getEngine().getCamera();
+                    mCamera.setCenter(mCamera.getCenterX() + touchOffsetX,
+                            mCamera.getCenterY() + touchOffsetY);
                 }
-                switch (state) {
-                    case DEL:
+            }
+
+            void createRoom(RoomSprite pTouchedRoom, TouchEvent pSceneTouchEvent) {
+                if (!pSceneTouchEvent.isActionDown() || pTouchedRoom != null) {
+                    return;
+                }
+                RoomSprite currentRoom = map.createRoom(pSceneTouchEvent.getX(),
+                        pSceneTouchEvent.getY(), pScene);
+                if (currentRoom != null) {
+                    showParams(currentRoom);
+                }
+            }
+
+            private void moveWall(TouchEvent pSceneTouchEvent) {
+                switch (pSceneTouchEvent.getAction()) {
+                    case TouchEvent.ACTION_DOWN:
+                        firstPoint.set(currentPoint);
+                        previousPoint.set(currentPoint);
+                        map.setScaleByPoint(currentPoint, 1.0f, 1.4f);
+                        break;
+                    case TouchEvent.ACTION_MOVE:
+                        if (previousPoint.equals(currentPoint)) {
+                            break;
+                        }
+                        map.moveObjects(firstPoint, previousPoint, currentPoint);
+                        try {
+                            map.updateRooms(pScene);
+                        } catch (com.earcutj.exception.EarcutException ignored) {}
+                        previousPoint.set(currentPoint);
+                        break;
+                    case TouchEvent.ACTION_UP:
                         map.detachRemoved(mEngine);
-                        return false;
-                    case MOVE_STICKER:
-                        return false;
-                    case MOVE:
-                        mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
-                        if (pSceneTouchEvent.isActionDown()) {
-                            mInitialTouchX = pSceneTouchEvent.getX();
-                            mInitialTouchY = pSceneTouchEvent.getY();
-                        } else if (pSceneTouchEvent.isActionMove()){
-                            final float touchOffsetX = mInitialTouchX - pSceneTouchEvent.getX();
-                            final float touchOffsetY = mInitialTouchY - pSceneTouchEvent.getY();
-                            Camera mCamera = getEngine().getCamera();
-                            mCamera.setCenter(mCamera.getCenterX() + touchOffsetX, mCamera.getCenterY() + touchOffsetY);
+                        map.setScaleByPoint(firstPoint, 1.0f, 1.0f);
+                        if (firstPoint.equals(currentPoint)) {
+                            break;
                         }
-                        return false;
-                    case COLOR:
-                        if (pSceneTouchEvent.isActionDown()) {
-                            RoomSprite currentRoom = map.createRoom(pSceneTouchEvent.getX(),
-                                    pSceneTouchEvent.getY(), pScene);
-                            if (currentRoom != null) {
-                                showParams(currentRoom);
-                            }
+                        if (map.hasIntersections(firstPoint)) {
+                            map.moveObjects(firstPoint, currentPoint, firstPoint);
+                            map.updateRooms(pScene);
+                        } else {
+                            map.updateObjects(firstPoint);
                         }
-                        return false;
+                        break;
                     default:
                         break;
                 }
-                float currentX = Math.round(pSceneTouchEvent.getX() / GRID_SIZE) * GRID_SIZE;
-                float currentY = Math.round(pSceneTouchEvent.getY() / GRID_SIZE) * GRID_SIZE;
-                currentX = Math.min(currentX, GRID_SIZE * GRID_COLS);
-                currentY = Math.min(currentY, GRID_SIZE * GRID_ROWS);
-                currentX = Math.max(currentX, 0);
-                currentY = Math.max(currentY, 0);
-                PointF firstPoint = new PointF(firstX, firstY);
-                PointF previousPoint = new PointF(previousX, previousY);
-                PointF currentPoint = new PointF(currentX, currentY);
-                if (state == ActionState.ADD && item == MapItem.STICKER) {
-                    if (pSceneTouchEvent.getAction() != TouchEvent.ACTION_DOWN) {
-                        return false;
-                    }
-                    StickerSprite sticker = new StickerSprite(currentSticker, currentPoint);
-                    map.addObject(sticker);
-                    pScene.attachChild(sticker);
-                    pScene.registerTouchArea(sticker);
-                    pScene.sortChildren();
-                    return false;
+            }
+
+            void addSticker(TouchEvent pSceneTouchEvent) {
+                if (pSceneTouchEvent.getAction() != TouchEvent.ACTION_DOWN) {
+                    return;
                 }
+                StickerSprite sticker = new StickerSprite(currentSticker, currentPoint);
+                map.addObject(sticker);
+                pScene.attachChild(sticker);
+                pScene.registerTouchArea(sticker);
+                pScene.sortChildren();
+            }
+
+            void addLinear(TouchEvent pSceneTouchEvent) {
                 switch (pSceneTouchEvent.getAction()) {
                     case TouchEvent.ACTION_DOWN:
-                        firstX = previousX = currentX;
-                        firstY = previousY = currentY;
-                        if (state == ActionState.MOVE_WALL) {
-                            map.setScaleByPoint(currentPoint, 1.0f, 1.4f);
-                            break;
-                        }
-                        currentLine.setPosition(firstX, firstY, currentX, currentY);
+                        firstPoint.set(currentPoint);
+                        previousPoint.set(currentPoint);
+                        currentLine.setPosition(firstPoint.x, firstPoint.y,
+                                currentPoint.x, currentPoint.y);
                         switch (item) {
                             case WALL:
                                 currentAdded = new WallSprite();
@@ -159,7 +160,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
                                 currentAdded = new WindowSprite();
                                 break;
                             default:
-                                Log.e("VASYOID", "wrong item in onSceneTouchEvent function");
+                                Log.e("VASYOID", "invalid item in addLinear function");
                         }
                         currentAdded.setPosition(currentLine);
                         pScene.attachChild(currentAdded);
@@ -167,46 +168,68 @@ public class ConstructorActivity extends BaseConstructorActivity {
                         pScene.sortChildren();
                         break;
                     case TouchEvent.ACTION_MOVE:
-                        if (state == ActionState.MOVE_WALL) {
-                            if (!previousPoint.equals(currentPoint)) {
-                                map.moveObjects(firstPoint, previousPoint, currentPoint);
-                                try {
-                                    map.updateRooms(pScene);
-                                } catch (com.earcutj.exception.EarcutException ignored) {}
-                            }
-                        } else {
-                            currentLine.setPosition(firstX, firstY, currentX, currentY);
-                            currentAdded.setPosition(currentLine);
-                        }
-                        previousX = currentX;
-                        previousY = currentY;
+                        currentLine.setPosition(firstPoint.x, firstPoint.y,
+                                currentPoint.x, currentPoint.y);
+                        currentAdded.setPosition(currentLine);
+                        previousPoint.set(currentPoint);
                         break;
                     case TouchEvent.ACTION_UP:
-                        if (state == ActionState.MOVE_WALL) {
+                        if (!currentPoint.equals(firstPoint) &&
+                                !map.hasIntersections(currentAdded)) {
+                            map.addObject(currentAdded);
+                            pScene.sortChildren();
                             map.detachRemoved(mEngine);
-                            map.setScaleByPoint(firstPoint, 1.0f, 1.0f);
-                            if (!firstPoint.equals(currentPoint)) {
-                                if (map.hasIntersections(firstPoint)) {
-                                    map.moveObjects(firstPoint, currentPoint, firstPoint);
-                                    map.updateRooms(pScene);
-                                } else {
-                                    map.updateObjects(firstPoint);
-                                }
-                            }
                         } else {
-                            if ((currentX != firstX || currentY != firstY) &&
-                                    !map.hasIntersections(currentAdded)) {
-                                map.addObject(currentAdded);
-                                pScene.sortChildren();
-                                map.detachRemoved(mEngine);
-                            } else {
-                                pScene.detachChild(currentAdded);
-                            }
-                            currentLine.setPosition(0, 0, 0, 0);
+                            pScene.detachChild(currentAdded);
                         }
+                        currentLine.setPosition(0, 0, 0, 0);
                         break;
                     default:
                         break;
+                }
+            }
+
+            @Override
+            public boolean onSceneTouchEvent(final Scene pScene, TouchEvent pSceneTouchEvent) {
+                RoomSprite room = null;
+                if (pSceneTouchEvent.isActionDown()) {
+                    room = map.getRoomTouched(pSceneTouchEvent);
+                }
+                float currentX = Math.round(pSceneTouchEvent.getX() / GRID_SIZE) * GRID_SIZE;
+                float currentY = Math.round(pSceneTouchEvent.getY() / GRID_SIZE) * GRID_SIZE;
+                currentX = Math.max(Math.min(currentX, GRID_SIZE * GRID_COLS), 0);
+                currentY = Math.max(Math.min(currentY, GRID_SIZE * GRID_ROWS), 0);
+                currentPoint.set(currentX, currentY);
+                switch (state) {
+                    case MOVE_STICKER:
+                        break;
+                    case MOVE_MAP:
+                        moveMap(pSceneTouchEvent);
+                        break;
+                    case DEL:
+                        if (room != null) {
+                            map.removeRoom(room);
+                        }
+                        map.detachRemoved(mEngine);
+                        break;
+                    case SHOW_PARAMS:
+                        showParams(room);
+                        break;
+                    case CREATE_ROOM:
+                        createRoom(room, pSceneTouchEvent);
+                        break;
+                    case MOVE_WALL:
+                        moveWall(pSceneTouchEvent);
+                        break;
+                    case ADD:
+                        if (item == MapItem.STICKER) {
+                            addSticker(pSceneTouchEvent);
+                        } else {
+                            addLinear(pSceneTouchEvent);
+                        }
+                        break;
+                    default:
+                        Log.d("VASYOID", "invalid state in onSceneTouchEvent function.");
                 }
                 return false;
             }
@@ -371,7 +394,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 state = ActionState.DEL;
                 break;
             case R.id.buttonMove:
-                state = ActionState.MOVE;
+                state = ActionState.MOVE_MAP;
                 break;
             case R.id.buttonMoveWall:
                 state = ActionState.MOVE_WALL;
@@ -380,10 +403,10 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 state = ActionState.MOVE_STICKER;
                 break;
             case R.id.buttonColor:
-                state = ActionState.COLOR;
+                state = ActionState.CREATE_ROOM;
                 break;
             case R.id.buttonParams:
-                state = ActionState.PARAMS;
+                state = ActionState.SHOW_PARAMS;
                 break;
             case R.id.buttonClear:
                 clearField();
@@ -395,7 +418,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     public enum ActionState {
-        ADD, DEL, MOVE, MOVE_WALL, MOVE_STICKER, COLOR, PARAMS
+        ADD, DEL, MOVE_MAP, MOVE_WALL, MOVE_STICKER, CREATE_ROOM, SHOW_PARAMS
     }
 
     private enum MapItem {
