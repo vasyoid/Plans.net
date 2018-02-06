@@ -204,37 +204,35 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                         }
                     }
                 }
-                if (state == ActionState.DEL) {
-                    map.detachRemoved(mEngine);
-                    return false;
-                }
-                if (state == ActionState.MOVE_STICKER) {
-                    return false;
-                }
-                if (state == ActionState.MOVE) {
-                    mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
-                    if (pSceneTouchEvent.isActionDown()) {
-                        mInitialTouchX = pSceneTouchEvent.getX();
-                        mInitialTouchY = pSceneTouchEvent.getY();
-                    }
-
-                    if (pSceneTouchEvent.isActionMove()){
-                        final float touchOffsetX = mInitialTouchX - pSceneTouchEvent.getX();
-                        final float touchOffsetY = mInitialTouchY - pSceneTouchEvent.getY();
-                        Camera mCamera = getEngine().getCamera();
-                        mCamera.setCenter(mCamera.getCenterX() + touchOffsetX, mCamera.getCenterY() + touchOffsetY);
-                    }
-                    return false;
-                }
-                if (state == ActionState.COLOR) {
-                    if (pSceneTouchEvent.isActionDown()) {
-                        RoomSprite currentRoom = map.createRoom(pSceneTouchEvent.getX(),
-                                pSceneTouchEvent.getY(), pScene);
-                        if (currentRoom != null) {
-                            showParams(currentRoom);
+                switch (state) {
+                    case DEL:
+                        map.detachRemoved(mEngine);
+                        return false;
+                    case MOVE_STICKER:
+                        return false;
+                    case MOVE:
+                        mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
+                        if (pSceneTouchEvent.isActionDown()) {
+                            mInitialTouchX = pSceneTouchEvent.getX();
+                            mInitialTouchY = pSceneTouchEvent.getY();
+                        } else if (pSceneTouchEvent.isActionMove()){
+                            final float touchOffsetX = mInitialTouchX - pSceneTouchEvent.getX();
+                            final float touchOffsetY = mInitialTouchY - pSceneTouchEvent.getY();
+                            Camera mCamera = getEngine().getCamera();
+                            mCamera.setCenter(mCamera.getCenterX() + touchOffsetX, mCamera.getCenterY() + touchOffsetY);
                         }
-                    }
-                    return false;
+                        return false;
+                    case COLOR:
+                        if (pSceneTouchEvent.isActionDown()) {
+                            RoomSprite currentRoom = map.createRoom(pSceneTouchEvent.getX(),
+                                    pSceneTouchEvent.getY(), pScene);
+                            if (currentRoom != null) {
+                                showParams(currentRoom);
+                            }
+                        }
+                        return false;
+                    default:
+                        break;
                 }
                 float currentX = Math.round(pSceneTouchEvent.getX() / GRID_SIZE) * GRID_SIZE;
                 float currentY = Math.round(pSceneTouchEvent.getY() / GRID_SIZE) * GRID_SIZE;
@@ -246,41 +244,42 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 PointF previousPoint = new PointF(previousX, previousY);
                 PointF currentPoint = new PointF(currentX, currentY);
                 if (state == ActionState.ADD && item == MapItem.STICKER) {
-                    if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
-                        StickerSprite sticker = new StickerSprite(currentSticker, currentPoint);
-                        map.addObject(sticker);
-                        pScene.attachChild(sticker);
-                        pScene.registerTouchArea(sticker);
-                        pScene.sortChildren();
+                    if (pSceneTouchEvent.getAction() != TouchEvent.ACTION_DOWN) {
+                        return false;
                     }
+                    StickerSprite sticker = new StickerSprite(currentSticker, currentPoint);
+                    map.addObject(sticker);
+                    pScene.attachChild(sticker);
+                    pScene.registerTouchArea(sticker);
+                    pScene.sortChildren();
                     return false;
                 }
                 switch (pSceneTouchEvent.getAction()) {
                     case TouchEvent.ACTION_DOWN:
                         firstX = previousX = currentX;
                         firstY = previousY = currentY;
-                        if (state != ActionState.MOVE_WALL) {
-                            currentLine.setPosition(firstX, firstY, currentX, currentY);
-                            switch (item) {
-                                case WALL:
-                                    currentAdded = new WallSprite();
-                                    break;
-                                case DOOR:
-                                    currentAdded = new DoorSprite();
-                                    break;
-                                case WINDOW:
-                                    currentAdded = new WindowSprite();
-                                    break;
-                                default:
-                                    Log.e("VASYOID", "wrong item in onSceneTouchEvent function");
-                            }
-                            currentAdded.setPosition(currentLine);
-                            pScene.attachChild(currentAdded);
-                            pScene.registerTouchArea(currentAdded);
-                            pScene.sortChildren();
-                        } else {
+                        if (state == ActionState.MOVE_WALL) {
                             map.setScaleByPoint(currentPoint, 1.0f, 1.4f);
+                            break;
                         }
+                        currentLine.setPosition(firstX, firstY, currentX, currentY);
+                        switch (item) {
+                            case WALL:
+                                currentAdded = new WallSprite();
+                                break;
+                            case DOOR:
+                                currentAdded = new DoorSprite();
+                                break;
+                            case WINDOW:
+                                currentAdded = new WindowSprite();
+                                break;
+                            default:
+                                Log.e("VASYOID", "wrong item in onSceneTouchEvent function");
+                        }
+                        currentAdded.setPosition(currentLine);
+                        pScene.attachChild(currentAdded);
+                        pScene.registerTouchArea(currentAdded);
+                        pScene.sortChildren();
                         break;
                     case TouchEvent.ACTION_MOVE:
                         if (state == ActionState.MOVE_WALL) {
@@ -463,13 +462,11 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
         } else {
             findViewById(R.id.stickersLayout).setVisibility(View.VISIBLE);
         }
-
         ((Button) findViewById(R.id.buttonDoor)).setTextColor(BLACK);
         ((Button) findViewById(R.id.buttonWall)).setTextColor(BLACK);
         ((Button) findViewById(R.id.buttonWindow)).setTextColor(BLACK);
         ((Button) findViewById(R.id.buttonSticker)).setTextColor(BLACK);
         ((Button) v).setTextColor(RED);
-
         switch (v.getId()) {
             case R.id.buttonWall:
                 item = MapItem.WALL;
