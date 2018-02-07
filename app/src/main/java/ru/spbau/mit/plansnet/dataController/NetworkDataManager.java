@@ -23,6 +23,8 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.spbau.mit.plansnet.MainActivity.SearchResult;
 import ru.spbau.mit.plansnet.data.Building;
@@ -101,12 +103,10 @@ class NetworkDataManager {
     }
 
     /**
-     * Get all tree from database and download this to the phone,
-     * create an account from it
+     * Searches map on server and add it to list of paths
      */
-    void downloadMaps(@NonNull final ProgressDialog progressDialog) {
-        final ArrayList<String> floorsPaths = new ArrayList<>();
-
+    void searchMaps(@NonNull final List<String> floorsPaths,
+                    @NonNull final AtomicBoolean isFinished) {
         databaseReference
                 .child(userAccount.getUid())
                 .child("groups")
@@ -120,25 +120,23 @@ class NetworkDataManager {
                                 }
                             }
                         }
-
-                        downloadByPaths(floorsPaths, progressDialog, userAccount.getUid());
-                        //Invalid UI component
+                        synchronized (isFinished) {
+                            isFinished.set(true);
+                        }
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-                        Log.e(STORAGE_TAG, databaseError.getMessage());
-                        progressDialog.setMax(0);
-                        progressDialog.cancel();
+                        Log.d("Search Maps", databaseError.getMessage());
+                        synchronized (isFinished) {
+                            isFinished.set(true);
+                        }
                     }
-
-
                 });
     }
 
-    private void downloadByPaths(List<String> floorsPaths, ProgressDialog progressDialog, String owner) {
-        progressDialog.setMax(floorsPaths.size());
-        for (final String path : floorsPaths) {//atomicInteger заводим, пусть будет сколько осталось скачать
+    void downloadByPaths(@NonNull final List<String> floorsPaths, AtomicInteger mapCount, String owner) {
+        for (final String path : floorsPaths) {
             storageReference.child(path).getMetadata().addOnCompleteListener(
                     task -> {
                         String newPath = path.replace(owner, userAccount.getUid());
@@ -147,10 +145,10 @@ class NetworkDataManager {
                                 .getFilesDir(), newPath);
 
                         if (mapFile.exists() && mapFile.lastModified() > task.getResult().getUpdatedTimeMillis()) {
-                            Log.d(STORAGE_TAG,
-                                    task.getResult().getName() + " is up to date");
-                            progressDialog.incrementProgressBy(1);
-
+                            Log.d(STORAGE_TAG,task.getResult().getName() + " is up to date");
+                            synchronized (mapCount) {
+                                mapCount.incrementAndGet();
+                            }
                             return;
                         }
 
@@ -159,17 +157,20 @@ class NetworkDataManager {
                         } else {
                             Log.d(STORAGE_TAG, "mkdirs returned false");
                         }
+
                         storageReference.child(path).getFile(mapFile)
                                 .addOnSuccessListener(taskSnapshot -> {
-                                    progressDialog.incrementProgressBy(1);
-                                    Log.d("LOAD", progressDialog.getProgress() + " : " + progressDialog.getMax());
-                                    if (progressDialog.getProgress() == floorsPaths.size()) {
-                                        progressDialog.setMax(0);
+                                    synchronized (mapCount) {
+                                        mapCount.incrementAndGet();
+                                        Log.d(STORAGE_TAG, mapCount.get()
+                                                + " get file from storage: " + mapFile.getName());
                                     }
-                                    Log.d(STORAGE_TAG, progressDialog.getProgress() + " get file from storage: " + mapFile.getName());
                                 }).addOnFailureListener(e -> {
-                            progressDialog.incrementProgressBy(1);
-                            Toast.makeText(context, "Can't download map: " + mapFile.getName(), Toast.LENGTH_SHORT).show();
+                                    synchronized (mapCount) {
+                                        mapCount.incrementAndGet();
+                                        Toast.makeText(context, "Can't download map: "
+                                                + mapFile.getName(), Toast.LENGTH_SHORT).show();
+                                    }
                         });
                     });
         }
@@ -236,8 +237,9 @@ class NetworkDataManager {
                 });
     }
 
-    void downloadGroup(@NonNull final String owner, @NonNull final String group,
-                              @NonNull final ProgressDialog progressDialog) {
+    void searchGroupMaps(@NonNull final String owner, @NonNull final String group,
+                         @NonNull final List<String> floorsPaths,
+                         @NonNull final AtomicBoolean isFinished) {
         final UsersGroup userGroup = new UsersGroup(group + "_" + owner);
         databaseReference
                 .child(owner)
@@ -246,7 +248,6 @@ class NetworkDataManager {
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        final ArrayList<String> floorsPaths = new ArrayList<>();
 
                         for (DataSnapshot buildingShot : dataSnapshot.child("buildings").getChildren()) {
                             Building building = new Building(buildingShot.getKey());
@@ -258,8 +259,9 @@ class NetworkDataManager {
                                 floorsPaths.add(path);
                             }
                         }
-
-                        downloadByPaths(floorsPaths, progressDialog, owner);
+                        synchronized (isFinished) {
+                            isFinished.set(true);
+                        }
                     }
 
                     @Override
@@ -268,4 +270,6 @@ class NetworkDataManager {
                     }
                 });
     }
+
+
 }
