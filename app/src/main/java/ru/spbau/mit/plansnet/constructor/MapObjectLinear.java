@@ -1,7 +1,6 @@
 package ru.spbau.mit.plansnet.constructor;
 
 import android.graphics.PointF;
-import android.util.Log;
 
 import org.andengine.entity.primitive.Line;
 import org.andengine.input.touch.TouchEvent;
@@ -16,15 +15,13 @@ public abstract class MapObjectLinear extends MapObjectSprite {
 
     private static int THICKNESS = 10;
     private Line position;
-    private PointF point1, point2;
+    private PointF point1 = new PointF(), point2 = new PointF();
     private PointF firstPoint1, firstPoint2;
     private float firstTouchX, firstTouchY;
     private List<RoomSprite> roomsToRemove;
 
     public MapObjectLinear(ITextureRegion pTextureRegion) {
         super(pTextureRegion, vertexBufferObjectManager);
-        point1 = new PointF();
-        point2 = new PointF();
         setHeight(THICKNESS);
     }
 
@@ -115,7 +112,7 @@ public abstract class MapObjectLinear extends MapObjectSprite {
                     }
                 case TouchEvent.ACTION_UP:
                     if (firstPoint1 != null) {
-                        if (MAP.checkIntersections(this)) {
+                        if (MAP.hasIntersections(this)) {
                             setPoint1(firstPoint1);
                             setPoint2(firstPoint2);
                         }
@@ -129,6 +126,8 @@ public abstract class MapObjectLinear extends MapObjectSprite {
                         firstPoint1 = firstPoint2 = null;
                     }
                     return false;
+                default:
+                    break;
             }
         }
         return false;

@@ -9,11 +9,15 @@ import java.util.List;
 import ru.spbau.mit.plansnet.constructor.DoorSprite;
 import ru.spbau.mit.plansnet.constructor.MapObjectSprite;
 import ru.spbau.mit.plansnet.constructor.RoomSprite;
+import ru.spbau.mit.plansnet.constructor.StickerSprite;
 import ru.spbau.mit.plansnet.constructor.WallSprite;
+import ru.spbau.mit.plansnet.constructor.WindowSprite;
 import ru.spbau.mit.plansnet.data.objects.Door;
 import ru.spbau.mit.plansnet.data.objects.MapObject;
 import ru.spbau.mit.plansnet.data.objects.Room;
+import ru.spbau.mit.plansnet.data.objects.Sticker;
 import ru.spbau.mit.plansnet.data.objects.Wall;
+import ru.spbau.mit.plansnet.data.objects.Window;
 
 /**
  * Created by kostya55516 on 14.10.17.
@@ -32,8 +36,9 @@ public class FloorMap extends AbstractNamedData implements Serializable {
         return super.getName();
     }
 
-    public FloorMap(@NonNull final String name, @NonNull final String groupName,
+    public FloorMap(@NonNull final String groupName,
                     @NonNull final String buildingName,
+                    @NonNull final String name,
                     @NonNull final ru.spbau.mit.plansnet.constructor.Map map) {
         super(name);
         this.buildingName = buildingName;
@@ -50,6 +55,10 @@ public class FloorMap extends AbstractNamedData implements Serializable {
                 objects.add(new Wall((WallSprite) obj));
             } else if (obj instanceof DoorSprite) {
                 objects.add(new Door((DoorSprite) obj));
+            } else if (obj instanceof WindowSprite) {
+                objects.add(new Window((WindowSprite) obj));
+            } else if (obj instanceof StickerSprite) {
+                objects.add(new Sticker((StickerSprite) obj));
             }
         }
         for (ru.spbau.mit.plansnet.constructor.RoomSprite room : roomList) {
@@ -63,8 +72,8 @@ public class FloorMap extends AbstractNamedData implements Serializable {
         objects = new ArrayList<>();
     }
 
-    public FloorMap(@NonNull final String name, @NonNull final String groupName,
-                    @NonNull final String buildingName) {
+    public FloorMap(@NonNull final String groupName,
+                    @NonNull final String buildingName, @NonNull final String name) {
         super(name);
         objects = new ArrayList<>();
 

@@ -100,10 +100,13 @@ public class Geometry {
         return PointF.equals(line.getX2(), line.getY2());
     }
 
-    public static boolean isPointRightward(Line line, PointF PointF) {
-        PointF tmp = getIntersectionPoint(new Line(-1e5f, PointF.y,
-                1e5f, PointF.y, null), line, false);
-        return tmp != null && PointF.x > tmp.x;
+    public static boolean isPointAtCorner(PointF point, PointF ld, PointF ru, double bounds) {
+        return (point.x <= bounds && (point.y <= bounds || point.y >= ru.y - bounds)) ||
+               (point.x >= ru.x - bounds && (point.y <= bounds || point.y >= ru.y - bounds));
+    }
+
+    public static float distance(PointF p1, PointF p2) {
+        return length(new Line(p1.x, p1.y, p2.x, p2.y, null));
     }
 
     public static float length(Line line) {
@@ -111,9 +114,10 @@ public class Geometry {
                 (line.getY2() - line.getY1()) * (line.getY2() - line.getY1()));
     }
 
-    public static void normalize(Line line) {
+    public static Line normalize(Line line) {
         float len = length(line);
-        line.setPosition(0, 0, line.getX2() / len, line.getY2() / len);
+        return new Line(0, 0, line.getX2() / len, line.getY2() / len,
+                line.getVertexBufferObjectManager());
     }
 
     public static float getAngle(Line l1, Line l2) {
@@ -124,8 +128,8 @@ public class Geometry {
         if (isOnePoint(l1) || isOnePoint(l2) || linesJoinable(l1, l2)) {
             return 0;
         }
-        normalize(l1);
-        normalize(l2);
+        l1 = normalize(l1);
+        l2 = normalize(l2);
         float result = (float) Math.acos(l1.getX2() * l2.getX2() + l1.getY2() * l2.getY2());
         if (l1.getX2() * l2.getY2() - l1.getY2() * l2.getX2() < 0) {
             result *= -1;

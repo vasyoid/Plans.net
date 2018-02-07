@@ -1,20 +1,21 @@
 package ru.spbau.mit.plansnet.constructor;
 
+
 import org.andengine.opengl.texture.region.ITextureRegion;
 
-import ru.spbau.mit.plansnet.data.objects.Wall;
+import ru.spbau.mit.plansnet.data.objects.Window;
 
-public class WallSprite extends MapObjectLinear {
+public class WindowSprite extends MapObjectLinear {
 
     private static ITextureRegion textureRegion;
 
-    public WallSprite() {
+    public WindowSprite() {
         super(textureRegion);
     }
 
-    public WallSprite(Wall pWall) {
+    public WindowSprite(Window pWindow) {
         super(textureRegion);
-        setPosition(pWall.getX(), pWall.getY(), pWall.getX2(), pWall.getY2());
+        setPosition(pWindow.getX(), pWindow.getY(), pWindow.getX2(), pWindow.getY2());
     }
 
     public static void setTexture(ITextureRegion texture) {

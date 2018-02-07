@@ -17,10 +17,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.spbau.mit.plansnet.MainActivity;
 import ru.spbau.mit.plansnet.data.AbstractDataContainer;
@@ -36,8 +35,6 @@ import ru.spbau.mit.plansnet.data.UsersGroup;
 
 public class DataController {
     @NonNull
-    private final List<FloorMap> listOfMaps;
-    @NonNull
     private NetworkDataManager netManager;
     @NonNull
     private Account userAccount;
@@ -46,11 +43,11 @@ public class DataController {
 
     private static final String DATA_TAG = "DATA_CONTROLLER_FILES";
 
-    public DataController(@NonNull final Context context, @NonNull final FirebaseUser account, @NonNull final List<FloorMap> listOfMaps) {
+    public DataController(@NonNull final Context context,
+                          @NonNull final FirebaseUser account) {
         this.context = context;
         netManager = new NetworkDataManager(context, account);
 
-        this.listOfMaps = listOfMaps;
         userAccount = new Account(account.getDisplayName(), account.getUid());
     }
 
@@ -58,8 +55,8 @@ public class DataController {
      * Download maps from server
      * @param progressDialog progress dialog to track a progress
      */
-    public void downloadMaps(@NonNull final List<String> floorsPaths, @NonNull AtomicInteger mapCount) {
-        netManager.downloadByPaths(floorsPaths, mapCount);
+    public void downloadMaps(@NonNull final ProgressDialog progressDialog) {
+        netManager.downloadMaps(progressDialog);
     }
 
     /**
@@ -74,15 +71,17 @@ public class DataController {
                              @Nullable final String mapName)
             throws IllegalArgumentException {
         AbstractDataContainer ref = userAccount;
-        File mapFile = new File(context.getApplicationContext().getFilesDir(),
-                userAccount.getID() + File.pathSeparator + groupName);
+
+        File mapFile = new File(context.getApplicationContext().getFilesDir().getAbsolutePath() +
+                "/" + userAccount.getID() + "/" + groupName);
         AbstractDataContainer next = (AbstractDataContainer) ref.findByName(groupName);
         if (next == null) {
             throw new IllegalArgumentException("Doesn't exists group: " + groupName);
         }
         if (buildingName == null) {
-            mapFile.delete();
+            deleteRecursive(mapFile);
             ref.getAllData().remove(groupName);
+            netManager.deleteReference(groupName, null, null);
             return;
         }
 
@@ -93,8 +92,9 @@ public class DataController {
             throw new IllegalArgumentException("Doesn't exists building: " + buildingName);
         }
         if (mapName == null) {
-            mapFile.delete();
+            deleteRecursive(mapFile);
             ref.getAllData().remove(buildingName);
+            netManager.deleteReference(groupName, buildingName, null);
             return;
         }
 
@@ -105,7 +105,7 @@ public class DataController {
             throw new IllegalArgumentException("Doesn't exists map: " + mapName);
         }
         ref.getAllData().remove(mapName);
-        mapFile.delete();
+        deleteRecursive(mapFile);
 
         netManager.deleteReference(groupName, buildingName, mapName);
     }
@@ -116,13 +116,9 @@ public class DataController {
      * @param map map which will be deleted
      */
     public void deleteMap(@NonNull final FloorMap map) {
-        File mapFile = new File(context.getApplicationContext().getFilesDir(),
-                userAccount.getID() + File.pathSeparator
-                        + map.getGroupName() + File.pathSeparator
-                        + map.getBuildingName() + File.pathSeparator
-                        + map.getName() + ".plannet");
+        File mapFile = formingFileFromMap(map);
         if (mapFile.exists()) {
-            mapFile.delete();
+            deleteRecursive(mapFile);
         }
 
         userAccount.findByName(map.getGroupName())
@@ -175,7 +171,7 @@ public class DataController {
      * @param groupName name of a group
      * @param progressDialog progress dialog to track progress
      */
-    public void downloadGroup(@NonNull final String owner, @NonNull final String groupName,
+    public void addGroupByRef(@NonNull final String owner, @NonNull final String groupName,
                               @NonNull final ProgressDialog progressDialog) {
         netManager.downloadGroup(owner, groupName, progressDialog);
     }
@@ -219,6 +215,7 @@ public class DataController {
     public void saveMap(@NonNull final FloorMap map)
             throws IllegalArgumentException {
         UsersGroup userGroup = userAccount.findByName(map.getGroupName());
+        Log.d("saveMap", "search: " + map.getGroupName());
         if (userGroup == null) {
             throw new IllegalArgumentException("This user haven't group: " + map.getGroupName());
         }
@@ -229,9 +226,6 @@ public class DataController {
                     + "' haven't building: " + map.getBuildingName());
         }
 
-        if (building.findByName(map.getName()) == null) {
-            listOfMaps.add(map);
-        }
         building.setElementToContainer(map);
         Log.d(DATA_TAG, "set new map to account");
 
@@ -244,11 +238,7 @@ public class DataController {
 
     //private function for writing map to file
     private void writeMap(@NonNull final FloorMap map) {
-        File accountFile = new File(context.getApplicationContext().getFilesDir(),
-                userAccount.getID() + File.pathSeparator
-                        + map.getGroupName() + File.pathSeparator
-                        + map.getBuildingName() + File.pathSeparator
-                        + map.getName() + ".plannet");
+        File accountFile = formingFileFromMap(map);
         accountFile.getParentFile().mkdirs();
 
         try (ObjectOutputStream ous = new ObjectOutputStream(new FileOutputStream(accountFile))) {
@@ -277,15 +267,6 @@ public class DataController {
                 building = group.setElementToContainer(new Building(map.getBuildingName()));
             }
 
-            if (building.findByName(map.getName()) == null) {
-                listOfMaps.add(map);
-            } else {
-                for (int i = 0; i < listOfMaps.size(); i++) {
-                    if (listOfMaps.get(i).getName().equals(map.getName())) {
-                        listOfMaps.set(i, map);
-                    }
-                }
-            }
             building.setElementToContainer(map);
 
 
@@ -296,7 +277,23 @@ public class DataController {
         }
     }
 
-    public void searchMaps(@NonNull List<String> floorsPaths, @NonNull AtomicBoolean isFinished) {
-        netManager.searchMaps(floorsPaths, isFinished);
+    private void deleteRecursive(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory()) {
+            for (File child : fileOrDirectory.listFiles()) {
+                deleteRecursive(child);
+            }
+        }
+
+        fileOrDirectory.delete();
     }
+
+    private File formingFileFromMap(@NonNull final FloorMap map) {
+        return new File(context.getApplicationContext().getFilesDir(),
+                userAccount.getID() + "/"
+                        + map.getGroupName() + "/"
+                        + map.getBuildingName() + "/"
+                        + map.getName() + ".plannet"
+        );
+    }
+
 }

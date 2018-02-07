@@ -1,16 +1,20 @@
 <resources>
     <string name="app_name">Plans.net</string>
     <string name="server_client_id">939505549265-he2juu3ujb8m7fh9kgg558p7q54gcvjn.apps.googleusercontent.com</string>
-    <string name="wall">Cтена</string>
-    <string name="door">Дверь</string>
-    <string name="remove">Удалить</string>
-    <string name="clear">Очистить</string>
-    <string name="moveMap">Двигать карту</string>
-    <string name="moveWall">Двигать стену</string>
-    <string name="add">Добавить</string>
-    <string name="paint">Покрасить</string>
-    <string name="params">Свойства</string>
-    <string name="roomName">Название комнаты</string>
-    <string name="description">Описание</string>
-    <string name="ok">Окей</string>>
+    <string name="wall">Wall</string>
+    <string name="door">Door</string>
+    <string name="remove">Remove</string>
+    <string name="clear">CLear</string>
+    <string name="moveMap">Move map</string>
+    <string name="moveWall">Move walls</string>
+    <string name="add">Add</string>
+    <string name="paint">Create room</string>
+    <string name="params">Room properties</string>
+    <string name="roomName">Room title</string>
+    <string name="description">Room description</string>
+    <string name="ok">Okay</string>
+    <string name="window">Window</string>
+    <string name="sticker">Sticker</string>
+    <string name="moveSticker">Move sticker</string>
+    <string name="lift">lift</string>
 </resources>

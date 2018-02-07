@@ -3,18 +3,21 @@ package ru.spbau.mit.plansnet.constructor;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PointF;
+import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.text.Editable;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 
 import java.io.IOException;
+import java.util.concurrent.Semaphore;
 
 import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
@@ -25,6 +28,7 @@ import org.andengine.entity.scene.background.Background;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.input.touch.detector.PinchZoomDetector;
 import org.andengine.opengl.font.FontFactory;
+import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.TextureRegionFactory;
 import org.andengine.ui.activity.SimpleLayoutGameActivity;
 import org.andengine.util.color.Color;
@@ -38,7 +42,15 @@ import org.andengine.opengl.texture.bitmap.BitmapTexture;
 
 import ru.spbau.mit.plansnet.R;
 import ru.spbau.mit.plansnet.data.FloorMap;
-import ru.spbau.mit.plansnet.data.objects.Room;
+
+import static android.graphics.Color.BLACK;
+import static android.graphics.Color.GREEN;
+import static android.graphics.Color.RED;
+import static android.graphics.Color.TRANSPARENT;
+import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.EXIT;
+import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.LIFT;
+import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.STAIRS;
+import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.WC;
 
 public class ConstructorActivity extends SimpleLayoutGameActivity {
 	private static int CAMERA_WIDTH = 0;
@@ -49,7 +61,8 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     private static int GRID_SIZE;
 
     private ActionState state = ActionState.ADD;
-    private int item = 0;
+    private MapItem item = MapItem.WALL;
+    private StickerSprite.StickerType currentSticker = EXIT;
     private Map map;
     private FloorMap toOpenMap;
     private PinchZoomDetector mPinchZoomDetector;
@@ -69,9 +82,8 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-                Intent intent = getIntent();
-        toOpenMap = (FloorMap) intent.getSerializableExtra("toOpenMap");
+        Intent intent = getIntent();
+        toOpenMap = (FloorMap) intent.getSerializableExtra("currentMap");
     }
 
     @Override
@@ -80,15 +92,15 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             Log.d("VASYOID", "map is null!");
         } else {
             Intent intent = new Intent();
-            intent.putExtra("toSaveMap", new FloorMap(toOpenMap.getName(),
-                    toOpenMap.getGroupName(), toOpenMap.getBuildingName(), map));
+            intent.putExtra("toSaveMap", new FloorMap(toOpenMap.getGroupName(),
+                    toOpenMap.getBuildingName(), toOpenMap.getName(), map));
             setResult(1, intent);
         }
         super.onBackPressed();
     }
 
     @Override
-	public EngineOptions onCreateEngineOptions() {
+    public EngineOptions onCreateEngineOptions() {
         setCameraResolution();
         GRID_SIZE = (100000 / CAMERA_HEIGHT);
         Map.setGridSize(GRID_SIZE);
@@ -100,27 +112,48 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     	camera.setBounds(0, 0, GRID_SIZE * GRID_COLS, GRID_SIZE * GRID_ROWS);
     	camera.setBoundsEnabled(true);
     	return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new FillResolutionPolicy(), camera);
-	}
+    }
 
-	@Override
-	protected void onCreateResources() {
+    @Override
+    protected void onCreateResources() {
         try {
             ITexture wallTexture = new BitmapTexture(this.getTextureManager(),
                     () -> getAssets().open("wall.png"));
             wallTexture.load();
             WallSprite.setTexture(TextureRegionFactory.extractFromTexture(wallTexture));
+            ITexture windowTexture = new BitmapTexture(this.getTextureManager(),
+                    () -> getAssets().open("window.png"));
+            windowTexture.load();
+            WindowSprite.setTexture(TextureRegionFactory.extractFromTexture(windowTexture));
             ITexture doorTexture = new BitmapTexture(this.getTextureManager(),
                     () -> getAssets().open("door.png"));
             doorTexture.load();
             DoorSprite.setTexture(TextureRegionFactory.extractFromTexture(doorTexture));
-
+            ITexture stickersTextures[] = new ITexture[] {
+                new BitmapTexture(this.getTextureManager(),
+                        () -> getAssets().open("exit.png")),
+                new BitmapTexture(this.getTextureManager(),
+                        () -> getAssets().open("lift.png")),
+                new BitmapTexture(this.getTextureManager(),
+                        () -> getAssets().open("stairs.png")),
+                new BitmapTexture(this.getTextureManager(),
+                        () -> getAssets().open("wc.png"))
+            };
+            ITextureRegion[] stickersTextureRegions = new ITextureRegion[stickersTextures.length];
+            for (int i = 0; i < stickersTextures.length; i++) {
+                stickersTextures[i].load();
+                stickersTextureRegions[i] = TextureRegionFactory
+                        .extractFromTexture(stickersTextures[i]);
+            }
+            StickerSprite.setTextureRegions(stickersTextureRegions);
         } catch (IOException e) {
             Debug.e(e);
         }
     }
 
-	@Override
-	protected Scene onCreateScene() {
+    @Override
+    protected Scene onCreateScene() {
+        ((ImageView) (findViewById(R.id.imageExit))).setColorFilter(GREEN, PorterDuff.Mode.ADD);
         MapObjectSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
         RoomSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
         RoomSprite.setFont(FontFactory.create(getEngine().getFontManager(),
@@ -128,7 +161,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL),
                 100f, true, Color.WHITE_ABGR_PACKED_INT));
         final Scene scene = new Scene();
-		scene.setBackground(new Background(1, 1, 0.7f));
+        scene.setBackground(new Background(0.95f, 0.95f, 1f));
         for (int i = 0; i <= GRID_COLS; i++) {
             Line line = new Line(GRID_SIZE * i, 0,
                     GRID_SIZE * i, GRID_SIZE * GRID_ROWS,
@@ -156,13 +189,26 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             public boolean onSceneTouchEvent(final Scene pScene, TouchEvent pSceneTouchEvent) {
                 if (!pSceneTouchEvent.isActionMove()) {
                     RoomSprite room = map.getRoomTouched(pSceneTouchEvent);
-                    if (room != null && state == ActionState.PARAMS) {
-                        runOnUiThread(() -> showParams(room));
-                        return true;
+                    if (room != null) {
+                        switch (state) {
+                            case DEL:
+                                map.removeRoom(room);
+                                return false;
+                            case COLOR:
+                                return true;
+                            case PARAMS:
+                                showParams(room);
+                                return false;
+                            default:
+                                Log.e("VASYOID", "wrong state in onSceneTouchEvent function");
+                        }
                     }
                 }
                 if (state == ActionState.DEL) {
-                    runOnUpdateThread(() -> map.detachRemoved());
+                    map.detachRemoved(mEngine);
+                    return false;
+                }
+                if (state == ActionState.MOVE_STICKER) {
                     return false;
                 }
                 if (state == ActionState.MOVE) {
@@ -185,7 +231,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                         RoomSprite currentRoom = map.createRoom(pSceneTouchEvent.getX(),
                                 pSceneTouchEvent.getY(), pScene);
                         if (currentRoom != null) {
-                            runOnUiThread(() -> showParams(currentRoom));
+                            showParams(currentRoom);
                         }
                     }
                     return false;
@@ -199,22 +245,41 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 PointF firstPoint = new PointF(firstX, firstY);
                 PointF previousPoint = new PointF(previousX, previousY);
                 PointF currentPoint = new PointF(currentX, currentY);
-
+                if (state == ActionState.ADD && item == MapItem.STICKER) {
+                    if (pSceneTouchEvent.getAction() == TouchEvent.ACTION_DOWN) {
+                        StickerSprite sticker = new StickerSprite(currentSticker, currentPoint);
+                        map.addObject(sticker);
+                        pScene.attachChild(sticker);
+                        pScene.registerTouchArea(sticker);
+                        pScene.sortChildren();
+                    }
+                    return false;
+                }
                 switch (pSceneTouchEvent.getAction()) {
                     case TouchEvent.ACTION_DOWN:
                         firstX = previousX = currentX;
                         firstY = previousY = currentY;
                         if (state != ActionState.MOVE_WALL) {
-                            currentLine.setPosition(firstX, firstY,
-                                    currentX, currentY);
-                            if (item == 0) {
-                                currentAdded = new WallSprite();
-                            } else {
-                                currentAdded = new DoorSprite();
+                            currentLine.setPosition(firstX, firstY, currentX, currentY);
+                            switch (item) {
+                                case WALL:
+                                    currentAdded = new WallSprite();
+                                    break;
+                                case DOOR:
+                                    currentAdded = new DoorSprite();
+                                    break;
+                                case WINDOW:
+                                    currentAdded = new WindowSprite();
+                                    break;
+                                default:
+                                    Log.e("VASYOID", "wrong item in onSceneTouchEvent function");
                             }
                             currentAdded.setPosition(currentLine);
                             pScene.attachChild(currentAdded);
                             pScene.registerTouchArea(currentAdded);
+                            pScene.sortChildren();
+                        } else {
+                            map.setScaleByPoint(currentPoint, 1.0f, 1.4f);
                         }
                         break;
                     case TouchEvent.ACTION_MOVE:
@@ -234,9 +299,10 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                         break;
                     case TouchEvent.ACTION_UP:
                         if (state == ActionState.MOVE_WALL) {
-                            runOnUpdateThread(() -> map.detachRemoved());
+                            map.detachRemoved(mEngine);
+                            map.setScaleByPoint(firstPoint, 1.0f, 1.0f);
                             if (!firstPoint.equals(currentPoint)) {
-                                if (map.checkIntersections(firstPoint)) {
+                                if (map.hasIntersections(firstPoint)) {
                                     map.moveObjects(firstPoint, currentPoint, firstPoint);
                                     map.updateRooms(scene);
                                 } else {
@@ -245,14 +311,17 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                             }
                         } else {
                             if ((currentX != firstX || currentY != firstY) &&
-                                    !map.checkIntersections(currentAdded)) {
+                                    !map.hasIntersections(currentAdded)) {
                                 map.addObject(currentAdded);
-                                runOnUpdateThread(() -> map.detachRemoved());
+                                pScene.sortChildren();
+                                map.detachRemoved(mEngine);
                             } else {
                                 pScene.detachChild(currentAdded);
                             }
                             currentLine.setPosition(0, 0, 0, 0);
                         }
+                        break;
+                    default:
                         break;
                 }
                 return false;
@@ -306,7 +375,7 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 
         scene.sortChildren();
         return scene;
-	}
+    }
 
     @Override
     protected int getLayoutID() {
@@ -315,12 +384,12 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
 
     @Override
     protected int getRenderSurfaceViewID() {
-        return R.id.renderSurfaceView;
+        return R.id.constructorView;
     }
 
     private void clearField() {
-	    map.clear();
-	    runOnUpdateThread(() -> map.detachRemoved());
+        map.clear();
+        map.detachRemoved(mEngine);
     }
 
     private void hideKeyboard() {
@@ -336,51 +405,105 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
     }
 
     public void showParams(RoomSprite pRoom) {
-        findViewById(R.id.renderSurfaceView).setEnabled(false);
-        View paramsView = findViewById(R.id.roomParamsView);
-        paramsView.setVisibility(View.VISIBLE);
-        EditText roomName = findViewById(R.id.roomName);
-        EditText roomDescription = findViewById(R.id.roomDescription);
-        roomName.setText(pRoom.getTitle());
-        roomDescription.setText(pRoom.getDescription());
-        paramsView.findViewById(R.id.roomParamsOk).setOnClickListener(v1 -> {
-            hideKeyboard();
-            String title = roomName.getText().toString();
-            String description = roomDescription.getText().toString();
-            pRoom.setTitle(title);
-            pRoom.setDescription(description);
-            paramsView.setVisibility(View.GONE);
-            findViewById(R.id.renderSurfaceView).setEnabled(true);
+        Semaphore mutex = new Semaphore(1);
+        runOnUiThread(() -> {
+            findViewById(R.id.constructorView).setEnabled(false);
+            View paramsView = findViewById(R.id.roomParamsView);
+            paramsView.setVisibility(View.VISIBLE);
+            EditText roomName = findViewById(R.id.roomName);
+            EditText roomDescription = findViewById(R.id.roomDescription);
+            roomName.setText(pRoom.getTitle());
+            roomDescription.setText(pRoom.getDescription());
+            paramsView.findViewById(R.id.roomParamsOk).setOnClickListener(v1 -> {
+                hideKeyboard();
+                String title = roomName.getText().toString();
+                String description = roomDescription.getText().toString();
+                pRoom.setTitle(title);
+                pRoom.setDescription(description);
+                paramsView.setVisibility(View.GONE);
+                findViewById(R.id.constructorView).setEnabled(true);
+            });
+            mutex.release();
         });
+        try {
+            mutex.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setSticker(View v) {
+        ((ImageView) findViewById(R.id.imageExit)).setColorFilter(TRANSPARENT);
+        ((ImageView) findViewById(R.id.imageLift)).setColorFilter(TRANSPARENT);
+        ((ImageView) findViewById(R.id.imageStairs)).setColorFilter(TRANSPARENT);
+        ((ImageView) findViewById(R.id.imageWC)).setColorFilter(TRANSPARENT);
+        ((ImageView) v).setColorFilter(GREEN, PorterDuff.Mode.ADD);
+        switch (v.getId()) {
+            case R.id.imageExit:
+                currentSticker = EXIT;
+                break;
+            case R.id.imageLift:
+                currentSticker = LIFT;
+                break;
+            case R.id.imageStairs:
+                currentSticker = STAIRS;
+                break;
+            case R.id.imageWC:
+                currentSticker = WC;
+                break;
+            default:
+                Log.e("VASYOID", "wrong view id in setSticker function");
+
+        }
     }
 
     public void setItem(View v) {
+        if (v.getId() != R.id.buttonSticker) {
+            findViewById(R.id.stickersLayout).setVisibility(View.GONE);
+        } else {
+            findViewById(R.id.stickersLayout).setVisibility(View.VISIBLE);
+        }
+
+        ((Button) findViewById(R.id.buttonDoor)).setTextColor(BLACK);
+        ((Button) findViewById(R.id.buttonWall)).setTextColor(BLACK);
+        ((Button) findViewById(R.id.buttonWindow)).setTextColor(BLACK);
+        ((Button) findViewById(R.id.buttonSticker)).setTextColor(BLACK);
+        ((Button) v).setTextColor(RED);
+
         switch (v.getId()) {
             case R.id.buttonWall:
-                item = 0;
-                v.setEnabled(false);
-                findViewById(R.id.buttonDoor).setEnabled(true);
+                item = MapItem.WALL;
                 break;
             case R.id.buttonDoor:
-                item = 1;
-                v.setEnabled(false);
-                findViewById(R.id.buttonWall).setEnabled(true);
+                item = MapItem.DOOR;
                 break;
+            case R.id.buttonWindow:
+                item = MapItem.WINDOW;
+                break;
+            case R.id.buttonSticker:
+                item = MapItem.STICKER;
+                break;
+            default:
+                Log.e("VASYOID", "wrong view id setItem function");
         }
     }
 
     public void setState(View v) {
-
-        if (v.getId() != R.id.buttonClear) {
-            findViewById(R.id.buttonColor).setEnabled(true);
-            findViewById(R.id.buttonDel).setEnabled(true);
-            findViewById(R.id.buttonMove).setEnabled(true);
-            findViewById(R.id.buttonMoveWall).setEnabled(true);
-            findViewById(R.id.buttonAdd).setEnabled(true);
-            findViewById(R.id.buttonParams).setEnabled(true);
-            v.setEnabled(false);
+        if (v.getId() != R.id.buttonAdd) {
+            findViewById(R.id.itemsLayout).setVisibility(View.GONE);
+        } else {
+            findViewById(R.id.itemsLayout).setVisibility(View.VISIBLE);
         }
-
+        if (v.getId() != R.id.buttonClear) {
+            ((Button) findViewById(R.id.buttonColor)).setTextColor(BLACK);
+            ((Button) findViewById(R.id.buttonDel)).setTextColor(BLACK);
+            ((Button) findViewById(R.id.buttonMove)).setTextColor(BLACK);
+            ((Button) findViewById(R.id.buttonMoveWall)).setTextColor(BLACK);
+            ((Button) findViewById(R.id.buttonAdd)).setTextColor(BLACK);
+            ((Button) findViewById(R.id.buttonParams)).setTextColor(BLACK);
+            ((Button) findViewById(R.id.buttonMoveSticker)).setTextColor(BLACK);
+            ((Button) v).setTextColor(RED);
+        }
         switch (v.getId()) {
             case R.id.buttonAdd:
                 state = ActionState.ADD;
@@ -394,6 +517,9 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
             case R.id.buttonMoveWall:
                 state = ActionState.MOVE_WALL;
                 break;
+            case R.id.buttonMoveSticker:
+                state = ActionState.MOVE_STICKER;
+                break;
             case R.id.buttonColor:
                 state = ActionState.COLOR;
                 break;
@@ -401,14 +527,19 @@ public class ConstructorActivity extends SimpleLayoutGameActivity {
                 state = ActionState.PARAMS;
                 break;
             case R.id.buttonClear:
-                runOnUpdateThread(this::clearField);
+                clearField();
                 break;
+            default:
+                Log.e("VASYOID", "wrong view id in setState function");
         }
         map.setActionState(state);
     }
 
     public enum ActionState {
-        ADD, DEL, MOVE, MOVE_WALL, COLOR, PARAMS
+        ADD, DEL, MOVE, MOVE_WALL, MOVE_STICKER, COLOR, PARAMS
     }
 
+    private enum MapItem {
+        WALL, DOOR, WINDOW, STICKER
+    }
 }

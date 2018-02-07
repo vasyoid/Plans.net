@@ -25,7 +25,7 @@ public class RoomSprite {
     private static VertexBufferObjectManager vertexBufferObjectManager;
     private static Map MAP;
     private static Font font;
-    private List<PointF> polygon;
+    private List<PointF> polygon = new ArrayList<>();
     private float initialX, initialY;
     private Mesh mesh;
     private Color roomColor;
@@ -33,18 +33,24 @@ public class RoomSprite {
     private String description;
 
     public RoomSprite(List<PointF> pPolygon) {
-        polygon = new ArrayList<>();
         polygon.addAll(pPolygon);
         Random rand = new Random();
-        roomColor = new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
+        roomColor = new Color(rand.nextFloat() * 0.5f + 0.5f,
+                rand.nextFloat() * 0.5f + 0.5f, rand.nextFloat() * 0.5f + 0.5f);
         title = new Text(initialX, initialY, font, "", 30, vertexBufferObjectManager);
+        title.setZIndex(2);
+        title.setColor(Color.BLACK);
         reshape(polygon);
-
     }
 
     public static void setFont(Font pFont) {
         font = pFont;
         font.load();
+    }
+
+    public void setColor(Color pColor) {
+        roomColor = pColor;
+        mesh.setColor(roomColor);
     }
 
     public void setTitle(String pTitle) {
@@ -122,29 +128,14 @@ public class RoomSprite {
     }
 
     public boolean contains(PointF point1, PointF point2) {
-        polygon.add(polygon.get(0));
-        for (int i = 0; i < polygon.size() - 1; i++) {
+        for (int i = 0; i < polygon.size(); i++) {
             if (polygon.get(i).equals(point1) &&
-                    polygon.get(i + 1).equals(point2) ||
+                    polygon.get((i + 1) % polygon.size()).equals(point2) ||
                     polygon.get(i).equals(point2) &&
-                    polygon.get(i + 1).equals(point1)) {
-                polygon.remove(polygon.size() - 1);
+                    polygon.get((i + 1) % polygon.size()).equals(point1)) {
                 return true;
             }
         }
-        polygon.remove(polygon.size() - 1);
         return false;
-    }
-
-    public boolean onTouch(TouchEvent pSceneTouchEvent) {
-        switch (MAP.getTouchState()) {
-            case DEL:
-                MAP.removeRoom(this);
-                return false;
-            case COLOR:
-                return true;
-            default:
-                return false;
-        }
     }
 }
