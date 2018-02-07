@@ -13,7 +13,7 @@ import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.
 
 public abstract class MapObjectLinear extends MapObjectSprite {
 
-    private static int THICKNESS = 10;
+    private static final int THICKNESS = 80;
     private Line position;
     private PointF point1 = new PointF(), point2 = new PointF();
     private PointF firstPoint1, firstPoint2;
@@ -23,10 +23,6 @@ public abstract class MapObjectLinear extends MapObjectSprite {
     public MapObjectLinear(ITextureRegion pTextureRegion) {
         super(pTextureRegion, vertexBufferObjectManager);
         setHeight(THICKNESS);
-    }
-
-    public static void setThickness(int thickness) {
-        THICKNESS = thickness;
     }
 
     public void changeDirection() {

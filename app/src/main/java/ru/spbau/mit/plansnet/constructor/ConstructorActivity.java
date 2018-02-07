@@ -410,11 +410,15 @@ public class ConstructorActivity extends BaseConstructorActivity {
 
     public void clearField(View v) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Clear the map?").setTitle("Clear").setPositiveButton(R.string.ok,
-                (dialog, which) -> {
+        builder.setMessage("Clear the map?")
+                .setTitle("Clear")
+                .setPositiveButton(R.string.ok, (dialog, which) -> {
                     map.clear();
                     map.detachRemoved(mEngine);
-                }).setNegativeButton(R.string.cancel, (dialog, which) -> {}).create().show();
+                })
+                .setNegativeButton(R.string.cancel, (dialog, which) -> {})
+                .create()
+                .show();
     }
 
 

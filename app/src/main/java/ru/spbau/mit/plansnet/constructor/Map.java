@@ -27,15 +27,16 @@ import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.
 
 public class Map implements Serializable {
 
+    private static final int GRID_SIZE = 140;
+    private static final int GRID_COLS = 30;
+    private static final int GRID_ROWS = 20;
+
     private List<MapObjectSprite> objects = new LinkedList<>();
     private List<RoomSprite> rooms = new LinkedList<>();
     private List<MapObjectSprite> removedObjects = new LinkedList<>();
     private List<RoomSprite> removedRooms = new LinkedList<>();
     private HashMap<PointF, HashSet<MapObjectLinear>> linearObjectsByCell = new HashMap<>();
     private ConstructorActivity.ActionState touchState = ADD;
-    private static int gridSize = 0;
-    private static int gridCols = 0;
-    private static int gridRows = 0;
 
     Map() { }
 
@@ -66,24 +67,14 @@ public class Map implements Serializable {
     public static List<PointF> getGridPolygon() {
         List<PointF> result = new ArrayList<>();
         result.add(new PointF(-1.0f, -1.0f));
-        result.add(new PointF(-1.0f, gridRows * gridSize + 1.0f));
-        result.add(new PointF(gridCols * gridSize + 1.0f, gridRows * gridSize + 1.0f));
-        result.add(new PointF(gridCols * gridSize + 1.0f, -1.0f));
+        result.add(new PointF(-1.0f, GRID_ROWS * GRID_SIZE + 1.0f));
+        result.add(new PointF(GRID_COLS * GRID_SIZE + 1.0f, GRID_ROWS * GRID_SIZE + 1.0f));
+        result.add(new PointF(GRID_COLS * GRID_SIZE + 1.0f, -1.0f));
         return result;
     }
 
-    public static void setGridSize(int pSize) {
-        gridSize = pSize;
-    }
-    public static void setGridCols(int pCols) {
-        gridCols = pCols;
-    }
-    public static void setGridRows(int pRows) {
-        gridRows = pRows;
-    }
-
     public static int getGridSize() {
-        return gridSize;
+        return GRID_SIZE;
     }
 
     public void setActionState(ConstructorActivity.ActionState state) {
@@ -111,7 +102,6 @@ public class Map implements Serializable {
     }
 
     private void removeObjectFromHashTable(PointF point, MapObjectLinear object) {
-        PointF key = new PointF(point.x, point.y);
         if (linearObjectsByCell.containsKey(point)) {
             linearObjectsByCell.get(point).remove(object);
         }

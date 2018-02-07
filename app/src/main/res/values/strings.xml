@@ -8,14 +8,14 @@
     <string name="moveMap">Move map</string>
     <string name="moveWall">Move wall</string>
     <string name="add">Add</string>
-    <string name="paint">Create room</string>
-    <string name="params">Room properties</string>
+    <string name="paint">New room</string>
+    <string name="params">Room props</string>
     <string name="roomName">Room title</string>
     <string name="description">Room description</string>
     <string name="ok">Okay</string>
     <string name="cancel">Cancel</string>
     <string name="window">Window</string>
-    <string name="sticker">Sticker</string>
-    <string name="moveSticker">Move sticker</string>
+    <string name="sticker">Sign</string>
+    <string name="moveSticker">Move sign</string>
     <string name="lift">lift</string>
 </resources>
