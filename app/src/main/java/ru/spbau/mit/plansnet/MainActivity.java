@@ -6,7 +6,6 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
@@ -34,6 +33,8 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.spbau.mit.plansnet.constructor.ConstructorActivity;
 import ru.spbau.mit.plansnet.data.Building;
@@ -160,8 +161,7 @@ public class MainActivity extends AppCompatActivity {
                         user = auth.getCurrentUser();
                         dataController = new DataController(getApplicationContext(), user, myMaps);
 
-                        DownloadMapsAsyncTask downloadTask = new DownloadMapsAsyncTask(this);
-                        downloadTask.execute();
+                        new SearchAndDownloadMapsAsyncTask(this).execute();
                     }
                 });
     }
@@ -206,18 +206,59 @@ public class MainActivity extends AppCompatActivity {
             adapter.notifyDataSetChanged();
 
 
-            SearchTask st = new SearchTask(MainActivity.this);
+            SearchAsyncTask st = new SearchAsyncTask(MainActivity.this);
             st.execute("aul");
 
         }
     }
 
+    private class SearchAndDownloadMapsAsyncTask extends AsyncTask<Void, Void, Void> {
+        @NonNull private ProgressDialog dialog;
+        @NonNull private List<String> floorsPaths = new ArrayList<>();
+        @NonNull private MainActivity activity;
+        @NonNull private final AtomicBoolean isFinished = new AtomicBoolean(false);
+
+        SearchAndDownloadMapsAsyncTask(@NonNull MainActivity activity) {
+            dialog = new ProgressDialog(activity);
+            this.activity = activity;
+
+        }
+
+        @Override
+        protected void onPreExecute() {
+            dialog.setTitle("Search maps on server");
+            dialog.setCancelable(false);
+            dialog.setMessage("Searching...");
+            dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            dialog.show();
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            synchronized (isFinished) {
+                dataController.searchMaps(floorsPaths, isFinished);
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+            new DownloadMapsAsyncTask(activity, floorsPaths).execute();
+        }
+    }
+
     @SuppressLint("StaticFieldLeak")
     private class DownloadMapsAsyncTask extends AsyncTask<Void, Void, Void> {
-        private ProgressDialog dialog;
+        @NonNull private ProgressDialog dialog;
+        @NonNull private List<String> floorsPaths;
+        private final AtomicInteger mapCount = new AtomicInteger(0);
 
-        public DownloadMapsAsyncTask(MainActivity activity) {
+        DownloadMapsAsyncTask(MainActivity activity, @NonNull List<String> floorsPaths) {
             dialog = new ProgressDialog(activity);
+            this.floorsPaths = floorsPaths;
         }
 
         @Override
@@ -226,18 +267,28 @@ public class MainActivity extends AppCompatActivity {
             dialog.setTitle("Loading maps from server");
             dialog.setCancelable(false);
             dialog.setMessage("Loading...");
-            dialog.setMax(1);
+            dialog.setMax(floorsPaths.size());
             dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             dialog.show();
         }
 
         protected Void doInBackground(Void... args) {
-            dataController.downloadMaps(dialog);
-            while(dialog.getProgress() < dialog.getMax()) {
-                SystemClock.sleep(200);
+            mapCount.set(0);
+            synchronized (mapCount) {
+                dataController.downloadMaps(floorsPaths, mapCount);
+                while (mapCount.get() < floorsPaths.size()) {
+                    try {
+                        mapCount.wait();
+                        dialog.setProgress(mapCount.get());
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        Log.d("SYNCHRONIZED_ERROR", e.getMessage());
+                    }
+                }
             }
             return null;
         }
+
 
         protected void onPostExecute(Void result) {
             // do UI work here
@@ -246,8 +297,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("AsyncWork", "dismiss download async task");
                 dialog.dismiss();
             }
-            LoadMapsAsyncTask task = new LoadMapsAsyncTask(MainActivity.this);
-            task.execute();
+            new LoadMapsAsyncTask(MainActivity.this).execute();
         }
     }
 
@@ -267,11 +317,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressLint("StaticFieldLeak")
-    private class SearchTask extends AsyncTask<String, Void, Void> {
+    private class SearchAsyncTask extends AsyncTask<String, Void, Void> {
         private ProgressDialog dialog;
         private List<SearchResult> list; // list with <OwnerId, OwnerName, Group>. It is keys in Database
 
-        public SearchTask(MainActivity activity) {
+        public SearchAsyncTask(MainActivity activity) {
             dialog = new ProgressDialog(activity);
             list = new ArrayList<>();
         }

@@ -19,6 +19,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.spbau.mit.plansnet.MainActivity;
 import ru.spbau.mit.plansnet.data.AbstractDataContainer;
@@ -56,8 +58,8 @@ public class DataController {
      * Download maps from server
      * @param progressDialog progress dialog to track a progress
      */
-    public void downloadMaps(@NonNull final ProgressDialog progressDialog) {
-        netManager.downloadMaps(progressDialog);
+    public void downloadMaps(@NonNull final List<String> floorsPaths, @NonNull AtomicInteger mapCount) {
+        netManager.downloadByPaths(floorsPaths, mapCount);
     }
 
     /**
@@ -173,7 +175,7 @@ public class DataController {
      * @param groupName name of a group
      * @param progressDialog progress dialog to track progress
      */
-    public void addGroupByRef(@NonNull final String owner, @NonNull final String groupName,
+    public void downloadGroup(@NonNull final String owner, @NonNull final String groupName,
                               @NonNull final ProgressDialog progressDialog) {
         netManager.downloadGroup(owner, groupName, progressDialog);
     }
@@ -292,5 +294,9 @@ public class DataController {
             Log.d(DATA_TAG, "map can't be read");
             exception.printStackTrace();
         }
+    }
+
+    public void searchMaps(@NonNull List<String> floorsPaths, @NonNull AtomicBoolean isFinished) {
+        netManager.searchMaps(floorsPaths, isFinished);
     }
 }

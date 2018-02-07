@@ -23,6 +23,8 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.spbau.mit.plansnet.MainActivity.SearchResult;
 import ru.spbau.mit.plansnet.data.Building;
@@ -33,7 +35,7 @@ import ru.spbau.mit.plansnet.data.UsersGroup;
  * Manager of network data
  */
 
-public class NetworkDataManager {
+class NetworkDataManager {
     @NonNull
     private Context context;
     @NonNull
@@ -45,7 +47,7 @@ public class NetworkDataManager {
 
     private static final String STORAGE_TAG = "FIREBASE_STORAGE";
 
-    public NetworkDataManager(@NonNull final Context context,
+    NetworkDataManager(@NonNull final Context context,
                               @NonNull final FirebaseUser currentUser) {
         this.context = context;
         userAccount = currentUser;
@@ -57,7 +59,7 @@ public class NetworkDataManager {
         databaseReference = database.getReference();
     }
 
-    public void putMapOnServer(@NonNull final FloorMap map) {
+    void putMapOnServer(@NonNull final FloorMap map) {
         //put on database
         DatabaseReference userRef = databaseReference.child(userAccount.getUid());
         userRef.child("mail").setValue(userAccount.getEmail());
@@ -99,12 +101,10 @@ public class NetworkDataManager {
     }
 
     /**
-     * Get all tree from database and download this to the phone,
-     * create an account from it
+     * Searches map on server and add it to list of paths
      */
-    public void downloadMaps(@NonNull final ProgressDialog progressDialog) {
-        final ArrayList<String> floorsPaths = new ArrayList<>();
-
+    void searchMaps(@NonNull final List<String> floorsPaths,
+                    @NonNull final AtomicBoolean isFinished) {
         databaseReference
                 .child(userAccount.getUid())
                 .child("groups")
@@ -119,24 +119,22 @@ public class NetworkDataManager {
                             }
                         }
 
-                        progressDialog.setMax(floorsPaths.size());
-                        Log.d(STORAGE_TAG, "progress dialog size updated: " + progressDialog.getMax());
-
-                        downloadByPaths(floorsPaths, progressDialog);
+                        synchronized (isFinished) {
+                            isFinished.set(true);
+                        }
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-                        Log.e(STORAGE_TAG, databaseError.getMessage());
-                        progressDialog.setMax(0);
-                        progressDialog.cancel();
+                        Log.d("Search Maps", databaseError.getMessage());
+                        synchronized (isFinished) {
+                            isFinished.set(true);
+                        }
                     }
-
-
                 });
     }
 
-    private void downloadByPaths(List<String> floorsPaths, ProgressDialog progressDialog) {
+    void downloadByPaths(@NonNull final List<String> floorsPaths, AtomicInteger mapCount) {
         for (final String path : floorsPaths) {
             storageReference.child(path).getMetadata().addOnCompleteListener(
                     task -> {
@@ -144,11 +142,9 @@ public class NetworkDataManager {
                         final File mapFile = new File(context.getApplicationContext()
                                 .getFilesDir(), path);
 
-                        if (mapFile.exists() && mapFile.lastModified() > task.getResult().getUpdatedTimeMillis()) {
-                            Log.d(STORAGE_TAG,
-                                    task.getResult().getName() + " is up to date");
-                            progressDialog.incrementProgressBy(1);
-
+                        if (mapFile.exists()
+                                && mapFile.lastModified() > task.getResult().getUpdatedTimeMillis()) {
+                            Log.d(STORAGE_TAG,task.getResult().getName() + " is up to date");
                             return;
                         }
 
@@ -159,21 +155,23 @@ public class NetworkDataManager {
                         }
                         storageReference.child(path).getFile(mapFile)
                                 .addOnSuccessListener(taskSnapshot -> {
-                                    progressDialog.incrementProgressBy(1);
-                                    Log.d("LOAD", progressDialog.getProgress() + " : " + progressDialog.getMax());
-                                    if (progressDialog.getProgress() == floorsPaths.size()) {
-                                        progressDialog.dismiss();
+                                    synchronized (mapCount) {
+                                        mapCount.incrementAndGet();
+                                        Log.d("LOAD", mapCount.get() + " : "
+                                                + floorsPaths.size());
                                     }
-                                    Log.d(STORAGE_TAG, progressDialog.getProgress() + " get file from storage: " + mapFile.getName());
                                 }).addOnFailureListener(e -> {
-                            progressDialog.incrementProgressBy(1);
-                            Toast.makeText(context, "Can't download map: " + mapFile.getName(), Toast.LENGTH_SHORT).show();
+                                    synchronized (mapCount) {
+                                        mapCount.incrementAndGet();
+                                        Toast.makeText(context, "Can't download map: "
+                                                + mapFile.getName(), Toast.LENGTH_SHORT).show();
+                                    }
                         });
                     });
         }
     }
 
-    public void deleteReference(@Nullable final String groupName,
+    void deleteReference(@Nullable final String groupName,
                                 @Nullable final String buildingName,
                                 @Nullable final String mapName) {
         DatabaseReference ref = databaseReference.child(userAccount.getUid());
@@ -199,7 +197,7 @@ public class NetworkDataManager {
         ref.removeValue();
     }
 
-    public void getGroupsWhichContainsName(@NonNull final String name,
+    void getGroupsWhichContainsName(@NonNull final String name,
                                            @NonNull final List<SearchResult> ownersAndGroups,
                                            @NonNull CountDownLatch latch) {
         final String searchedName = name.toLowerCase();
@@ -226,7 +224,7 @@ public class NetworkDataManager {
                 });
     }
 
-    public void downloadGroup(@NonNull final String owner, @NonNull final String group,
+    void downloadGroup(@NonNull final String owner, @NonNull final String group,
                               @NonNull final ProgressDialog progressDialog) {
         final UsersGroup userGroup = new UsersGroup(group + "_" + owner);
         databaseReference
