@@ -146,7 +146,7 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
         MapObjectSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
         RoomSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
         RoomSprite.setFont(FontFactory.create(getEngine().getFontManager(),
-                getEngine().getTextureManager(), 256, 256,
+                getEngine().getTextureManager(), 512, 512,
                 Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL),
                 100f, true, Color.WHITE_ABGR_PACKED_INT));
     }

@@ -121,7 +121,7 @@ public abstract class MapObjectLinear extends MapObjectSprite {
                     MAP.updateMovedObject(firstPoint1, firstPoint2, this);
                     setScale(1.0f);
                     firstPoint1 = firstPoint2 = null;
-                    return false;
+                    return true;
                 default:
                     break;
             }

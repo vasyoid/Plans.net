@@ -209,6 +209,9 @@ public class ConstructorActivity extends BaseConstructorActivity {
                         map.detachRemoved(mEngine);
                         break;
                     case SHOW_PARAMS:
+                        if (room == null) {
+                            break;
+                        }
                         showParams(room);
                         break;
                     case CREATE_ROOM:
