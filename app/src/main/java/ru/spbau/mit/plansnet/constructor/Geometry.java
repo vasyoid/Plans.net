@@ -1,7 +1,6 @@
 package ru.spbau.mit.plansnet.constructor;
 
 import android.graphics.PointF;
-import android.util.Log;
 
 import com.earcutj.Earcut;
 
@@ -251,16 +250,15 @@ public class Geometry {
 
     public static boolean isPointInsidePolygon(List<PointF> polygon, PointF PointF) {
         int cntIntersections = 0;
-        Line line = new Line(PointF.x, PointF.y, PointF.x, -1e5f, null);
-        polygon.add(polygon.get(0));
-        for (int i = 0; i < polygon.size() - 1; i++) {
+        Line line = new Line(PointF.x, PointF.y, PointF.x + 0.5f, -1e5f, null);
+        for (int i = 0; i < polygon.size(); i++) {
             Line side = new Line(polygon.get(i).x, polygon.get(i).y,
-                    polygon.get(i + 1).x, polygon.get(i + 1).y, null);
+                    polygon.get((i + 1) % polygon.size()).x,
+                    polygon.get((i + 1) % polygon.size()).y, null);
             if (side.collidesWith(line)) {
                 cntIntersections++;
             }
         }
-        polygon.remove(polygon.size() - 1);
         return cntIntersections % 2 == 1;
     }
 
