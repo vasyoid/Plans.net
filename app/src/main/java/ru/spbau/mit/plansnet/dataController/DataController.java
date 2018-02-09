@@ -158,12 +158,16 @@ public class DataController {
      * Method for searching groups on server
      * @param substring substring of names of groups
      * @param ownersAndGroups list for results of searching
-     * @param latch count down latch to track a progress
      */
     public void getSearchedGroupsAndOwners(@NonNull String substring,
-                                           @NonNull final List<MainActivity.SearchResult> ownersAndGroups,
-                                           @NonNull final CountDownLatch latch) {
+                                           @NonNull final List<MainActivity.SearchResult> ownersAndGroups) {
+        CountDownLatch latch = new CountDownLatch(1);
         netManager.getGroupsWhichContainsName(substring, ownersAndGroups, latch);
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void searchGroupMaps(@NonNull String owner, @NonNull String group,

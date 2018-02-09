@@ -5,7 +5,6 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -60,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final Pattern allowedStringPattern = Pattern.compile("[a-zA-Zа-яА-ЯёЁ0-9_ ]*");
 
-    InputFilter filter = (charSequence, i, i1, spanned, i2, i3) -> {//TODO: why spaces doesn't works?
+    InputFilter filter = (charSequence, i, i1, spanned, i2, i3) -> {
         if (charSequence != null && !allowedStringPattern.matcher(charSequence).matches()) {
             return "";
         }
@@ -685,13 +684,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("AsyncWork", "nothing to search");
                 return null;
             }
-            CountDownLatch latch = new CountDownLatch(1);
-            dataController.getSearchedGroupsAndOwners(args[0], list, latch);
-            try {
-                latch.await();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            dataController.getSearchedGroupsAndOwners(args[0], list);
             return null;
         }
 
