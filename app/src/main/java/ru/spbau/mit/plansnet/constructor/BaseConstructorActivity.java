@@ -8,6 +8,7 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
+import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
@@ -32,6 +33,7 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
 
     protected static int cameraWidth = 0;
     protected static int cameraHeight = 0;
+    protected static float cameraZoomFactor = 1;
 
     protected final static int GRID_COLS = 30;
     protected final static int GRID_ROWS = 20;
@@ -63,12 +65,14 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
     @Override
     public EngineOptions onCreateEngineOptions() {
         setCameraResolution();
-        final ZoomCamera camera = new ZoomCamera(0, 0, cameraWidth, cameraHeight);
+        final SmoothCamera camera = new SmoothCamera(0, 0, cameraWidth, cameraHeight,
+                5000, 5                                                                                                                                                                                     000, 100);
         camera.setCenter(GRID_SIZE * GRID_COLS / 2, GRID_SIZE * GRID_ROWS / 2);
         camera.setBounds(-3 * GRID_SIZE, -3 * GRID_SIZE,
                 GRID_SIZE * (GRID_COLS + 3), GRID_SIZE * (GRID_ROWS + 3));
         camera.setBoundsEnabled(true);
-        camera.setZoomFactor(Math.min(1f, (float) cameraHeight / ((GRID_ROWS + 2) * GRID_SIZE)));
+        cameraZoomFactor = Math.min(1f, (float) cameraHeight / ((GRID_ROWS + 2) * GRID_SIZE));
+        camera.setZoomFactor(cameraZoomFactor);
         return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED,
                 new FillResolutionPolicy(), camera);
     }
@@ -126,17 +130,17 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
                     @Override
                     public void onPinchZoom(PinchZoomDetector pPinchZoomDetector,
                                             TouchEvent pTouchEvent, float pZoomFactor) {
-                        final float newZoomFactor = mInitialTouchZoomFactor * pZoomFactor;
+                        float newZoomFactor = mInitialTouchZoomFactor * pZoomFactor;
                         ZoomCamera mCamera = (ZoomCamera) getEngine().getCamera();
+                        newZoomFactor = Math.min(newZoomFactor, 3.0f * cameraZoomFactor);
+                        newZoomFactor = Math.max(newZoomFactor, 0.8f * cameraZoomFactor);
                         mCamera.setZoomFactor(newZoomFactor);
                     }
 
                     @Override
                     public void onPinchZoomFinished(PinchZoomDetector pPinchZoomDetector,
                                                     TouchEvent pTouchEvent, float pZoomFactor) {
-                        final float newZoomFactor = mInitialTouchZoomFactor * pZoomFactor;
-                        ZoomCamera mCamera = (ZoomCamera) getEngine().getCamera();
-                        mCamera.setZoomFactor(newZoomFactor);
+                        onPinchZoom(pPinchZoomDetector, pTouchEvent, pZoomFactor);
                     }
                 });
         mPinchZoomDetector.setEnabled(true);
