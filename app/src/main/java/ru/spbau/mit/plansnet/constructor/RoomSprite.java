@@ -7,12 +7,8 @@ import org.andengine.entity.primitive.DrawMode;
 import org.andengine.entity.primitive.Mesh;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.text.Text;
-import org.andengine.entity.text.TextOptions;
-import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.font.Font;
-import org.andengine.opengl.font.FontFactory;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
-import org.andengine.util.TextUtils;
 import org.andengine.util.color.Color;
 
 import java.util.ArrayList;
@@ -31,10 +27,10 @@ public class RoomSprite {
     private Color roomColor;
     private Text title;
     private String description;
+    private Random rand = new Random();
 
     public RoomSprite(List<PointF> pPolygon) {
         polygon.addAll(pPolygon);
-        Random rand = new Random();
         roomColor = new Color(rand.nextFloat() * 0.5f + 0.5f,
                 rand.nextFloat() * 0.5f + 0.5f, rand.nextFloat() * 0.5f + 0.5f);
         title = new Text(initialX, initialY, font, "", 30, vertexBufferObjectManager);
@@ -49,7 +45,7 @@ public class RoomSprite {
     }
 
     public void setColor(Color pColor) {
-        roomColor = pColor;
+        roomColor.set(pColor.getRed(), pColor.getGreen(), pColor.getBlue(), 1.0f);
         mesh.setColor(roomColor);
     }
 

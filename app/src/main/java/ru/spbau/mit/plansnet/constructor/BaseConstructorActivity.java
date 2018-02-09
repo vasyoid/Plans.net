@@ -8,7 +8,6 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
-import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
@@ -30,12 +29,13 @@ import java.io.IOException;
 import ru.spbau.mit.plansnet.data.FloorMap;
 
 public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
-    protected static int CAMERA_WIDTH = 0;
-    protected static int CAMERA_HEIGHT = 0;
+
+    protected static int cameraWidth = 0;
+    protected static int cameraHeight = 0;
 
     protected final static int GRID_COLS = 30;
     protected final static int GRID_ROWS = 20;
-    protected static int GRID_SIZE;
+    protected final static int GRID_SIZE = 140;
 
     protected Map map;
     protected FloorMap toOpenMap;
@@ -49,8 +49,8 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
         Display display = wm.getDefaultDisplay();
         DisplayMetrics metrics = new DisplayMetrics();
         display.getMetrics(metrics);
-        CAMERA_WIDTH = metrics.widthPixels;
-        CAMERA_HEIGHT = metrics.heightPixels;
+        cameraWidth = metrics.widthPixels;
+        cameraHeight = metrics.heightPixels;
     }
 
     @Override
@@ -63,17 +63,12 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
     @Override
     public EngineOptions onCreateEngineOptions() {
         setCameraResolution();
-        GRID_SIZE = (100000 / CAMERA_HEIGHT);
-        Map.setGridSize(GRID_SIZE);
-        Map.setGridCols(GRID_COLS);
-        Map.setGridRows(GRID_ROWS);
-        MapObjectLinear.setThickness(60000 / CAMERA_HEIGHT);
-        final SmoothCamera camera = new SmoothCamera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT,
-                CAMERA_WIDTH, CAMERA_HEIGHT, 50);
+        final ZoomCamera camera = new ZoomCamera(0, 0, cameraWidth, cameraHeight);
         camera.setCenter(GRID_SIZE * GRID_COLS / 2, GRID_SIZE * GRID_ROWS / 2);
-        camera.setBounds(0, 0,
-                GRID_SIZE * GRID_COLS, GRID_SIZE * GRID_ROWS);
+        camera.setBounds(-3 * GRID_SIZE, -3 * GRID_SIZE,
+                GRID_SIZE * (GRID_COLS + 3), GRID_SIZE * (GRID_ROWS + 3));
         camera.setBoundsEnabled(true);
+        camera.setZoomFactor(Math.min(1f, (float) cameraHeight / ((GRID_ROWS + 2) * GRID_SIZE)));
         return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED,
                 new FillResolutionPolicy(), camera);
     }
@@ -151,7 +146,7 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
         MapObjectSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
         RoomSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
         RoomSprite.setFont(FontFactory.create(getEngine().getFontManager(),
-                getEngine().getTextureManager(), 256, 256,
+                getEngine().getTextureManager(), 512, 512,
                 Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL),
                 100f, true, Color.WHITE_ABGR_PACKED_INT));
     }
