@@ -66,7 +66,7 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
     public EngineOptions onCreateEngineOptions() {
         setCameraResolution();
         final SmoothCamera camera = new SmoothCamera(0, 0, cameraWidth, cameraHeight,
-                5000, 5                                                                                                                                                                                     000, 100);
+                5000, 5000, 100);
         camera.setCenter(GRID_SIZE * GRID_COLS / 2, GRID_SIZE * GRID_ROWS / 2);
         camera.setBounds(-3 * GRID_SIZE, -3 * GRID_SIZE,
                 GRID_SIZE * (GRID_COLS + 3), GRID_SIZE * (GRID_ROWS + 3));
