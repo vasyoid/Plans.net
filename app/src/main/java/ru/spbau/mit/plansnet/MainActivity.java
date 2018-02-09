@@ -382,6 +382,7 @@ public class MainActivity extends AppCompatActivity {
         findListView.setOnItemClickListener((parent, view, i, id) -> {
             SearchResult searchResult = findList.get(i);
             findList.clear();
+            findViewById(R.id.searchView).clearFocus();
             findListAdapter.notifyDataSetChanged();
             new SearchAndDownloadGroupAsyncTask(MainActivity.this).execute(searchResult);
         });
@@ -402,10 +403,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        searchView.setOnSearchClickListener(View::clearFocus);
+
         searchView.setOnCloseListener(() -> {
+            searchView.clearFocus();
             findList.clear();
             findListAdapter.notifyDataSetChanged();
             return false;
+        });
+
+        searchView.setOnQueryTextFocusChangeListener((view, b) -> {
+            Log.d("SearchView", "bool is " + b);
         });
     }
 
