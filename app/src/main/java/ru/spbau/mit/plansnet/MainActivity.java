@@ -738,7 +738,9 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected Void doInBackground(SearchResult... args) {
-            //TODO: args can be empty
+            if (args.length == 0) {
+                throw new RuntimeException("Expected arguments in SearchAndDownloadGroupAsyncTask");
+            }
             arg = args[0];
             dataController.searchGroupMaps(arg.ownerId, arg.groupName,
                     floorsPaths, isFinished);
@@ -794,7 +796,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         protected Void doInBackground(SearchResult... args) {
-            //TODO args can be empty
+            if (args.length == 0) {
+                throw new RuntimeException("Expected arguments in DownloadGroupMapsAsyncTask");
+            }
             mapCount.set(0);
             Log.d("GroupDownload", "Start doInBackground " + floorsPaths.size());
             synchronized (mapCount) {

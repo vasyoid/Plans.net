@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -64,10 +65,12 @@ class NetworkDataManager {
         DatabaseReference userRef = databaseReference.child(userAccount.getUid());
         userRef.child("mail").setValue(userAccount.getEmail());
         userRef.child("name").setValue(userAccount.getDisplayName());
-        DatabaseReference buildingsRef = userRef.child("groups")
-                .child(map.getGroupName()).child("buildings");
+        DatabaseReference groupRef = userRef.child("groups").child(map.getGroupName());
 
-        buildingsRef.child("isPublic").setValue(true);
+        groupRef.child("isPublic").setValue(true);
+
+        DatabaseReference buildingsRef = groupRef.child("buildings");
+
         DatabaseReference floorsRef = buildingsRef
                 .child(map.getBuildingName())
                 .child("floors")//need to add some order in future
@@ -205,17 +208,45 @@ class NetworkDataManager {
             }
         } else {
             return;
-        } //TODO: make recursive delete
-//        Log.d("STORAGE_DELETE", storageRef.getPath());
-//        storageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-//            @Override
-//            public void onSuccess(Void aVoid) {
-//                Log.d("STORAGE_DELET", "deleted");
-//            }
-//        }).addOnFailureListener(runnable -> {
-//            runnable.printStackTrace();
-//        });
-        ref.removeValue();
+        }
+
+        if (mapName != null) {
+            ref.removeValue();
+            storageRef.delete();
+            return;
+        }
+        final StorageReference deleteInStorage = storageRef;
+        final DatabaseReference deleteInDatabase = ref;
+        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                List<String> floorsPaths = new ArrayList<>();
+                if (buildingName != null) {
+                    Log.d("delete storage", "delete building");
+                    for (DataSnapshot floor : dataSnapshot.child("floors").getChildren()) {
+                        floorsPaths.add((String)floor.child("path").getValue());
+                    }
+                } else {
+                    Log.d("delete storage", "delete group");
+                    for (DataSnapshot building : dataSnapshot.child("buildings").getChildren()) {
+                        for (DataSnapshot floor : building.child("floors").getChildren()) {
+                            floorsPaths.add((String)floor.child("path").getValue());
+                            Log.d("delete storage", "added path:" + floorsPaths.get(floorsPaths.size() - 1));
+                        }
+                    }
+                }
+                for (String path : floorsPaths) {
+                    Log.d("storage delete", "delete: " + path);
+                    storageReference.child(path).delete();
+                }
+                deleteInDatabase.removeValue();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d("storage delete", "OOPS: " + databaseError.getMessage());
+            }
+        });
     }
 
     void getGroupsWhichContainsName(@NonNull final String name,
