@@ -209,6 +209,9 @@ public class Map implements Serializable {
     }
 
     public void detachRemoved(Engine pEngine) {
+        if (removedObjects.isEmpty() && removedRooms.isEmpty()) {
+            return;
+        }
         Semaphore mutex = new Semaphore(1);
         pEngine.runOnUpdateThread(() -> {
             for (MapObjectSprite o : removedObjects) {

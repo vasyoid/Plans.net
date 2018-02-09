@@ -96,35 +96,35 @@ public abstract class MapObjectLinear extends MapObjectSprite {
                     setScale(1.0f, 1.4f);
                     return true;
                 case TouchEvent.ACTION_MOVE:
-                    if (firstPoint1 != null) {
-                        PointF currentPoint1 = new PointF(firstPoint1.x + currentTouchX - firstTouchX,
-                                firstPoint1.y + currentTouchY - firstTouchY);
-                        PointF currentPoint2 = new PointF(firstPoint2.x + currentTouchX - firstTouchX,
-                                firstPoint2.y + currentTouchY - firstTouchY);
-                        if (Geometry.isPointInsidePolygon(Map.getGridPolygon(), currentPoint1) &&
-                                Geometry.isPointInsidePolygon(Map.getGridPolygon(), currentPoint2)) {
-                            setPoint1(currentPoint1);
-                            setPoint2(currentPoint2);
-                        }
-                        return true;
-                    } else {
+                    if (firstPoint1 == null) {
                         return false;
                     }
-                case TouchEvent.ACTION_UP:
-                    if (firstPoint1 != null) {
-                        if (MAP.hasIntersections(this)) {
-                            setPoint1(firstPoint1);
-                            setPoint2(firstPoint2);
-                        }
-                        if (!point1.equals(firstPoint1)) {
-                            for (RoomSprite room : roomsToRemove) {
-                                MAP.removeRoom(room);
-                            }
-                        }
-                        MAP.updateMovedObject(firstPoint1, firstPoint2, this);
-                        setScale(1.0f);
-                        firstPoint1 = firstPoint2 = null;
+                    PointF currentPoint1 = new PointF(firstPoint1.x + currentTouchX - firstTouchX,
+                            firstPoint1.y + currentTouchY - firstTouchY);
+                    PointF currentPoint2 = new PointF(firstPoint2.x + currentTouchX - firstTouchX,
+                            firstPoint2.y + currentTouchY - firstTouchY);
+                    if (Geometry.isPointInsidePolygon(Map.getGridPolygon(), currentPoint1) &&
+                            Geometry.isPointInsidePolygon(Map.getGridPolygon(), currentPoint2)) {
+                        setPoint1(currentPoint1);
+                        setPoint2(currentPoint2);
                     }
+                    return true;
+                case TouchEvent.ACTION_UP:
+                    if (firstPoint1 == null) {
+                        return false;
+                    }
+                    if (MAP.hasIntersections(this)) {
+                        setPoint1(firstPoint1);
+                        setPoint2(firstPoint2);
+                    }
+                    if (!point1.equals(firstPoint1)) {
+                        for (RoomSprite room : roomsToRemove) {
+                            MAP.removeRoom(room);
+                        }
+                    }
+                    MAP.updateMovedObject(firstPoint1, firstPoint2, this);
+                    setScale(1.0f);
+                    firstPoint1 = firstPoint2 = null;
                     return false;
                 default:
                     break;

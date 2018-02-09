@@ -199,11 +199,12 @@ public class Geometry {
             }
             MapObjectLinear ol = (MapObjectLinear) o;
             PointF tmp = getIntersectionPoint(ray, ol.getPosition(), true);
-            if (tmp != null) {
-                if (curX < tmp.x) {
-                    currentObject = (MapObjectLinear) o;
-                    curX = tmp.x;
-                }
+            if (tmp == null) {
+                continue;
+            }
+            if (curX < tmp.x) {
+                currentObject = (MapObjectLinear) o;
+                curX = tmp.x;
             }
         }
         if (currentObject == null) {
@@ -232,11 +233,12 @@ public class Geometry {
                 if (lineEndsWith(ol.getPosition(), curPoint)) {
                     ol.changeDirection();
                 }
-                if (lineStartsWith(ol.getPosition(), curPoint)) {
-                    if (currentAngle > getAngle(currentObject.getPosition(), ol.getPosition())) {
-                        currentAngle = getAngle(currentObject.getPosition(), ol.getPosition());
-                        nextObject = (MapObjectLinear) o;
-                    }
+                if (!lineStartsWith(ol.getPosition(), curPoint)) {
+                    continue;
+                }
+                if (currentAngle > getAngle(currentObject.getPosition(), ol.getPosition())) {
+                    currentAngle = getAngle(currentObject.getPosition(), ol.getPosition());
+                    nextObject = (MapObjectLinear) o;
                 }
             }
             if (nextObject == null) {
