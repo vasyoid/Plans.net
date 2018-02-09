@@ -25,7 +25,7 @@ public class StickerSprite extends MapObjectSprite {
     private float currentSize;
 
     public StickerSprite(StickerType pType, PointF pPosition) {
-        this(pType, pPosition, 0.5f);
+        this(pType, pPosition, 1.0f);
     }
 
     public StickerSprite(Sticker pSticker) {
@@ -71,7 +71,7 @@ public class StickerSprite extends MapObjectSprite {
                     firstTouch = previousTouch = new PointF(pSceneTouchEvent.getX(), pSceneTouchEvent.getY());
                     if (Geometry.isPointAtCorner(new PointF(pTouchAreaLocalX, pTouchAreaLocalY),
                             new PointF(0, 0), new PointF(TEXTURE_SIZE, TEXTURE_SIZE),
-                            Map.getGridSize() / size)) {
+                            Map.getGridSize() / 2.0 / size)) {
                         zooming = true;
                         currentSize = size;
                     } else {
@@ -87,6 +87,8 @@ public class StickerSprite extends MapObjectSprite {
                     if (zooming) {
                         currentSize = size * Geometry.distance(position, currentTouch) /
                                 Geometry.distance(position, firstTouch);
+                        currentSize = Math.min(currentSize, 1.5f);
+                        currentSize = Math.max(currentSize, 0.7f);
                         setScale(currentSize);
                     } else {
                         position.offset(currentTouch.x - previousTouch.x,
@@ -107,9 +109,11 @@ public class StickerSprite extends MapObjectSprite {
                 default:
                     break;
             }
+            return true;
         } else if (MAP.getTouchState() == ConstructorActivity.ActionState.DEL &&
                 pSceneTouchEvent.getAction() == ACTION_DOWN) {
             MAP.removeObject(this);
+            return true;
         }
         return false;
     }
