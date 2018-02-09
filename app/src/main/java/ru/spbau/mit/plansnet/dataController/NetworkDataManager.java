@@ -107,6 +107,7 @@ class NetworkDataManager {
      */
     void searchMaps(@NonNull final List<String> floorsPaths,
                     @NonNull final AtomicBoolean isFinished) {
+        Log.d("SearchMaps", "Start Searching in network manager");
         databaseReference
                 .child(userAccount.getUid())
                 .child("groups")
@@ -117,11 +118,14 @@ class NetworkDataManager {
                             for (DataSnapshot building : group.child("buildings").getChildren()) {
                                 for (DataSnapshot floor : building.child("floors").getChildren()) {
                                     floorsPaths.add((String) floor.child("path").getValue());
+                                    Log.d("SearchMaps", "found " + floor.getKey());
                                 }
                             }
                         }
                         synchronized (isFinished) {
                             isFinished.set(true);
+                            isFinished.notify();
+                            Log.d("SearchMaps", "finish!");
                         }
                     }
 
@@ -130,6 +134,7 @@ class NetworkDataManager {
                         Log.d("Search Maps", databaseError.getMessage());
                         synchronized (isFinished) {
                             isFinished.set(true);
+                            isFinished.notify();
                         }
                     }
                 });
@@ -148,6 +153,7 @@ class NetworkDataManager {
                             Log.d(STORAGE_TAG,task.getResult().getName() + " is up to date");
                             synchronized (mapCount) {
                                 mapCount.incrementAndGet();
+                                mapCount.notify();
                             }
                             return;
                         }
@@ -162,12 +168,14 @@ class NetworkDataManager {
                                 .addOnSuccessListener(taskSnapshot -> {
                                     synchronized (mapCount) {
                                         mapCount.incrementAndGet();
+                                        mapCount.notify();
                                         Log.d(STORAGE_TAG, mapCount.get()
                                                 + " get file from storage: " + mapFile.getName());
                                     }
                                 }).addOnFailureListener(e -> {
                                     synchronized (mapCount) {
                                         mapCount.incrementAndGet();
+                                        mapCount.notify();
                                         Toast.makeText(context, "Can't download map: "
                                                 + mapFile.getName(), Toast.LENGTH_SHORT).show();
                                     }
@@ -261,12 +269,17 @@ class NetworkDataManager {
                         }
                         synchronized (isFinished) {
                             isFinished.set(true);
+                            isFinished.notify();
                         }
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-
+                        Log.d("SearchGroups", databaseError.getMessage());
+                        synchronized (isFinished) {
+                            isFinished.set(true);
+                            isFinished.notify();
+                        }
                     }
                 });
     }

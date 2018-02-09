@@ -523,9 +523,23 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected Void doInBackground(Void... voids) {
+            Log.d("SearchMapsAsync", "In Searching");
+            dataController.searchMaps(floorsPaths, isFinished);
             synchronized (isFinished) {
-                dataController.searchMaps(floorsPaths, isFinished);
+                Log.d("SearchMapsAsync", "In sync");
+                while (!isFinished.get()) {
+                    try {
+                        Log.d("SearchMapsAsync", "before wait");
+                        isFinished.wait();
+                        Log.d("SearchMapsAsync", "after wait");
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                Log.d("SearchMapsAsync", "after while");
             }
+            Log.d("SearchMapsAsync", "after sync");
+
             return null;
         }
 
@@ -725,10 +739,24 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(SearchResult... args) {
             //TODO: args can be empty
             arg = args[0];
+            dataController.searchGroupMaps(arg.ownerId, arg.groupName,
+                    floorsPaths, isFinished);
             synchronized (isFinished) {
-                dataController.searchGroupMaps(arg.ownerId, arg.groupName,
-                        floorsPaths, isFinished);
+                Log.d("SearchGroups", "before while");
+                while (!isFinished.get()) {
+                    try {
+                        Log.d("SearchGroups", "start wait");
+                        isFinished.wait();
+                        Log.d("SearchGroups", "end wait");
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                Log.d("SearchGroups", "after while");
+
             }
+            Log.d("SearchGroups", "after sync");
+
             return null;
         }
 
@@ -767,6 +795,7 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(SearchResult... args) {
             //TODO args can be empty
             mapCount.set(0);
+            Log.d("GroupDownload", "Start doInBackground " + floorsPaths.size());
             synchronized (mapCount) {
                 dataController.downloadGroup(args[0].ownerId, floorsPaths, mapCount);
                 while (mapCount.get() < floorsPaths.size()) {
