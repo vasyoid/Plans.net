@@ -13,12 +13,15 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputFilter;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.SearchView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -142,16 +145,52 @@ public class MainActivity extends AppCompatActivity {
 
     private void createNewMapDialog(UsersGroup chosenGroup, Building chosenBuilding) {
         AlertDialog newMapDialog = new AlertDialog.Builder(MainActivity.this).create();
-        newMapDialog.setTitle("enter name of new floor");
+        newMapDialog.setTitle("choose how to create new floor");
+
+        RadioGroup createMode = (RadioGroup) getLayoutInflater()
+                .inflate(R.layout.create_mode, null);
+        if (createMode == null) {
+            Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show();
+            return;
+        }
+        newMapDialog.setView(createMode);
+        newMapDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
+            switch (createMode.getCheckedRadioButtonId()) {
+                case R.id.createModeEmpty:
+                    Toast.makeText(this, "Grid", Toast.LENGTH_LONG).show();
+                    createNewMapNameDialog(chosenGroup, chosenBuilding);
+                    break;
+                case R.id.createModeBackground:
+                    Toast.makeText(this, "Background", Toast.LENGTH_LONG).show();
+                    break;
+                case R.id.createModeCopy:
+                    Toast.makeText(this, "Copy", Toast.LENGTH_LONG).show();
+                    break;
+                default:
+                    Toast.makeText(this, "Nothing is chosen", Toast.LENGTH_LONG).show();
+                    break;
+            }
+        });
+
+        newMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
+                (dialog, which) -> {});
+
+        newMapDialog.show();
+    }
+
+    private void createNewMapNameDialog(UsersGroup chosenGroup, Building chosenBuilding) {
+        AlertDialog newMapNameDialog = new AlertDialog.Builder(MainActivity.this).create();
+        newMapNameDialog.setTitle("enter name of new floor");
 
         EditText mapNameInput = new EditText(MainActivity.this);
         mapNameInput.setFilters(new InputFilter[]{filter});
-        newMapDialog.setView(mapNameInput);
+        newMapNameDialog.setView(mapNameInput);
 
-        newMapDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
+        newMapNameDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
             String newMapName = mapNameInput.getText().toString();
             if (chosenBuilding.findByName(newMapName) != null) {
-                Toast.makeText(MainActivity.this, "This floor already exists", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this,
+                        "This floor already exists", Toast.LENGTH_LONG).show();
                 return;
             }
             FloorMap floor = new FloorMap(
@@ -167,10 +206,10 @@ public class MainActivity extends AppCompatActivity {
             floorListAdapter.notifyDataSetChanged();
         });
 
-        newMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
+        newMapNameDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
                 (dialog, which) -> {});
 
-        newMapDialog.show();
+        newMapNameDialog.show();
     }
 
     private void createChooseBuildingForNewMapDialog(UsersGroup chosenGroup) {

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RadioGroup
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="600dp"
+    android:layout_height="400dp"
+    android:id="@+id/createModeRadioGroup"
+    android:orientation="vertical"
+    tools:context="ru.spbau.mit.plansnet.MainActivity">
+
+    <RadioButton
+        android:id="@+id/createModeEmpty"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="@string/emptyMap"
+        android:checked="true"
+        />
+
+    <RadioButton
+        android:id="@+id/createModeBackground"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="@string/backgroundMap"
+        />
+
+    <RadioButton
+        android:id="@+id/createModeCopy"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="@string/copyMap"
+        />
+
+</RadioGroup>

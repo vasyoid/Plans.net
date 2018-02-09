@@ -18,4 +18,7 @@
     <string name="sticker">Sign</string>
     <string name="moveSticker">Move sign</string>
     <string name="lift">lift</string>
+    <string name="emptyMap">empty map with grid</string>
+    <string name="copyMap">copy existing map</string>
+    <string name="backgroundMap">map with background picture</string>
 </resources>
