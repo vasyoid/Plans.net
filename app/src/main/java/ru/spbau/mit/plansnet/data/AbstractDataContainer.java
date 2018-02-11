@@ -7,7 +7,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,20 +19,22 @@ import java.util.Map;
 public abstract class AbstractDataContainer<T extends AbstractNamedData>
         extends AbstractNamedData implements Serializable {
     @NonNull
-    private final Map<String, T> data;
+    private final Map<String, T> data = new HashMap<>();
 
     public AbstractDataContainer(@NonNull String name) {
         super(name);
-        data = new HashMap<>();
     }
 
     @NotNull
-    public ArrayList<String> getListOfNames() {
-        ArrayList<String> list = new ArrayList<>();
-        for (Object name : data.keySet().toArray())  {
-            list.add((String) name);
-        }
+    public List<T> getListOfData() {
+        ArrayList<T> list = new ArrayList<>();
+        list.addAll(data.values());
         return list;
+    }
+
+    @NonNull
+    public Collection<T> getValues() {
+        return data.values();
     }
 
     @NonNull

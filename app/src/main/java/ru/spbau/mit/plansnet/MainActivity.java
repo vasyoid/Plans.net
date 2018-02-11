@@ -75,14 +75,14 @@ public class MainActivity extends AppCompatActivity {
     private FloorMap currentMap;
 
     @NonNull
-    private final List<String> myGroupList = new ArrayList<>();
+    private final List<UsersGroup> myGroupList = new ArrayList<>();
     @NonNull
-    private final List<String> buildingList = new ArrayList<>();
+    private final List<Building> buildingList = new ArrayList<>();
     @NonNull
-    private final List<String> floorList = new ArrayList<>();
-    private ArrayAdapter<String> myGroupListAdapter;
-    private ArrayAdapter<String> buildingListAdapter;
-    private ArrayAdapter<String> floorListAdapter;
+    private final List<FloorMap> floorList = new ArrayList<>();
+    private ArrayAdapter<UsersGroup> myGroupListAdapter;
+    private ArrayAdapter<Building> buildingListAdapter;
+    private ArrayAdapter<FloorMap> floorListAdapter;
 
     @NonNull
     private final List<SearchResult> findList = new ArrayList<>();
@@ -103,8 +103,9 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "This group already exists", Toast.LENGTH_LONG).show();
                 return;
             }
-            dataController.addGroup(new UsersGroup(newGroupName));
-            myGroupList.add(newGroupName);
+            UsersGroup group = new UsersGroup(newGroupName);
+            dataController.addGroup(group);
+            myGroupList.add(group);
             myGroupListAdapter.notifyDataSetChanged();
         });
 
@@ -131,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
             dataController.addBuildingToGroup(new Building(newBuildingName), chosenGroup);
             buildingList.clear();
             if (currentGroup == chosenGroup) {
-                buildingList.addAll(currentGroup.getListOfNames());
+                buildingList.addAll(currentGroup.getValues());
             }
             buildingListAdapter.notifyDataSetChanged();
         });
@@ -200,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
             dataController.saveMap(floor);
             floorList.clear();
             if (currentBuilding == chosenBuilding) {
-                floorList.addAll(currentBuilding.getListOfNames());
+                floorList.addAll(currentBuilding.getValues());
             }
             floorListAdapter.notifyDataSetChanged();
         });
@@ -218,13 +219,13 @@ public class MainActivity extends AppCompatActivity {
         ListView buildingsSuggestedList = new ListView(MainActivity.this);
         chooseBuildingsForNewMapDialog.setView(buildingsSuggestedList);
 
-        final List<String> buildingList = chosenGroup.getListOfNames();
-        ArrayAdapter<String> buildingAdapter = new ArrayAdapter<>(MainActivity.this,
+        final List<Building> buildingList = chosenGroup.getListOfData();
+        ArrayAdapter<Building> buildingAdapter = new ArrayAdapter<>(MainActivity.this,
                 android.R.layout.simple_list_item_1, buildingList);
 
         buildingsSuggestedList.setAdapter(buildingAdapter);
         buildingsSuggestedList.setOnItemClickListener((adapterView, view, i, l) -> {
-            Building chosenBuilding = chosenGroup.findByName(buildingList.get(i));
+            Building chosenBuilding = buildingList.get(i);
             chooseBuildingsForNewMapDialog.cancel();
             createNewMapDialog(chosenGroup, chosenBuilding);
         });
@@ -244,12 +245,12 @@ public class MainActivity extends AppCompatActivity {
         ListView groupsSuggestedList = new ListView(MainActivity.this);
         chooseGroupForNewMapDialog.setView(groupsSuggestedList);
 
-        ArrayAdapter<String> groupAdapter = new ArrayAdapter<>(MainActivity.this,
+        ArrayAdapter<UsersGroup> groupAdapter = new ArrayAdapter<>(MainActivity.this,
                 android.R.layout.simple_list_item_1, myGroupList);
 
         groupsSuggestedList.setAdapter(groupAdapter);
         groupsSuggestedList.setOnItemClickListener((adapterView, view, i, l) -> {
-            UsersGroup chosenGroup = dataController.getGroup(myGroupList.get(i));
+            UsersGroup chosenGroup = myGroupList.get(i);
             chooseGroupForNewMapDialog.cancel();
             createChooseBuildingForNewMapDialog(chosenGroup);
         });
@@ -281,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
         deleteDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
             dataController.deleteByPath(groupName, buildingName, floorName);
             myGroupList.clear();
-            myGroupList.addAll(dataController.getAccount().getListOfNames());
+            myGroupList.addAll(dataController.getAccount().getValues());
             myGroupListAdapter.notifyDataSetChanged();
 
             if (currentGroup != null && groupName.equals(currentGroup.getName())) {
@@ -314,25 +315,25 @@ public class MainActivity extends AppCompatActivity {
         Log.d("ID", "id: " + groupListView.getId());
 
         groupListView.setOnItemClickListener((parent, view, i, id) -> {
-            currentGroup = dataController.getAccount().findByName(myGroupList.get(i));
+            currentGroup = myGroupList.get(i);
             assert currentGroup != null;
 
             buildingList.clear();
             if (currentGroup != null) {
-                buildingList.addAll(currentGroup.getListOfNames());
+                buildingList.addAll(currentGroup.getValues());
             }
             buildingListAdapter.notifyDataSetChanged();
 
             floorList.clear();
-            if (buildingList.size() > 0) {
-                currentBuilding = currentGroup.findByName(buildingList.get(0));
-                floorList.addAll(currentBuilding.getListOfNames());
+            if (buildingList.size() != 0) {
+                currentBuilding = buildingList.get(0);
+                floorList.addAll(currentBuilding.getValues());
             }
             floorListAdapter.notifyDataSetChanged();
         });
 
         groupListView.setOnItemLongClickListener((adapterView, view, i, l) -> {
-            UsersGroup group = dataController.getAccount().findByName(myGroupList.get(i));
+            UsersGroup group = myGroupList.get(i);
             assert group != null;
             createDeleteDialog(group.getName(), null, null);
             return true;
@@ -358,9 +359,9 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                currentBuilding = currentGroup.findByName(buildingList.get(i));
+                currentBuilding = buildingList.get(i);
                 assert currentBuilding != null;
-                floorList.addAll(currentBuilding.getListOfNames());
+                floorList.addAll(currentBuilding.getValues());
                 floorListAdapter.notifyDataSetChanged();
             }
 
@@ -396,7 +397,7 @@ public class MainActivity extends AppCompatActivity {
                     floorListAdapter.notifyDataSetChanged();
                     return;
                 }
-                currentMap = currentBuilding.findByName(floorList.get(i));
+                currentMap = floorList.get(i);
             }
 
             @Override
@@ -702,7 +703,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             myGroupList.clear();
-            myGroupList.addAll(dataController.getAccount().getListOfNames());
+            myGroupList.addAll(dataController.getAccount().getValues());
 
             buildingList.clear();
             floorList.clear();

@@ -28,4 +28,9 @@ public abstract class AbstractNamedData implements Serializable {
     public void setName(@NonNull String name) {
         this.name = name;
     }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

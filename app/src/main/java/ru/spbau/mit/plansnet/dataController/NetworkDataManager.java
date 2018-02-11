@@ -148,6 +148,7 @@ class NetworkDataManager {
             storageReference.child(path).getMetadata().addOnCompleteListener(
                     task -> {
                         String newPath = path.replace(owner, userAccount.getUid());
+
                         Log.d(STORAGE_TAG, "downloading file: " + path);
                         final File mapFile = new File(context.getApplicationContext()
                                 .getFilesDir(), newPath);

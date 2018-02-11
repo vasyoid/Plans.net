@@ -181,7 +181,6 @@ public class DataController {
      */
     public void downloadGroup(@NonNull final String owner, @NonNull final List<String> floorsPaths,
                               @NonNull final AtomicInteger mapCount) {
-//        netManager.downloadGroup(owner, groupName, floorsPaths, mapCount);
         netManager.downloadByPaths(floorsPaths, mapCount, owner);
     }
 
