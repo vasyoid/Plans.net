@@ -3,12 +3,9 @@ package ru.spbau.mit.plansnet.constructor;
 import android.view.View;
 import android.widget.TextView;
 
-import org.andengine.engine.camera.Camera;
 import org.andengine.entity.primitive.Line;
-import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
-import org.andengine.input.touch.TouchEvent;
 
 import java.util.concurrent.Semaphore;
 
@@ -36,30 +33,18 @@ public class ViewerActivity extends BaseConstructorActivity {
     }
 
     private void initScene(Scene pScene) {
-        pScene.setOnSceneTouchListener(new IOnSceneTouchListener() {
-
-            private float mInitialTouchX;
-            private float mInitialTouchY;
-
-            @Override
-            public boolean onSceneTouchEvent(final Scene pScene, TouchEvent pSceneTouchEvent) {
-                mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
-                if (pSceneTouchEvent.isActionDown()) {
-                    RoomSprite room = map.getRoomTouched(pSceneTouchEvent);
-                    if (room != null) {
-                        showParams(room);
-                    }
-                    mInitialTouchX = pSceneTouchEvent.getX();
-                    mInitialTouchY = pSceneTouchEvent.getY();
-                } else if (pSceneTouchEvent.isActionMove()){
-                    final float touchOffsetX = mInitialTouchX - pSceneTouchEvent.getX();
-                    final float touchOffsetY = mInitialTouchY - pSceneTouchEvent.getY();
-                    Camera mCamera = getEngine().getCamera();
-                    mCamera.setCenter(mCamera.getCenterX() + touchOffsetX,
-                            mCamera.getCenterY() + touchOffsetY);
+        pScene.setOnSceneTouchListener((pScene1, pSceneTouchEvent) -> {
+            mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
+            if (pSceneTouchEvent.isActionDown()) {
+                RoomSprite room = map.getRoomTouched(pSceneTouchEvent);
+                if (room != null) {
+                    showParams(room);
                 }
-                return false;
-            }});
+            } else {
+                moveMap(pSceneTouchEvent);
+            }
+            return false;
+        });
         pScene.setTouchAreaBindingOnActionDownEnabled(true);
         pScene.setTouchAreaBindingOnActionMoveEnabled(true);
         pScene.setOnSceneTouchListenerBindingOnActionDownEnabled(true);

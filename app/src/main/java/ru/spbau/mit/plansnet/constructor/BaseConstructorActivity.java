@@ -6,8 +6,10 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.Display;
+import android.view.MotionEvent;
 import android.view.WindowManager;
 
+import org.andengine.engine.camera.Camera;
 import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.options.EngineOptions;
@@ -111,6 +113,21 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
             StickerSprite.setTextureRegions(stickersTextureRegions);
         } catch (IOException e) {
             Debug.e(e);
+        }
+    }
+
+    protected void moveMap(TouchEvent pSceneTouchEvent) {
+        mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
+        if (pSceneTouchEvent.isActionMove()) {
+            final MotionEvent event = pSceneTouchEvent.getMotionEvent();
+            if (event.getHistorySize() == 0) {
+                return;
+            }
+            final float touchOffsetX = event.getHistoricalX(0) - event.getX();
+            final float touchOffsetY = event.getHistoricalY(0) - event.getY();
+            Camera mCamera = getEngine().getCamera();
+            mCamera.setCenter(mCamera.getCenterX() + touchOffsetX,
+                    mCamera.getCenterY() + touchOffsetY);
         }
     }
 

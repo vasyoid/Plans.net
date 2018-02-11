@@ -66,21 +66,6 @@ public class ConstructorActivity extends BaseConstructorActivity {
                     getVertexBufferObjectManager());
             private MapObjectLinear currentAdded;
 
-            private void moveMap(TouchEvent pSceneTouchEvent) {
-                mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
-                if (pSceneTouchEvent.isActionMove()) {
-                    final MotionEvent event = pSceneTouchEvent.getMotionEvent();
-                    if (event.getHistorySize() == 0) {
-                        return;
-                    }
-                    final float touchOffsetX = event.getHistoricalX(0) - event.getX();
-                    final float touchOffsetY = event.getHistoricalY(0) - event.getY();
-                    Camera mCamera = getEngine().getCamera();
-                    mCamera.setCenter(mCamera.getCenterX() + touchOffsetX,
-                            mCamera.getCenterY() + touchOffsetY);
-                }
-            }
-
             void createRoom(RoomSprite pTouchedRoom, TouchEvent pSceneTouchEvent) {
                 if (!pSceneTouchEvent.isActionDown() || pTouchedRoom != null) {
                     return;
