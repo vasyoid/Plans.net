@@ -12,17 +12,16 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputFilter;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SearchView;
 import android.widget.Spinner;
+import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,7 +38,6 @@ import com.google.firebase.auth.GoogleAuthProvider;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
@@ -77,12 +75,12 @@ public class MainActivity extends AppCompatActivity {
     private FloorMap currentMap;
 
     @NonNull
-    private final List<String> groupList = new ArrayList<>();
+    private final List<String> myGroupList = new ArrayList<>();
     @NonNull
     private final List<String> buildingList = new ArrayList<>();
     @NonNull
     private final List<String> floorList = new ArrayList<>();
-    private ArrayAdapter<String> groupListAdapter;
+    private ArrayAdapter<String> myGroupListAdapter;
     private ArrayAdapter<String> buildingListAdapter;
     private ArrayAdapter<String> floorListAdapter;
 
@@ -106,8 +104,8 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             dataController.addGroup(new UsersGroup(newGroupName));
-            groupList.add(newGroupName);
-            groupListAdapter.notifyDataSetChanged();
+            myGroupList.add(newGroupName);
+            myGroupListAdapter.notifyDataSetChanged();
         });
 
         newGroupDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
@@ -149,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
         newMapDialog.setTitle("choose how to create new floor");
 
         RadioGroup createMode = (RadioGroup) getLayoutInflater()
-                .inflate(R.layout.create_mode, null);
+                .inflate(R.layout.create_mode,null);
         if (createMode == null) {
             Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show();
             return;
@@ -247,11 +245,11 @@ public class MainActivity extends AppCompatActivity {
         chooseGroupForNewMapDialog.setView(groupsSuggestedList);
 
         ArrayAdapter<String> groupAdapter = new ArrayAdapter<>(MainActivity.this,
-                android.R.layout.simple_list_item_1, groupList);
+                android.R.layout.simple_list_item_1, myGroupList);
 
         groupsSuggestedList.setAdapter(groupAdapter);
         groupsSuggestedList.setOnItemClickListener((adapterView, view, i, l) -> {
-            UsersGroup chosenGroup = dataController.getGroup(groupList.get(i));
+            UsersGroup chosenGroup = dataController.getGroup(myGroupList.get(i));
             chooseGroupForNewMapDialog.cancel();
             createChooseBuildingForNewMapDialog(chosenGroup);
         });
@@ -282,9 +280,9 @@ public class MainActivity extends AppCompatActivity {
 
         deleteDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
             dataController.deleteByPath(groupName, buildingName, floorName);
-            groupList.clear();
-            groupList.addAll(dataController.getAccount().getListOfNames());
-            groupListAdapter.notifyDataSetChanged();
+            myGroupList.clear();
+            myGroupList.addAll(dataController.getAccount().getListOfNames());
+            myGroupListAdapter.notifyDataSetChanged();
 
             if (currentGroup != null && groupName.equals(currentGroup.getName())) {
                 currentGroup = null;
@@ -305,18 +303,18 @@ public class MainActivity extends AppCompatActivity {
         deleteDialog.show();
     }
 
-    private void setUpGroupListView() {
-        ListView groupListView = findViewById(R.id.groupListView);
+    private void setUpMyGroupListView() {
+        ListView groupListView = findViewById(R.id.myGroupListView);
 
-        groupListAdapter = new ArrayAdapter<>(this,
+        myGroupListAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1,
-                groupList);
+                myGroupList);
 
-        groupListView.setAdapter(groupListAdapter);
+        groupListView.setAdapter(myGroupListAdapter);
         Log.d("ID", "id: " + groupListView.getId());
 
         groupListView.setOnItemClickListener((parent, view, i, id) -> {
-            currentGroup = dataController.getAccount().findByName(groupList.get(i));
+            currentGroup = dataController.getAccount().findByName(myGroupList.get(i));
             assert currentGroup != null;
 
             buildingList.clear();
@@ -334,7 +332,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         groupListView.setOnItemLongClickListener((adapterView, view, i, l) -> {
-            UsersGroup group = dataController.getAccount().findByName(groupList.get(i));
+            UsersGroup group = dataController.getAccount().findByName(myGroupList.get(i));
             assert group != null;
             createDeleteDialog(group.getName(), null, null);
             return true;
@@ -355,8 +353,8 @@ public class MainActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 floorList.clear();
                 if (currentGroup == null) {
-                    groupList.clear();
-                    groupListAdapter.notifyDataSetChanged();
+                    myGroupList.clear();
+                    myGroupListAdapter.notifyDataSetChanged();
                     return;
                 }
 
@@ -374,7 +372,7 @@ public class MainActivity extends AppCompatActivity {
 
         buildingSpinnerView.setOnItemLongClickListener((adapterView, view, i, l) -> {
 //            assert currentGroup != null;
-//            Building building = currentGroup.findByName(groupList.get(i));
+//            Building building = currentGroup.findByName(myGroupList.get(i));
 //            assert building != null;
 //            createDeleteDialog(currentGroup.getName(), building.getName(), null);
 //
@@ -456,6 +454,26 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void setUpTabHost() {
+        TabHost tabHost = findViewById(R.id.tabHost);
+        tabHost.setup();
+
+        TabHost.TabSpec spec = tabHost.newTabSpec("Tag1");
+        spec.setContent(R.id.myGroupLayout);
+        spec.setIndicator("MY");
+        tabHost.addTab(spec);
+
+        spec = tabHost.newTabSpec("Tag2");
+        spec.setContent(R.id.netGroupListView);
+        spec.setIndicator("NET");
+        tabHost.addTab(spec);
+
+        spec = tabHost.newTabSpec("Tag3");
+        spec.setContent(R.id.searchLayout);
+        spec.setIndicator("SEARCH");
+        tabHost.addTab(spec);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -466,9 +484,10 @@ public class MainActivity extends AppCompatActivity {
 
         setUpBuildingSpinnerView();
         setUpFloorSpinnerView();
-        setUpGroupListView();
+        setUpMyGroupListView();
         setUpFindListView();
         setUpSearchView();
+        setUpTabHost();
 
         btnAddGroup.setOnClickListener(groupView -> createNewGroupDialog());
 
@@ -543,7 +562,6 @@ public class MainActivity extends AppCompatActivity {
 
         new SearchAndDownloadMapsAsyncTask(this).execute();
     }
-    // [END handle_sign_in_result]
 
     @SuppressLint("StaticFieldLeak")
     private class SearchAndDownloadMapsAsyncTask extends AsyncTask<Void, Void, Void> {
@@ -555,7 +573,6 @@ public class MainActivity extends AppCompatActivity {
         SearchAndDownloadMapsAsyncTask(@NonNull MainActivity activity) {
             dialog = new ProgressDialog(activity);
             this.activity = activity;
-
         }
 
         @Override
@@ -653,7 +670,7 @@ public class MainActivity extends AppCompatActivity {
     private class LoadMapsAsyncTask extends AsyncTask<Void, Void, Void> {
         private ProgressDialog dialog;
 
-        public LoadMapsAsyncTask(MainActivity activity) {
+        LoadMapsAsyncTask(MainActivity activity) {
             dialog = new ProgressDialog(activity);
         }
 
@@ -684,13 +701,13 @@ public class MainActivity extends AppCompatActivity {
                 dialog.dismiss();
             }
 
-            groupList.clear();
-            groupList.addAll(dataController.getAccount().getListOfNames());
+            myGroupList.clear();
+            myGroupList.addAll(dataController.getAccount().getListOfNames());
 
             buildingList.clear();
             floorList.clear();
 
-            groupListAdapter.notifyDataSetChanged();
+            myGroupListAdapter.notifyDataSetChanged();
             buildingListAdapter.notifyDataSetChanged();
             floorListAdapter.notifyDataSetChanged();
         }
@@ -717,7 +734,7 @@ public class MainActivity extends AppCompatActivity {
         private ProgressDialog dialog;
         private List<SearchResult> list = new ArrayList<>(); // list with <OwnerId, OwnerName, Group>. It is keys in Database
 
-        public SearchAsyncTask(MainActivity activity) {
+        SearchAsyncTask(MainActivity activity) {
             dialog = new ProgressDialog(activity);
         }
 
@@ -759,7 +776,7 @@ public class MainActivity extends AppCompatActivity {
         @NonNull private List<String> floorsPaths = new ArrayList<>();
         @NonNull private MainActivity activity;
         @NonNull private final AtomicBoolean isFinished = new AtomicBoolean(false);
-        @NonNull SearchResult arg;
+        private SearchResult arg;
 
         SearchAndDownloadGroupAsyncTask(@NonNull MainActivity activity) {
             dialog = new ProgressDialog(activity);
@@ -818,7 +835,7 @@ public class MainActivity extends AppCompatActivity {
         @NonNull private final AtomicInteger mapCount = new AtomicInteger(0);
         @NonNull private List<String> floorsPaths;
 
-        public DownloadGroupMapsAsyncTask(MainActivity activity, @NonNull List<String> floorsPaths) {
+        DownloadGroupMapsAsyncTask(MainActivity activity, @NonNull List<String> floorsPaths) {
             dialog = new ProgressDialog(activity);
             this.floorsPaths = floorsPaths;
         }
@@ -892,7 +909,7 @@ public class MainActivity extends AppCompatActivity {
                 floorListAdapter.notifyDataSetChanged();
             }
             currentMap = toSaveMap;
-            groupList.clear();
+            myGroupList.clear();
             break;
         }
     }
