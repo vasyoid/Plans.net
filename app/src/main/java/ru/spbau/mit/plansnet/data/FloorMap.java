@@ -20,7 +20,7 @@ import ru.spbau.mit.plansnet.data.objects.Wall;
 import ru.spbau.mit.plansnet.data.objects.Window;
 
 /**
- * Created by kostya55516 on 14.10.17.
+ * Class for users map
  */
 
 public class FloorMap extends AbstractNamedData implements Serializable {

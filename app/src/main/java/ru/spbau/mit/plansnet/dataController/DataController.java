@@ -128,13 +128,6 @@ public class DataController {
     }
 
     /**
-     * unsupported operation
-     */
-    public void renameMap(@NonNull final FloorMap map) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
      * Load data from local files to user account
      */
     public void loadLocalFiles() {
@@ -182,6 +175,10 @@ public class DataController {
     public void downloadGroup(@NonNull final String owner, @NonNull final List<String> floorsPaths,
                               @NonNull final AtomicInteger mapCount) {
         netManager.downloadByPaths(floorsPaths, mapCount, owner);
+    }
+
+    public void searchMaps(@NonNull List<String> floorsPaths, @NonNull AtomicBoolean isFinished) {
+        netManager.searchMaps(floorsPaths, isFinished);
     }
 
     @NonNull
@@ -302,9 +299,5 @@ public class DataController {
                         + map.getBuildingName() + "/"
                         + map.getName() + ".plannet"
         );
-    }
-
-    public void searchMaps(@NonNull List<String> floorsPaths, @NonNull AtomicBoolean isFinished) {
-        netManager.searchMaps(floorsPaths, isFinished);
     }
 }

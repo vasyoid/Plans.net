@@ -99,14 +99,21 @@ public class MainActivity extends AppCompatActivity {
 
         newGroupDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
             String newGroupName = groupNameInput.getText().toString();
+
+            if (newGroupName.isEmpty()) {
+                Toast.makeText(MainActivity.this, "Name is empty", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             if (dataController.getAccount().findByName(newGroupName) != null) {
                 Toast.makeText(MainActivity.this, "This group already exists", Toast.LENGTH_LONG).show();
                 return;
             }
-            UsersGroup group = new UsersGroup(newGroupName);
-            dataController.addGroup(group);
+            UsersGroup group = dataController.addGroup(new UsersGroup(newGroupName));
             myGroupList.add(group);
             myGroupListAdapter.notifyDataSetChanged();
+
+            createNewBuildingDialog(group);
         });
 
         newGroupDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
@@ -125,16 +132,23 @@ public class MainActivity extends AppCompatActivity {
 
         newBuildingDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
             String newBuildingName = buildingNameInput.getText().toString();
+
+            if (newBuildingName.isEmpty()) {
+                Toast.makeText(MainActivity.this, "Name is empty", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             if (chosenGroup.findByName(newBuildingName) != null) {
                 Toast.makeText(MainActivity.this, "This building already exists", Toast.LENGTH_LONG).show();
                 return;
             }
-            dataController.addBuildingToGroup(new Building(newBuildingName), chosenGroup);
+            Building building = dataController.addBuildingToGroup(new Building(newBuildingName), chosenGroup);
             buildingList.clear();
             if (currentGroup == chosenGroup) {
                 buildingList.addAll(currentGroup.getValues());
             }
             buildingListAdapter.notifyDataSetChanged();
+            createNewMapDialog(chosenGroup, building);
         });
 
         newBuildingDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
@@ -188,6 +202,12 @@ public class MainActivity extends AppCompatActivity {
 
         newMapNameDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
             String newMapName = mapNameInput.getText().toString();
+
+            if (newMapName.isEmpty()) {
+                Toast.makeText(MainActivity.this, "Name is empty", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             if (chosenBuilding.findByName(newMapName) != null) {
                 Toast.makeText(MainActivity.this,
                         "This floor already exists", Toast.LENGTH_LONG).show();
@@ -924,7 +944,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "No map chosen", Toast.LENGTH_LONG).show();
         }
     }
-
 
     public void openConstructor(View v) {
         Intent intent = new Intent(MainActivity.this, ConstructorActivity.class);

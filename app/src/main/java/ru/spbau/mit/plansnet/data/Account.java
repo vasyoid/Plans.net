@@ -4,6 +4,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,16 +19,18 @@ public class Account extends AbstractDataContainer<UsersGroup> {
     private final Map<String, UsersGroup> downloadedGroups = new HashMap<>();
 
     @NonNull
-    public Map<String, UsersGroup> getDownloadedGroups() {
+    public Map<String, UsersGroup> getDownloadedGroupsMap() {
         return downloadedGroups;
     }
 
+    public Collection<UsersGroup> getDownloadedGroups() {
+        return downloadedGroups.values();
+    }
+
     @NonNull
-    public List<String> getListOfDownloadedGroupsNames() {
-        ArrayList<String> list = new ArrayList<>();
-        for (Object name : downloadedGroups.keySet().toArray())  {
-            list.add((String) name);
-        }
+    public List<UsersGroup> getListOfDownloadedGroups() {
+        ArrayList<UsersGroup> list = new ArrayList<>();
+        list.addAll(downloadedGroups.values());
         return list;
     }
 
