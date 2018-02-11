@@ -1,14 +1,11 @@
 package ru.spbau.mit.plansnet.dataController;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
-import android.widget.MultiAutoCompleteTextView;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -30,9 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.spbau.mit.plansnet.MainActivity.SearchResult;
-import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
-import ru.spbau.mit.plansnet.data.UsersGroup;
 
 /**
  * Manager of network data
@@ -86,7 +81,7 @@ class NetworkDataManager {
 
         DatabaseReference floorsRef = buildingsRef
                 .child(map.getBuildingName())
-                .child("floors")//need to add some order in future
+                .child("floors")
                 .child(map.getName());
 
         String pathInStorage = "/" + map.getOwner() + "/"
@@ -126,18 +121,15 @@ class NetworkDataManager {
         Log.d("SearchMaps", "Start Searching in network manager");
         databaseReference
                 .child(userAccount.getUid())
-                .child("groups")
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(final DataSnapshot dataSnapshot) {
-                        for (DataSnapshot group : dataSnapshot.getChildren()) {
-                            for (DataSnapshot building : group.child("buildings").getChildren()) {
-                                for (DataSnapshot floor : building.child("floors").getChildren()) {
-                                    floorsPaths.add((String) floor.child("path").getValue());
-                                    Log.d("SearchMaps", "found " + floor.getKey());
-                                }
-                            }
-                        }
+                        DataSnapshot groups = dataSnapshot.child("groups");
+                        addToFloorsPaths(groups, floorsPaths);
+
+                        groups = dataSnapshot.child("downloads");
+                        addToFloorsPaths(groups, floorsPaths);
+
                         synchronized (isFinished) {
                             isFinished.set(true);
                             isFinished.notify();
@@ -156,11 +148,25 @@ class NetworkDataManager {
                 });
     }
 
-    void downloadByPaths(@NonNull final List<String> floorsPaths, AtomicInteger mapCount, String owner) {
+    private void addToFloorsPaths(DataSnapshot groups, List<String> floorsPaths) {
+        for (DataSnapshot group : groups.getChildren()) {
+            for (DataSnapshot building : group.child("buildings").getChildren()) {
+                for (DataSnapshot floor : building.child("floors").getChildren()) {
+                    floorsPaths.add((String) floor.child("path").getValue());
+                    Log.d("SearchMaps", "found " + floor.getKey());
+                }
+            }
+        }
+    }
+
+    void downloadByPaths(@NonNull final List<String> floorsPaths, AtomicInteger mapCount) {
         for (final String path : floorsPaths) {
             storageReference.child(path).getMetadata().addOnCompleteListener(
                     task -> {
                         String newPath = path;
+                        String owner = path.substring(1, path.substring(1).indexOf('/') + 1);
+                        Log.d(STORAGE_TAG, "Owner is " + owner);
+
                         if (!owner.equals(userAccount.getUid())) {
                             newPath = path.replace(owner + "/",
                                     userAccount.getUid() + "/" + owner + "_");

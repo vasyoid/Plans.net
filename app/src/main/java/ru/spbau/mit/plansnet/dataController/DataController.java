@@ -1,6 +1,5 @@
 package ru.spbau.mit.plansnet.dataController;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -17,7 +16,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -57,7 +55,7 @@ public class DataController {
      * Download maps from server
      */
     public void downloadMaps(@NonNull final List<String> floorsPaths, @NonNull AtomicInteger mapCount) {
-        netManager.downloadByPaths(floorsPaths, mapCount, userAccount.getID());
+        netManager.downloadByPaths(floorsPaths, mapCount);
     }
 
     /**
@@ -168,14 +166,6 @@ public class DataController {
         netManager.searchGroupMaps(owner, group, floorsPaths, isFinished);
     }
 
-    /**
-     * Download and add to account foreign group from server
-     * @param owner id of owner who owned a group
-     */
-    public void downloadGroup(@NonNull final String owner, @NonNull final List<String> floorsPaths,
-                              @NonNull final AtomicInteger mapCount) {
-        netManager.downloadByPaths(floorsPaths, mapCount, owner);
-    }
 
     public void searchMaps(@NonNull List<String> floorsPaths, @NonNull AtomicBoolean isFinished) {
         netManager.searchMaps(floorsPaths, isFinished);
@@ -313,6 +303,7 @@ public class DataController {
         fileOrDirectory.delete();
     }
 
+    @NonNull
     private File formingFileFromMap(@NonNull final FloorMap map) {
         return new File(context.getApplicationContext().getFilesDir(),
                 userAccount.getID() + "/"

@@ -885,65 +885,9 @@ public class MainActivity extends AppCompatActivity {
             if (dialog.isShowing()) {
                 dialog.dismiss();
             }
-            new DownloadGroupMapsAsyncTask(activity, floorsPaths).execute(arg);
+            new DownloadMapsAsyncTask(activity, floorsPaths).execute();
         }
     }
-
-
-    @SuppressLint("StaticFieldLeak")
-    private class DownloadGroupMapsAsyncTask extends AsyncTask<SearchResult, Void, Void> {
-        @NonNull private ProgressDialog dialog;
-        @NonNull private final AtomicInteger mapCount = new AtomicInteger(0);
-        @NonNull private List<String> floorsPaths;
-
-        DownloadGroupMapsAsyncTask(MainActivity activity, @NonNull List<String> floorsPaths) {
-            dialog = new ProgressDialog(activity);
-            this.floorsPaths = floorsPaths;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            Log.d("AsyncWork", "starts group download async task");
-            dialog.setTitle("Loading group from server");
-            dialog.setCancelable(false);
-            dialog.setMessage("Loading...");
-            dialog.setMax(floorsPaths.size());
-            dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            dialog.show();
-        }
-
-        protected Void doInBackground(SearchResult... args) {
-            if (args.length == 0) {
-                throw new RuntimeException("Expected arguments in DownloadGroupMapsAsyncTask");
-            }
-            mapCount.set(0);
-            Log.d("GroupDownload", "Start doInBackground " + floorsPaths.size());
-            synchronized (mapCount) {
-                dataController.downloadGroup(args[0].ownerId, floorsPaths, mapCount);
-                while (mapCount.get() < floorsPaths.size()) {
-                    try {
-                        mapCount.wait();
-                        dialog.setProgress(mapCount.get());
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        Log.d("SYNCHRONIZED_ERROR", e.getMessage());
-                    }
-                }
-            }
-            return null;
-        }
-
-        protected void onPostExecute(Void result) {
-            // do UI work here
-            Log.d("AsyncWork", "ends download async task");
-            if (dialog.isShowing()) {
-                Log.d("AsyncWork", "dismiss download async task");
-                dialog.dismiss();
-            }
-            new LoadMapsAsyncTask(MainActivity.this).execute();
-        }
-    }
-
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
