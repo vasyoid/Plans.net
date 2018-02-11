@@ -173,6 +173,14 @@
             android:textSize="@dimen/button_text_size"
             android:text="@string/params" />
 
+        <Button
+            android:id="@+id/addBackground"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height"
+            android:onClick="setBackground"
+            android:textSize="@dimen/button_text_size"
+            android:text="@string/bkgnd" />
+
     </LinearLayout>
 
     </ScrollView>

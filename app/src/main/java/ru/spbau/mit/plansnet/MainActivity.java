@@ -148,10 +148,6 @@ public class MainActivity extends AppCompatActivity {
 
         RadioGroup createMode = (RadioGroup) getLayoutInflater()
                 .inflate(R.layout.create_mode,null);
-        if (createMode == null) {
-            Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show();
-            return;
-        }
         newMapDialog.setView(createMode);
         newMapDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
             switch (createMode.getCheckedRadioButtonId()) {

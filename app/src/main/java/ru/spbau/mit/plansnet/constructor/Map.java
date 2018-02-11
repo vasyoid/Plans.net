@@ -1,10 +1,16 @@
 package ru.spbau.mit.plansnet.constructor;
 
+import android.graphics.Bitmap;
 import android.graphics.PointF;
 
 import org.andengine.engine.Engine;
 import org.andengine.entity.scene.Scene;
+import org.andengine.entity.scene.background.SpriteBackground;
+import org.andengine.entity.sprite.Sprite;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
+import org.andengine.opengl.texture.region.TextureRegion;
+import org.andengine.opengl.texture.region.TextureRegionFactory;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -73,6 +79,26 @@ public class Map implements Serializable {
 
     public static int getGridSize() {
         return GRID_SIZE;
+    }
+
+    public void setBackground(Bitmap background, Engine pEngine) {
+        BitmapTextureAtlasSource source = new BitmapTextureAtlasSource(background);
+        BitmapTextureAtlas texture = new BitmapTextureAtlas(pEngine.getTextureManager(),
+                background.getWidth(), background.getHeight());
+        texture.addTextureAtlasSource(source, 0, 0);
+        texture.load();
+        TextureRegion backgroundTexture = TextureRegionFactory.createFromSource(texture, source,
+                0, 0);
+        Sprite backgroundSprite = new Sprite(0, 0, backgroundTexture,
+                pEngine.getVertexBufferObjectManager());
+        backgroundSprite.setScaleCenter(0, 0);
+        if (backgroundSprite.getHeight() / backgroundSprite.getWidth() <
+                pEngine.getSurfaceHeight() / pEngine.getSurfaceWidth()) {
+            backgroundSprite.setScale(pEngine.getSurfaceWidth() / backgroundSprite.getWidth());
+        } else {
+            backgroundSprite.setScale(pEngine.getSurfaceHeight() / backgroundSprite.getHeight());
+        }
+        pEngine.getScene().setBackground(new SpriteBackground(backgroundSprite));
     }
 
     public void setActionState(ConstructorActivity.ActionState state) {

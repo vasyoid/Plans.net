@@ -3,8 +3,11 @@ package ru.spbau.mit.plansnet.constructor;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -12,6 +15,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.concurrent.Semaphore;
 
 import org.andengine.entity.primitive.Line;
@@ -35,6 +40,7 @@ import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.WC;
 
 public class ConstructorActivity extends BaseConstructorActivity {
 
+    private static final int PICK_IMAGE_TOKEN = 42;
     private ActionState state = ActionState.ADD;
     private MapItem item = MapItem.WALL;
     private StickerSprite.StickerType currentSticker = EXIT;
@@ -405,6 +411,36 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 .setNegativeButton(R.string.cancel, (dialog, which) -> {})
                 .create()
                 .show();
+    }
+
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case PICK_IMAGE_TOKEN:
+                if (resultCode != RESULT_OK) {
+                    break;
+                }
+                try {
+                    Uri imageUri = data.getData();
+                    if (imageUri == null) {
+                        break;
+                    }
+                    InputStream imageStream = getContentResolver().openInputStream(imageUri);
+                    Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
+                    map.setBackground(selectedImage, getEngine());
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+        }
+
+    }
+
+    public void setBackground(View view) {
+        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+        photoPickerIntent.setType("image/*");
+        startActivityForResult(photoPickerIntent, PICK_IMAGE_TOKEN);
     }
 
     public enum ActionState {

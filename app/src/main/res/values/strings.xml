@@ -10,6 +10,7 @@
     <string name="add">Add</string>
     <string name="paint">New room</string>
     <string name="params">Room props</string>
+    <string name="bkgnd">Add bkgnd</string>
     <string name="roomName">Room title</string>
     <string name="description">Room description</string>
     <string name="ok">Okay</string>
