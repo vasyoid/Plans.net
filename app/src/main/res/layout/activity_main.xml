@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v7.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,151 +7,204 @@
     android:orientation="horizontal"
     tools:context="ru.spbau.mit.plansnet.MainActivity">
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="180dp"
+    <TabHost
+        android:id="@+id/tabHost"
+        android:layout_width="160dp"
         android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <SearchView
-            android:id="@+id/searchView"
-            android:layout_width="match_parent"
-            android:layout_height="30dp">
-
-        </SearchView>
-
-        <ListView
-            android:id="@+id/findListView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            app:layout_constraintEnd_toStartOf="@+id/linearLayout2"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="My groups:" />
-
-        <ListView
-            android:id="@+id/groupListView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="80" />
+        app:layout_constraintBottom_toTopOf="@+id/btnViewer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout2"
+        app:layout_constraintVertical_bias="0.0">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="30dp"
-            android:layout_weight="1"
-            android:gravity="bottom"
-            android:orientation="horizontal">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-            <Button
-                android:id="@+id/btnLogOut"
-                style="@style/Widget.AppCompat.Button.Borderless"
-                android:layout_width="30dp"
-                android:layout_height="match_parent"
-                android:background="@android:drawable/progress_horizontal"
-                android:text="Esc"
-                android:textSize="12sp" />
+            <TabWidget
+                android:id="@android:id/tabs"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:orientation="horizontal"
+                android:visibility="visible" />
 
-            <Space
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_weight="1" />
+            <FrameLayout
+                android:id="@android:id/tabcontent"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:visibility="visible">
 
-            <Button
-                android:id="@+id/btnAddGroup"
-                style="@style/Widget.AppCompat.Button.Borderless"
-                android:layout_width="90dp"
-                android:layout_height="match_parent"
-                android:background="@android:drawable/progress_horizontal"
-                android:text="ADD GROUP"
-                android:textSize="12sp" />
+                <LinearLayout
+                    android:id="@+id/myGroupLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <ListView
+                        android:id="@+id/myGroupListView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="80" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/netGroupLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <ListView
+                        android:id="@+id/netGroupListView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/searchLayout"
+                    android:layout_width="180dp"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <SearchView
+                        android:id="@+id/searchView"
+                        android:layout_width="match_parent"
+                        android:layout_height="30dp">
+
+                    </SearchView>
+
+                    <ListView
+                        android:id="@+id/findListView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="16dp"
+                        app:layout_constraintEnd_toStartOf="@+id/linearLayout2"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </LinearLayout>
+
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:gravity="bottom"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnLogOut"
+                    style="@style/Widget.AppCompat.Button.Borderless"
+                    android:layout_width="30dp"
+                    android:layout_height="match_parent"
+                    android:background="@android:drawable/progress_horizontal"
+                    android:text="Esc"
+                    android:textSize="12sp" />
+
+                <Space
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1" />
+
+                <Button
+                    android:id="@+id/btnAddGroup"
+                    style="@style/Widget.AppCompat.Button.Borderless"
+                    android:layout_width="90dp"
+                    android:layout_height="match_parent"
+                    android:background="@android:drawable/progress_horizontal"
+                    android:text="ADD GROUP"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
         </LinearLayout>
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/btnConstructor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:onClick="openConstructor"
-        android:text="Open constructor"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.505"
-        app:layout_constraintStart_toEndOf="@+id/linearLayout"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.628" />
-
-    <Space
-        android:layout_width="30dp"
-        android:layout_height="50dp"
-        android:layout_weight="1" />
-
-    <Button
-        android:id="@+id/btnViewer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:onClick="openViewer"
-        android:text="Open viewer"
-        app:layout_constraintBottom_toBottomOf="@id/btnConstructor"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.529"
-        app:layout_constraintStart_toEndOf="@+id/linearLayout"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.654" />
-
+    </TabHost>
 
     <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        android:id="@+id/linearLayout2"
-        android:layout_width="360dp"
-        android:layout_height="40dp"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.519"
-        app:layout_constraintStart_toEndOf="@+id/linearLayout"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.059">
+        <LinearLayout
 
-
-        <Spinner
-            android:id="@+id/buildingSpinnerView"
-            android:layout_width="160dp"
+            android:id="@+id/linearLayout2"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1" />
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.519"
+            app:layout_constraintStart_toEndOf="@+id/searchLayout"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.059">
 
-        <Spinner
-            android:id="@+id/floorSpinnerView"
-            android:layout_width="160dp"
+
+            <Spinner
+                android:id="@+id/buildingSpinnerView"
+                android:layout_width="160dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <Spinner
+                android:id="@+id/floorSpinnerView"
+                android:layout_width="160dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <Space
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/btnAddMap"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                app:backgroundTint="@color/colorPrimary"
+                app:rippleColor="@color/colorPrimary"
+                app:srcCompat="@android:drawable/ic_menu_add"
+                tools:ignore="MissingConstraints"
+                tools:layout_editor_absoluteX="550dp"
+                tools:layout_editor_absoluteY="0dp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnViewer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1" />
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:onClick="openViewer"
+            android:text="Open viewer"
+            app:layout_constraintBottom_toBottomOf="@id/btnConstructor"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.529"
+            app:layout_constraintStart_toEndOf="@+id/searchLayout"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.654" />
 
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/btnAddMap"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:clickable="true"
-            android:focusable="true"
-            app:backgroundTint="@color/colorPrimary"
-            app:rippleColor="@color/colorPrimary"
-            app:srcCompat="@android:drawable/ic_menu_add"
-            tools:ignore="MissingConstraints"
-            tools:layout_editor_absoluteX="550dp"
-            tools:layout_editor_absoluteY="0dp" />
+        <Button
+            android:id="@+id/btnConstructor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:onClick="openConstructor"
+            android:text="Open constructor"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.505"
+            app:layout_constraintStart_toEndOf="@+id/searchLayout"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.628" />
+
     </LinearLayout>
 
-</android.support.constraint.ConstraintLayout>
+
+</android.support.v7.widget.LinearLayoutCompat>
