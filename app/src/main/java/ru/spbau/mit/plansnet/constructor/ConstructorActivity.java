@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -58,8 +59,6 @@ public class ConstructorActivity extends BaseConstructorActivity {
 
     private void initScene(Scene pScene) {
         pScene.setOnSceneTouchListener(new IOnSceneTouchListener() {
-            private float mInitialTouchX;
-            private float mInitialTouchY;
             private PointF firstPoint = new PointF();
             private PointF currentPoint = new PointF();
             private PointF previousPoint = new PointF();
@@ -69,12 +68,13 @@ public class ConstructorActivity extends BaseConstructorActivity {
 
             private void moveMap(TouchEvent pSceneTouchEvent) {
                 mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
-                if (pSceneTouchEvent.isActionDown()) {
-                    mInitialTouchX = pSceneTouchEvent.getX();
-                    mInitialTouchY = pSceneTouchEvent.getY();
-                } else if (pSceneTouchEvent.isActionMove()){
-                    final float touchOffsetX = mInitialTouchX - pSceneTouchEvent.getX();
-                    final float touchOffsetY = mInitialTouchY - pSceneTouchEvent.getY();
+                if (pSceneTouchEvent.isActionMove()) {
+                    final MotionEvent event = pSceneTouchEvent.getMotionEvent();
+                    if (event.getHistorySize() == 0) {
+                        return;
+                    }
+                    final float touchOffsetX = event.getHistoricalX(0) - event.getX();
+                    final float touchOffsetY = event.getHistoricalY(0) - event.getY();
                     Camera mCamera = getEngine().getCamera();
                     mCamera.setCenter(mCamera.getCenterX() + touchOffsetX,
                             mCamera.getCenterY() + touchOffsetY);
