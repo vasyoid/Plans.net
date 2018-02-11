@@ -216,7 +216,7 @@ class NetworkDataManager {
             storageRef.delete();
             return;
         }
-        final StorageReference deleteInStorage = storageRef;
+
         final DatabaseReference deleteInDatabase = ref;
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
