@@ -77,10 +77,13 @@ public class MainActivity extends AppCompatActivity {
     @NonNull
     private final List<UsersGroup> myGroupList = new ArrayList<>();
     @NonNull
+    private final List<UsersGroup> netGroupList = new ArrayList<>();
+    @NonNull
     private final List<Building> buildingList = new ArrayList<>();
     @NonNull
     private final List<FloorMap> floorList = new ArrayList<>();
     private ArrayAdapter<UsersGroup> myGroupListAdapter;
+    private ArrayAdapter<UsersGroup> netGroupListAdapter;
     private ArrayAdapter<Building> buildingListAdapter;
     private ArrayAdapter<FloorMap> floorListAdapter;
 
@@ -98,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
         newGroupDialog.setView(groupNameInput);
 
         newGroupDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
-            String newGroupName = groupNameInput.getText().toString();
+            String newGroupName = groupNameInput.getText().toString().trim();
 
             if (newGroupName.isEmpty()) {
                 Toast.makeText(MainActivity.this, "Name is empty", Toast.LENGTH_LONG).show();
@@ -131,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
         newBuildingDialog.setView(buildingNameInput);
 
         newBuildingDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
-            String newBuildingName = buildingNameInput.getText().toString();
+            String newBuildingName = buildingNameInput.getText().toString().trim();
 
             if (newBuildingName.isEmpty()) {
                 Toast.makeText(MainActivity.this, "Name is empty", Toast.LENGTH_LONG).show();
@@ -201,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
         newMapNameDialog.setView(mapNameInput);
 
         newMapNameDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
-            String newMapName = mapNameInput.getText().toString();
+            String newMapName = mapNameInput.getText().toString().trim();
 
             if (newMapName.isEmpty()) {
                 Toast.makeText(MainActivity.this, "Name is empty", Toast.LENGTH_LONG).show();
@@ -333,7 +336,6 @@ public class MainActivity extends AppCompatActivity {
                 myGroupList);
 
         groupListView.setAdapter(myGroupListAdapter);
-        Log.d("ID", "id: " + groupListView.getId());
 
         groupListView.setOnItemClickListener((parent, view, i, id) -> {
             currentGroup = myGroupList.get(i);
@@ -357,6 +359,42 @@ public class MainActivity extends AppCompatActivity {
             UsersGroup group = myGroupList.get(i);
             assert group != null;
             createDeleteDialog(group.getName(), null, null);
+            return true;
+        });
+    }
+
+    private void setUpNetGroupListView() {
+        ListView groupListView = findViewById(R.id.netGroupListView);
+
+        netGroupListAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1,
+                netGroupList);
+
+        groupListView.setAdapter(netGroupListAdapter);
+
+        groupListView.setOnItemClickListener((parent, view, i, id) -> {
+            currentGroup = netGroupList.get(i);
+            assert currentGroup != null;
+
+            buildingList.clear();
+            if (currentGroup != null) {
+                buildingList.addAll(currentGroup.getValues());
+            }
+            buildingListAdapter.notifyDataSetChanged();
+
+            floorList.clear();
+            if (buildingList.size() != 0) {
+                currentBuilding = buildingList.get(0);
+                floorList.addAll(currentBuilding.getValues());
+            }
+            floorListAdapter.notifyDataSetChanged();
+        });
+
+        groupListView.setOnItemLongClickListener((adapterView, view, i, l) -> {
+            UsersGroup group = netGroupList.get(i);
+            assert group != null;
+
+//            createDeleteDialog(group.getName(), null, null); TODO: think about it
             return true;
         });
     }
@@ -506,6 +544,7 @@ public class MainActivity extends AppCompatActivity {
         setUpBuildingSpinnerView();
         setUpFloorSpinnerView();
         setUpMyGroupListView();
+        setUpNetGroupListView();
         setUpFindListView();
         setUpSearchView();
         setUpTabHost();
@@ -722,6 +761,9 @@ public class MainActivity extends AppCompatActivity {
 
             myGroupList.clear();
             myGroupList.addAll(dataController.getAccount().getValues());
+
+            netGroupList.clear();
+            netGroupList.addAll(dataController.getAccount().getDownloadedGroups());
 
             buildingList.clear();
             floorList.clear();

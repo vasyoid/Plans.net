@@ -25,7 +25,7 @@ import ru.spbau.mit.plansnet.data.objects.Window;
 
 public class FloorMap extends AbstractNamedData implements Serializable {
     @NonNull
-    private final ArrayList<MapObject> objects = new ArrayList<>();
+    private ArrayList<MapObject> objects = new ArrayList<>();
     @NonNull
     private String buildingName;
     @NonNull
@@ -40,6 +40,15 @@ public class FloorMap extends AbstractNamedData implements Serializable {
         this.owner = owner;
         this.groupName = groupName;
         this.buildingName = buildingName;
+    }
+
+    public FloorMap(FloorMap map) {
+        owner = map.owner;
+        groupName = map.groupName;
+        buildingName = map.buildingName;
+        setName(map.getName());
+
+        objects = map.objects;
     }
 
     public FloorMap addObjectsFromMap(@NonNull final ru.spbau.mit.plansnet.constructor.Map map) {
