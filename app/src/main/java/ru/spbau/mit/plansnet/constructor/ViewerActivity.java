@@ -50,7 +50,6 @@ public class ViewerActivity extends BaseConstructorActivity {
         pScene.setOnSceneTouchListenerBindingOnActionDownEnabled(true);
     }
 
-
     @Override
     protected Scene onCreateScene() {
         final Scene scene = new Scene();
@@ -95,4 +94,5 @@ public class ViewerActivity extends BaseConstructorActivity {
             e.printStackTrace();
         }
     }
+
 }

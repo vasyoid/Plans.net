@@ -62,34 +62,12 @@ public class Geometry {
         return getMinX(l1) != getMaxX(l2) && getMaxX(l1) != getMinX(l2);
     }
 
-    @Deprecated
-    public static Line join(Line l1, Line l2) {
-        if (!linesJoinable(l1, l2)) {
-            return null;
-        }
-        Line result = new Line(Math.min(getMinX(l1), getMinX(l2)),
-                Math.min(getMinY(l1), getMinY(l2)),
-                Math.max(getMaxX(l1), getMaxX(l2)),
-                Math.max(getMaxY(l1), getMaxY(l2)),
-                l1.getVertexBufferObjectManager());
-        if (!linesParallel(result, l1)) {
-            result.setPosition(result.getX1(), result.getY2(), result.getX2(), result.getY1());
-        }
-        return result;
-    }
-
     public static boolean isVertical(Line line) {
         return line.getX1() == line.getX2();
     }
 
     public static boolean isHorizontal(Line line) {
         return line.getY1() == line.getY2();
-    }
-
-    public static boolean isPointAbove(Line line, PointF PointF) {
-        PointF tmp = getIntersectionPoint(new Line(PointF.x, -1e5f,
-                PointF.x, 1e5f, null), line, false);
-        return tmp != null && PointF.y > tmp.y;
     }
 
     public static boolean lineStartsWith(Line line, PointF PointF) {
@@ -100,8 +78,8 @@ public class Geometry {
     }
 
     public static boolean isPointAtCorner(PointF point, PointF ld, PointF ru, double bounds) {
-        return (point.x <= bounds && (point.y <= bounds || point.y >= ru.y - bounds)) ||
-               (point.x >= ru.x - bounds && (point.y <= bounds || point.y >= ru.y - bounds));
+        return (point.x <= ld.x + bounds || point.x >= ru.x - bounds) &&
+               (point.y <= ld.y + bounds || point.y >= ru.y - bounds);
     }
 
     public static float distance(PointF p1, PointF p2) {
@@ -140,10 +118,10 @@ public class Geometry {
         return line.getX1() == line.getX2() && line.getY1() == line.getY2();
     }
 
-    public static PointF getIntersectionPoint(Line l1, Line l2, boolean checkCollision) {
+    public static PointF getIntersectionPoint(Line l1, Line l2) {
         l1 = copy(l1);
         l2 = copy(l2);
-        if (checkCollision && !l1.collidesWith(l2) || linesJoinable(l1, l2)) {
+        if (!l1.collidesWith(l2) || linesJoinable(l1, l2)) {
             return null;
         }
         PointF result = new PointF();
@@ -197,7 +175,7 @@ public class Geometry {
                 continue;
             }
             MapObjectLinear ol = (MapObjectLinear) o;
-            PointF tmp = getIntersectionPoint(ray, ol.getPosition(), true);
+            PointF tmp = getIntersectionPoint(ray, ol.getPosition());
             if (tmp == null) {
                 continue;
             }
@@ -250,7 +228,8 @@ public class Geometry {
 
     public static boolean isPointInsidePolygon(List<PointF> polygon, PointF PointF) {
         int cntIntersections = 0;
-        Line line = new Line(PointF.x, PointF.y, PointF.x + 0.5f, -1e5f, null);
+        Line line = new Line(PointF.x, PointF.y,
+                PointF.x + 0.5f, -1e5f, null);
         for (int i = 0; i < polygon.size(); i++) {
             Line side = new Line(polygon.get(i).x, polygon.get(i).y,
                     polygon.get((i + 1) % polygon.size()).x,
@@ -264,16 +243,12 @@ public class Geometry {
 
     public static float[] makeTriangles(List<PointF> polygon) {
         float[][][] vertices = new float[1][polygon.size()][2];
-
         for (int i = 0; i < polygon.size(); i++) {
             vertices[0][i][0] = polygon.get(i).x;
             vertices[0][i][1] = polygon.get(i).y;
         }
-
         List<float[][]> triangles = Earcut.earcut(vertices, true);
-
         float[] vertexData = new float[triangles.size() * 9];
-
         for (int i = 0; i < triangles.size(); i++) {
             for (int t = 0; t < 3; ++t) {
                 vertexData[9 * i + 3 * t] = triangles.get(i)[t][0];

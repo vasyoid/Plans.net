@@ -180,11 +180,10 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
             map = new Map();
         }
         MapObjectSprite.setMap(map);
-        RoomSprite.setMap(map);
-
         for (MapObjectSprite o : map.getObjects()) {
             pScene.attachChild(o);
             pScene.registerTouchArea(o);
         }
     }
+
 }

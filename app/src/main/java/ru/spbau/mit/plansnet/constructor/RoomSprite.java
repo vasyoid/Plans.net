@@ -1,7 +1,6 @@
 package ru.spbau.mit.plansnet.constructor;
 
 import android.graphics.PointF;
-import android.util.Log;
 
 import org.andengine.entity.primitive.DrawMode;
 import org.andengine.entity.primitive.Mesh;
@@ -19,7 +18,6 @@ import java.util.Random;
 public class RoomSprite {
 
     private static VertexBufferObjectManager vertexBufferObjectManager;
-    private static Map MAP;
     private static Font font;
     private List<PointF> polygon = new ArrayList<>();
     private float initialX, initialY;
@@ -27,13 +25,14 @@ public class RoomSprite {
     private Color roomColor;
     private Text title;
     private String description;
-    private Random rand = new Random();
 
     public RoomSprite(List<PointF> pPolygon) {
         polygon.addAll(pPolygon);
+        Random rand = new Random();
         roomColor = new Color(rand.nextFloat() * 0.5f + 0.5f,
                 rand.nextFloat() * 0.5f + 0.5f, rand.nextFloat() * 0.5f + 0.5f);
-        title = new Text(initialX, initialY, font, "", 30, vertexBufferObjectManager);
+        title = new Text(initialX, initialY, font, "", 30,
+                vertexBufferObjectManager);
         title.setZIndex(2);
         title.setColor(Color.BLACK);
         reshape(polygon);
@@ -105,10 +104,6 @@ public class RoomSprite {
     public static void setVertexBufferObjectManager(VertexBufferObjectManager
                                                             pVertexBufferObjectManager) {
         vertexBufferObjectManager = pVertexBufferObjectManager;
-    }
-
-    public static void setMap(Map pMap) {
-        MAP = pMap;
     }
 
     public float getInitialX() {

@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -19,7 +18,6 @@ import org.andengine.entity.primitive.Line;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.input.touch.TouchEvent;
-import org.andengine.engine.camera.Camera;
 import org.andengine.entity.scene.Scene;
 
 import ru.spbau.mit.plansnet.R;
@@ -29,6 +27,7 @@ import static android.graphics.Color.BLACK;
 import static android.graphics.Color.GREEN;
 import static android.graphics.Color.RED;
 import static android.graphics.Color.TRANSPARENT;
+
 import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.EXIT;
 import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.LIFT;
 import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.STAIRS;
@@ -213,7 +212,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
                         }
                         break;
                     default:
-                        Log.d("VASYOID", "invalid state in onSceneTouchEvent function.");
+                        Log.e("VASYOID", "invalid state in onSceneTouchEvent function.");
                 }
                 return false;
             }
@@ -240,7 +239,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
     @Override
     public void onBackPressed() {
         if (toOpenMap == null) {
-            Log.d("VASYOID", "map is null!");
+            Log.e("VASYOID", "map is null!");
         } else {
             Intent intent = new Intent();
             intent.putExtra("toSaveMap", new FloorMap(toOpenMap.getGroupName(),
@@ -321,7 +320,6 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 break;
             default:
                 Log.e("VASYOID", "wrong view id in setSticker function");
-
         }
     }
 
@@ -409,8 +407,6 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 .show();
     }
 
-
-
     public enum ActionState {
         ADD, DEL, MOVE_MAP, MOVE_WALL, MOVE_STICKER, CREATE_ROOM, SHOW_PARAMS
     }
@@ -418,4 +414,5 @@ public class ConstructorActivity extends BaseConstructorActivity {
     private enum MapItem {
         WALL, DOOR, WINDOW, STICKER
     }
+
 }
