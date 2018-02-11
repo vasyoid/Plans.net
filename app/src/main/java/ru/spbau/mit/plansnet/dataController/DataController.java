@@ -1,6 +1,5 @@
 package ru.spbau.mit.plansnet.dataController;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -17,7 +16,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -57,7 +55,7 @@ public class DataController {
      * Download maps from server
      */
     public void downloadMaps(@NonNull final List<String> floorsPaths, @NonNull AtomicInteger mapCount) {
-        netManager.downloadByPaths(floorsPaths, mapCount, userAccount.getID());
+        netManager.downloadByPaths(floorsPaths, mapCount);
     }
 
     /**
@@ -163,19 +161,11 @@ public class DataController {
         }
     }
 
-    public void searchGroupMaps(@NonNull String owner, @NonNull String group,
+        public void searchGroupMaps(@NonNull String owner, @NonNull String group,
                                 @NonNull List<String> floorsPaths, @NonNull AtomicBoolean isFinished) {
         netManager.searchGroupMaps(owner, group, floorsPaths, isFinished);
     }
 
-    /**
-     * Download and add to account foreign group from server
-     * @param owner id of owner who owned a group
-     */
-    public void downloadGroup(@NonNull final String owner, @NonNull final List<String> floorsPaths,
-                              @NonNull final AtomicInteger mapCount) {
-        netManager.downloadByPaths(floorsPaths, mapCount, owner);
-    }
 
     public void searchMaps(@NonNull List<String> floorsPaths, @NonNull AtomicBoolean isFinished) {
         netManager.searchMaps(floorsPaths, isFinished);
@@ -219,7 +209,12 @@ public class DataController {
      */
     public void saveMap(@NonNull final FloorMap map)
             throws IllegalArgumentException {
-        UsersGroup userGroup = userAccount.findByName(map.getGroupName());
+        UsersGroup userGroup;
+        if (map.getOwner().equals(userAccount.getID())) {
+            userGroup = userAccount.findByName(map.getGroupName());
+        } else {
+            userGroup = userAccount.findDownloadedGroup(map.getGroupName());
+        }
         Log.d("saveMap", "search: " + map.getGroupName());
         if (userGroup == null) {
             throw new IllegalArgumentException("This user haven't group: " + map.getGroupName());
@@ -234,11 +229,12 @@ public class DataController {
         building.setElementToContainer(map);
         Log.d(DATA_TAG, "set new map to account");
 
-
         writeMap(map);
         Toast.makeText(context, "Map saved", Toast.LENGTH_SHORT).show();
 
+
         netManager.putMapOnServer(map);
+
     }
 
     //private function for writing map to file
@@ -261,11 +257,27 @@ public class DataController {
         try (ObjectInputStream ois =
                      new ObjectInputStream(new FileInputStream(mapFile))) {
             FloorMap map = (FloorMap) ois.readObject();
+            UsersGroup group;
 
+            if (!map.getOwner().equals(userAccount.getID())) {
+                //add prefix "owner_" to groupName
+                String oldGroupName = map.getGroupName();
+                if (!map.getGroupName().startsWith(map.getOwner() + "_")) {
+                    map.setPath(map.getOwner() + "_" + map.getGroupName(),
+                            map.getBuildingName());
+                }
 
-            UsersGroup group = userAccount.findByName(map.getGroupName());
-            if (group == null) {
-                group = userAccount.setElementToContainer(new UsersGroup(map.getGroupName()));
+                group = userAccount.findDownloadedGroup(map.getGroupName());
+                if (group == null) {
+                    group = new UsersGroup(map.getGroupName());
+                    userAccount.addDownloadedGroup(group);
+                }
+                group.setVisibleName(oldGroupName + " by " + map.getOwner());
+            } else {
+                group = userAccount.findByName(map.getGroupName());
+                if (group == null) {
+                    group = userAccount.setElementToContainer(new UsersGroup(map.getGroupName()));
+                }
             }
             Building building = group.findByName(map.getBuildingName());
             if (building == null) {
@@ -273,7 +285,6 @@ public class DataController {
             }
 
             building.setElementToContainer(map);
-
 
             Log.d(DATA_TAG, "map " + map.getName() + " was read");
         } catch (Exception exception) {
@@ -292,6 +303,7 @@ public class DataController {
         fileOrDirectory.delete();
     }
 
+    @NonNull
     private File formingFileFromMap(@NonNull final FloorMap map) {
         return new File(context.getApplicationContext().getFilesDir(),
                 userAccount.getID() + "/"

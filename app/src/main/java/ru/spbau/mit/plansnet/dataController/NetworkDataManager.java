@@ -1,13 +1,11 @@
 package ru.spbau.mit.plansnet.dataController;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -23,14 +21,13 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.spbau.mit.plansnet.MainActivity.SearchResult;
-import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
-import ru.spbau.mit.plansnet.data.UsersGroup;
 
 /**
  * Manager of network data
@@ -60,30 +57,41 @@ class NetworkDataManager {
         databaseReference = database.getReference();
     }
 
-    void putMapOnServer(@NonNull final FloorMap map) {
+    void putMapOnServer(@NonNull FloorMap map) {
         //put on database
         DatabaseReference userRef = databaseReference.child(userAccount.getUid());
         userRef.child("mail").setValue(userAccount.getEmail());
         userRef.child("name").setValue(userAccount.getDisplayName());
-        DatabaseReference groupRef = userRef.child("groups").child(map.getGroupName());
 
-        groupRef.child("isPublic").setValue(true);
+        DatabaseReference groupRef;
+
+        if (map.getOwner().equals(userAccount.getUid())) {
+            groupRef = userRef.child("groups").child(map.getGroupName());
+
+            groupRef.child("isPublic").setValue(true);
+        } else {
+            groupRef = userRef.child("downloads").child(map.getGroupName());
+
+            map = new FloorMap(map);
+            map.setPath(map.getGroupName().replace(map.getOwner() + "_", ""),
+                    map.getBuildingName());
+        }
 
         DatabaseReference buildingsRef = groupRef.child("buildings");
 
         DatabaseReference floorsRef = buildingsRef
                 .child(map.getBuildingName())
-                .child("floors")//need to add some order in future
+                .child("floors")
                 .child(map.getName());
 
-        String pathInStorage = "/" + userAccount.getUid() + "/"
+        String pathInStorage = "/" + map.getOwner() + "/"
                 + map.getGroupName() + "/"
                 + map.getBuildingName() + "/"
                 + map.getName() + ".plannet";
+
         floorsRef.child("path").setValue(pathInStorage);
 
         Log.d("Storage upload", pathInStorage);
-
         //put on storage
         StorageReference storageMapRef = storageReference.child(pathInStorage);
 
@@ -113,18 +121,15 @@ class NetworkDataManager {
         Log.d("SearchMaps", "Start Searching in network manager");
         databaseReference
                 .child(userAccount.getUid())
-                .child("groups")
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(final DataSnapshot dataSnapshot) {
-                        for (DataSnapshot group : dataSnapshot.getChildren()) {
-                            for (DataSnapshot building : group.child("buildings").getChildren()) {
-                                for (DataSnapshot floor : building.child("floors").getChildren()) {
-                                    floorsPaths.add((String) floor.child("path").getValue());
-                                    Log.d("SearchMaps", "found " + floor.getKey());
-                                }
-                            }
-                        }
+                        DataSnapshot groups = dataSnapshot.child("groups");
+                        addToFloorsPaths(groups, floorsPaths);
+
+                        groups = dataSnapshot.child("downloads");
+                        addToFloorsPaths(groups, floorsPaths);
+
                         synchronized (isFinished) {
                             isFinished.set(true);
                             isFinished.notify();
@@ -143,13 +148,34 @@ class NetworkDataManager {
                 });
     }
 
-    void downloadByPaths(@NonNull final List<String> floorsPaths, AtomicInteger mapCount, String owner) {
+    private void addToFloorsPaths(DataSnapshot groups, List<String> floorsPaths) {
+        for (DataSnapshot group : groups.getChildren()) {
+            for (DataSnapshot building : group.child("buildings").getChildren()) {
+                for (DataSnapshot floor : building.child("floors").getChildren()) {
+                    floorsPaths.add((String) floor.child("path").getValue());
+                    Log.d("SearchMaps", "found " + floor.getKey());
+                }
+            }
+        }
+    }
+
+    void downloadByPaths(@NonNull final List<String> floorsPaths, AtomicInteger mapCount) {
         for (final String path : floorsPaths) {
             storageReference.child(path).getMetadata().addOnCompleteListener(
                     task -> {
-                        String newPath = path.replace(owner, userAccount.getUid());
+                        String newPath = path;
+                        String owner = path.substring(1, path.substring(1).indexOf('/') + 1);
+                        Log.d(STORAGE_TAG, "Owner is " + owner);
 
-                        Log.d(STORAGE_TAG, "downloading file: " + path);
+                        if (!owner.equals(userAccount.getUid())) {
+                            newPath = path.replace(owner + "/",
+                                    userAccount.getUid() + "/" + owner + "_");
+                            memoriseDownloadedMap(newPath, path);
+                            Log.d("Path replace", path + " -> " + newPath);
+                        }
+
+                        Log.d(STORAGE_TAG, "downloading file: " + newPath);
+
                         final File mapFile = new File(context.getApplicationContext()
                                 .getFilesDir(), newPath);
 
@@ -186,6 +212,29 @@ class NetworkDataManager {
                         });
                     });
         }
+    }
+
+    private void memoriseDownloadedMap(String newPath, String path) {
+        DatabaseReference downloads = databaseReference
+                .child(userAccount.getUid())
+                .child("downloads");
+        StringTokenizer tokenizer = new StringTokenizer(newPath, "/", false);
+        tokenizer.nextToken();
+
+        String newGroupName = tokenizer.nextToken();
+        String buildingName = tokenizer.nextToken();
+        String floorName = tokenizer.nextToken();
+        floorName = floorName.subSequence(0, floorName.lastIndexOf(".")).toString();
+
+        Log.d("Memoriser", newGroupName + "; " + buildingName + "; " + floorName);
+
+        downloads.child(newGroupName)
+                .child("buildings")
+                .child(buildingName)
+                .child("floors")
+                .child(floorName)
+                .child("path")
+                .setValue(path);
     }
 
     void deleteReference(@Nullable final String groupName,
@@ -280,7 +329,6 @@ class NetworkDataManager {
     void searchGroupMaps(@NonNull final String owner, @NonNull final String group,
                          @NonNull final List<String> floorsPaths,
                          @NonNull final AtomicBoolean isFinished) {
-        final UsersGroup userGroup = new UsersGroup(group + "_" + owner);
         databaseReference
                 .child(owner)
                 .child("groups")
@@ -290,11 +338,7 @@ class NetworkDataManager {
                     public void onDataChange(DataSnapshot dataSnapshot) {
 
                         for (DataSnapshot buildingShot : dataSnapshot.child("buildings").getChildren()) {
-                            Building building = new Building(buildingShot.getKey());
-                            userGroup.addData(building);
                             for (DataSnapshot floorShot : buildingShot.child("floors").getChildren()) {
-                                FloorMap map = new FloorMap(group, building.getName(), floorShot.getKey());
-                                building.addData(map);
                                 String path = (String) floorShot.child("path").getValue();
                                 floorsPaths.add(path);
                             }
