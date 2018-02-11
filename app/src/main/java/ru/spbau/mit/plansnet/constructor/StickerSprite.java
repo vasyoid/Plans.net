@@ -1,7 +1,6 @@
 package ru.spbau.mit.plansnet.constructor;
 
 import android.graphics.PointF;
-import android.util.Log;
 
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
@@ -68,7 +67,8 @@ public class StickerSprite extends MapObjectSprite {
         if (MAP.getTouchState() == ConstructorActivity.ActionState.MOVE_STICKER) {
             switch (pSceneTouchEvent.getAction()) {
                 case ACTION_DOWN:
-                    firstTouch = previousTouch = new PointF(pSceneTouchEvent.getX(), pSceneTouchEvent.getY());
+                    firstTouch = previousTouch = new PointF(pSceneTouchEvent.getX(),
+                            pSceneTouchEvent.getY());
                     if (Geometry.isPointAtCorner(new PointF(pTouchAreaLocalX, pTouchAreaLocalY),
                             new PointF(0, 0), new PointF(TEXTURE_SIZE, TEXTURE_SIZE),
                             Map.getGridSize() / 2.0 / size)) {
@@ -121,7 +121,6 @@ public class StickerSprite extends MapObjectSprite {
     public enum StickerType {
 
         EXIT(0), LIFT(1), STAIRS(2), WC(3);
-
         private int value;
 
         StickerType(int pValue) {
@@ -148,4 +147,5 @@ public class StickerSprite extends MapObjectSprite {
         }
 
     }
+
 }

@@ -71,13 +71,16 @@ public abstract class MapObjectLinear extends MapObjectSprite {
     }
 
     @Override
-    public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX, float pTouchAreaLocalY) {
+    public boolean onAreaTouched(TouchEvent pSceneTouchEvent, float pTouchAreaLocalX,
+                                 float pTouchAreaLocalY) {
         if (MAP.getTouchState() == DEL) {
             MAP.removeObject(this);
             MAP.removeRoomsBySection(point1, point2);
         } else if (MAP.getTouchState() == MOVE_WALL) {
-            float currentTouchX = Math.round(pSceneTouchEvent.getX() / Map.getGridSize()) * Map.getGridSize();
-            float currentTouchY = Math.round(pSceneTouchEvent.getY() / Map.getGridSize()) * Map.getGridSize();
+            float currentTouchX = Math.round(pSceneTouchEvent.getX() / Map.getGridSize())
+                    * Map.getGridSize();
+            float currentTouchY = Math.round(pSceneTouchEvent.getY() / Map.getGridSize())
+                    * Map.getGridSize();
             PointF currentPoint = new PointF(currentTouchX, currentTouchY);
             switch (pSceneTouchEvent.getAction()) {
                 case TouchEvent.ACTION_DOWN:
@@ -128,4 +131,5 @@ public abstract class MapObjectLinear extends MapObjectSprite {
         }
         return false;
     }
+
 }

@@ -3,7 +3,6 @@ package ru.spbau.mit.plansnet.constructor;
 import android.graphics.PointF;
 
 import org.andengine.engine.Engine;
-import org.andengine.entity.primitive.Line;
 import org.andengine.entity.scene.Scene;
 import org.andengine.input.touch.TouchEvent;
 
@@ -46,7 +45,6 @@ public class Map implements Serializable {
                 addObject(new DoorSprite((Door) o));
             } else if (o instanceof Wall) {
                 addObject(new WallSprite((Wall) o));
-                WallSprite ws = new WallSprite((Wall) o);
             } else if (o instanceof Window) {
                 addObject(new WindowSprite((Window) o));
             } else if (o instanceof Sticker) {
@@ -114,6 +112,7 @@ public class Map implements Serializable {
         addObjectToHashTable(object.getPoint2(), object);
     }
 
+    @SuppressWarnings("SameParameterValue")
     public void setScaleByPoint(PointF at, float sx, float sy) {
         if (!linearObjectsByCell.containsKey(at)) {
             return;
@@ -258,22 +257,6 @@ public class Map implements Serializable {
             }
         }
         return false;
-    }
-
-    @Deprecated
-    public void joinAll(MapObjectLinear pObject) {
-        for (MapObjectSprite o : objects) {
-            if (!(o instanceof MapObjectLinear)) {
-                continue;
-            }
-            MapObjectLinear ol = (MapObjectLinear) o;
-            Line joined = Geometry.join(ol.getPosition(), pObject.getPosition());
-            if (joined != null) {
-                pObject.setPosition(joined);
-                removedObjects.add(o);
-            }
-        }
-        objects.removeAll(removedObjects);
     }
 
     public RoomSprite getRoomTouched(TouchEvent pTouchEvent) {

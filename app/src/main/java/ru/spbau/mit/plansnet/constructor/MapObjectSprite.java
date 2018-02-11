@@ -14,11 +14,13 @@ public abstract class MapObjectSprite extends Sprite {
         vertexBufferObjectManager = pVertexBufferObjectManager;
     }
 
-    public MapObjectSprite(ITextureRegion pTextureRegion, VertexBufferObjectManager pVertexBufferObjectManager) {
+    public MapObjectSprite(ITextureRegion pTextureRegion,
+                           VertexBufferObjectManager pVertexBufferObjectManager) {
         this(0, 0, pTextureRegion, pVertexBufferObjectManager);
     }
 
-    public MapObjectSprite(float pX, float pY, ITextureRegion pTextureRegion, VertexBufferObjectManager pVertexBufferObjectManager) {
+    public MapObjectSprite(float pX, float pY, ITextureRegion pTextureRegion,
+                           VertexBufferObjectManager pVertexBufferObjectManager) {
         super(pX, pY, pTextureRegion, pVertexBufferObjectManager);
     }
 
