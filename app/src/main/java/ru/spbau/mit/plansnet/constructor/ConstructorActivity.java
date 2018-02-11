@@ -258,8 +258,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
             Log.d("VASYOID", "map is null!");
         } else {
             Intent intent = new Intent();
-            intent.putExtra("toSaveMap", new FloorMap(toOpenMap.getGroupName(),
-                    toOpenMap.getBuildingName(), toOpenMap.getName(), map));
+            intent.putExtra("toSaveMap", toOpenMap.addObjectsFromMap(map));
             setResult(1, intent);
         }
         super.onBackPressed();

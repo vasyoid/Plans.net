@@ -214,6 +214,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             FloorMap floor = new FloorMap(
+                    dataController.getAccount().getID(),
                     chosenGroup.getName(),
                     chosenBuilding.getName(),
                     newMapName
@@ -500,7 +501,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Button btnLogOut = findViewById(R.id.btnLogOut);
-        Button btnAddGroup = findViewById(R.id.btnAddGroup);
         FloatingActionButton btnAddMap = findViewById(R.id.btnAddMap);
 
         setUpBuildingSpinnerView();
@@ -509,8 +509,6 @@ public class MainActivity extends AppCompatActivity {
         setUpFindListView();
         setUpSearchView();
         setUpTabHost();
-
-        btnAddGroup.setOnClickListener(groupView -> createNewGroupDialog());
 
         btnAddMap.setOnClickListener(v -> createChooseGroupForNewMapDialog());
 
