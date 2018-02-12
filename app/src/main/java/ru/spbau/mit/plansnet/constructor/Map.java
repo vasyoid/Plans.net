@@ -28,13 +28,13 @@ import ru.spbau.mit.plansnet.data.objects.Sticker;
 import ru.spbau.mit.plansnet.data.objects.Wall;
 import ru.spbau.mit.plansnet.data.objects.Window;
 
+import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.MAP_HEIGHT;
+import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.MAP_WIDTH;
 import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.ADD;
 
 public class Map implements Serializable {
 
-    private static final int GRID_SIZE = 140;
-    private static final int GRID_COLS = 30;
-    private static final int GRID_ROWS = 20;
+    private static int gridSize = 0;
 
     private List<MapObjectSprite> objects = new LinkedList<>();
     private List<RoomSprite> rooms = new LinkedList<>();
@@ -71,14 +71,18 @@ public class Map implements Serializable {
     public static List<PointF> getGridPolygon() {
         List<PointF> result = new ArrayList<>();
         result.add(new PointF(-1.0f, -1.0f));
-        result.add(new PointF(-1.0f, GRID_ROWS * GRID_SIZE + 1.0f));
-        result.add(new PointF(GRID_COLS * GRID_SIZE + 1.0f, GRID_ROWS * GRID_SIZE + 1.0f));
-        result.add(new PointF(GRID_COLS * GRID_SIZE + 1.0f, -1.0f));
+        result.add(new PointF(-1.0f, MAP_HEIGHT + 1.0f));
+        result.add(new PointF(MAP_WIDTH + 1.0f, MAP_HEIGHT + 1.0f));
+        result.add(new PointF(MAP_WIDTH + 1.0f, -1.0f));
         return result;
     }
 
     public static int getGridSize() {
-        return GRID_SIZE;
+        return gridSize;
+    }
+
+    public static void setGridSize(int pSize) {
+        gridSize = pSize;
     }
 
     public void setBackground(Bitmap background, Engine pEngine) {

@@ -33,13 +33,14 @@ import ru.spbau.mit.plansnet.data.FloorMap;
 
 public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
 
-    protected static int cameraWidth = 0;
-    protected static int cameraHeight = 0;
-    protected static float cameraZoomFactor = 1;
+    protected final static int MAP_WIDTH = 4096;
+    protected final static int MAP_HEIGHT = 2560;
+    protected final static int GRID_SIZE_MIN = 64;
 
-    protected final static int GRID_COLS = 30;
-    protected final static int GRID_ROWS = 20;
-    protected final static int GRID_SIZE = 140;
+    protected int cameraWidth = 0;
+    protected int cameraHeight = 0;
+    protected float cameraZoomFactor = 1;
+    protected int gridSize = 256;
 
     protected Map map;
     protected FloorMap toOpenMap;
@@ -69,11 +70,11 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
         setCameraResolution();
         final SmoothCamera camera = new SmoothCamera(0, 0, cameraWidth, cameraHeight,
                 5000, 5000, 100);
-        camera.setCenter(GRID_SIZE * GRID_COLS / 2, GRID_SIZE * GRID_ROWS / 2);
-        camera.setBounds(-3 * GRID_SIZE, -3 * GRID_SIZE,
-                GRID_SIZE * (GRID_COLS + 3), GRID_SIZE * (GRID_ROWS + 3));
+        camera.setCenter(MAP_WIDTH / 2, MAP_HEIGHT / 2);
+        camera.setBounds(-2 * gridSize, -2 * gridSize,
+                MAP_WIDTH + 2 * gridSize, MAP_HEIGHT + 2 * gridSize);
         camera.setBoundsEnabled(true);
-        cameraZoomFactor = Math.min(1f, (float) cameraHeight / ((GRID_ROWS + 2) * GRID_SIZE));
+        cameraZoomFactor = Math.min(1f, (float) cameraHeight / camera.getBoundsHeight());
         camera.setZoomFactor(cameraZoomFactor);
         return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED,
                 new FillResolutionPolicy(), camera);
@@ -179,6 +180,7 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
         if (map == null) {
             map = new Map();
         }
+        Map.setGridSize(gridSize);
         MapObjectSprite.setMap(map);
         for (MapObjectSprite o : map.getObjects()) {
             pScene.attachChild(o);

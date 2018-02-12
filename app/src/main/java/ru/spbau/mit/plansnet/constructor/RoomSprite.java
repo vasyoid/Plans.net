@@ -94,7 +94,7 @@ public class RoomSprite {
         mesh = new Mesh(0, 0, pBufferData, pBufferData.length / 3,
                 DrawMode.TRIANGLES, vertexBufferObjectManager);
         mesh.setColor(roomColor);
-        mesh.setZIndex(-1);
+        mesh.setZIndex(-2);
     }
 
     public void updateShape() {

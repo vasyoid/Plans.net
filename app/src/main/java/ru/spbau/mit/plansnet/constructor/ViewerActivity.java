@@ -15,16 +15,14 @@ public class ViewerActivity extends BaseConstructorActivity {
 
     private void createBorder(Scene pScene) {
         Line[] border = {
-                new Line(0, 0, 0, GRID_SIZE * GRID_ROWS,
-                        3, getVertexBufferObjectManager()),
-                new Line(GRID_SIZE * GRID_COLS, 0,
-                        GRID_SIZE * GRID_COLS, GRID_SIZE * GRID_ROWS,
-                        3, getVertexBufferObjectManager()),
-                new Line(0, 0, GRID_SIZE * GRID_COLS, 0,
-                        3, getVertexBufferObjectManager()),
-                new Line(0, GRID_SIZE * GRID_ROWS,
-                        GRID_SIZE * GRID_COLS, GRID_SIZE * GRID_ROWS,
-                        3, getVertexBufferObjectManager())
+                new Line(0, 0, 0, MAP_HEIGHT, 3,
+                        getVertexBufferObjectManager()),
+                new Line(MAP_WIDTH, 0, MAP_WIDTH, MAP_HEIGHT, 3,
+                        getVertexBufferObjectManager()),
+                new Line(0, 0, MAP_WIDTH, 0, 3,
+                        getVertexBufferObjectManager()),
+                new Line(0, MAP_HEIGHT, MAP_WIDTH, MAP_HEIGHT, 3,
+                        getVertexBufferObjectManager())
         };
         for (Line line : border) {
             line.setColor(0.7f, 0.7f, 0.7f);

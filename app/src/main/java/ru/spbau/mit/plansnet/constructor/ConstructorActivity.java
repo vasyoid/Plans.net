@@ -14,11 +14,16 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import org.andengine.entity.IEntity;
+import org.andengine.entity.IEntityMatcher;
 import org.andengine.entity.primitive.Line;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.background.Background;
@@ -41,29 +46,51 @@ import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.WC;
 public class ConstructorActivity extends BaseConstructorActivity {
 
     private static final int PICK_IMAGE_TOKEN = 42;
+
     private ActionState state = ActionState.ADD;
     private MapItem item = MapItem.WALL;
     private StickerSprite.StickerType currentSticker = EXIT;
+    private List<Line> grid = new LinkedList<>();
+
+    private void removeGrid(Scene pScene) {
+        Semaphore mutex = new Semaphore(0);
+        getEngine().runOnUpdateThread(() -> {
+            for (Line l : grid) {
+                l.detachSelf();
+            }
+            grid.clear();
+            mutex.release();
+        });
+        try {
+            mutex.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
     private void createGrid(Scene pScene) {
-        for (int i = 0; i <= GRID_COLS; i++) {
-            Line line = new Line(GRID_SIZE * i, 0,
-                    GRID_SIZE * i, GRID_SIZE * GRID_ROWS,
-                    3, getVertexBufferObjectManager());
+        for (int i = 0; i <= MAP_WIDTH; i += gridSize) {
+            Line line = new Line(i, 0, i, MAP_HEIGHT, 3,
+                    getVertexBufferObjectManager());
             line.setColor(0.7f, 0.7f, 0.7f);
+            line.setZIndex(-1);
+            grid.add(line);
             pScene.attachChild(line);
         }
-        for (int i = 0; i <= GRID_ROWS; i++) {
-            Line line = new Line(0, GRID_SIZE * i,
-                    GRID_SIZE * GRID_COLS, GRID_SIZE * i,
-                    3, getVertexBufferObjectManager());
+        for (int i = 0; i <= MAP_HEIGHT; i += gridSize) {
+            Line line = new Line(0, i, MAP_WIDTH, i, 3,
+                    getVertexBufferObjectManager());
             line.setColor(0.7f, 0.7f, 0.7f);
+            line.setZIndex(-1);
+            grid.add(line);
             pScene.attachChild(line);
         }
+        pScene.sortChildren();
     }
 
     private void initScene(Scene pScene) {
         pScene.setOnSceneTouchListener(new IOnSceneTouchListener() {
+
             private PointF firstPoint = new PointF();
             private PointF currentPoint = new PointF();
             private PointF previousPoint = new PointF();
@@ -181,10 +208,17 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 if (pSceneTouchEvent.isActionDown()) {
                     room = map.getRoomTouched(pSceneTouchEvent);
                 }
-                float currentX = Math.round(pSceneTouchEvent.getX() / GRID_SIZE) * GRID_SIZE;
-                float currentY = Math.round(pSceneTouchEvent.getY() / GRID_SIZE) * GRID_SIZE;
-                currentX = Math.max(Math.min(currentX, GRID_SIZE * GRID_COLS), 0);
-                currentY = Math.max(Math.min(currentY, GRID_SIZE * GRID_ROWS), 0);
+                float currentX = pSceneTouchEvent.getX();
+                float currentY = pSceneTouchEvent.getY();
+                if (state == ActionState.MOVE_WALL && !pSceneTouchEvent.isActionMove()) {
+                    currentX = Math.round(currentX / GRID_SIZE_MIN) * GRID_SIZE_MIN;
+                    currentY = Math.round(currentY / GRID_SIZE_MIN) * GRID_SIZE_MIN;
+                } else {
+                    currentX = Math.round(currentX / gridSize) * gridSize;
+                    currentY = Math.round(currentY / gridSize) * gridSize;
+                }
+                currentX = Math.max(Math.min(currentX, MAP_WIDTH), 0);
+                currentY = Math.max(Math.min(currentY, MAP_HEIGHT), 0);
                 currentPoint.set(currentX, currentY);
                 switch (state) {
                     case MOVE_STICKER:
@@ -413,8 +447,6 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 .show();
     }
 
-
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
@@ -441,6 +473,41 @@ public class ConstructorActivity extends BaseConstructorActivity {
         Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
         photoPickerIntent.setType("image/*");
         startActivityForResult(photoPickerIntent, PICK_IMAGE_TOKEN);
+    }
+
+    public void setGridSize(View view) {
+        Semaphore mutex = new Semaphore(1);
+        runOnUiThread(() -> {
+            findViewById(R.id.constructorView).setEnabled(false);
+            View gridSizeView = findViewById(R.id.gridSizeView);
+            gridSizeView.setVisibility(View.VISIBLE);
+            SeekBar sizeSeekBar = gridSizeView.findViewById(R.id.sizeSeekBar);
+            sizeSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    gridSize = GRID_SIZE_MIN << progress;
+                    Map.setGridSize(gridSize);
+                    removeGrid(getEngine().getScene());
+                    createGrid(getEngine().getScene());
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+            gridSizeView.findViewById(R.id.gridSizeOk).setOnClickListener(v1 -> {
+                gridSizeView.setVisibility(View.GONE);
+                findViewById(R.id.constructorView).setEnabled(true);
+            });
+            mutex.release();
+        });
+        try {
+            mutex.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public enum ActionState {

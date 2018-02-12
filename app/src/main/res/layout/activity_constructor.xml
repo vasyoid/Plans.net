@@ -179,11 +179,61 @@
             android:layout_height="@dimen/button_height"
             android:onClick="setBackground"
             android:textSize="@dimen/button_text_size"
-            android:text="@string/bkgnd" />
+            android:text="@string/addBkgnd" />
+
+        <Button
+            android:id="@+id/gridSize"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/button_height"
+            android:onClick="setGridSize"
+            android:textSize="@dimen/button_text_size"
+            android:text="@string/gridSize" />
 
     </LinearLayout>
 
     </ScrollView>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/gridSizeView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:background="@android:color/holo_blue_bright"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="300dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:textSize="16sp"
+            android:text="@string/chooseGridSize" />
+
+        <SeekBar
+            android:id="@+id/sizeSeekBar"
+            android:layout_height="wrap_content"
+            android:layout_width="300dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:theme="@style/Widget.AppCompat.SeekBar.Discrete"
+            android:max="3"
+            android:progress="2" />
+
+        <Button
+            android:id="@+id/gridSizeOk"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:layout_gravity="end"
+            android:alpha="255"
+            android:text="@string/ok" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:orientation="vertical"
