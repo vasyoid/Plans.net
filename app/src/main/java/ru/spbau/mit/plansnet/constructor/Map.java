@@ -28,6 +28,7 @@ import ru.spbau.mit.plansnet.data.objects.Sticker;
 import ru.spbau.mit.plansnet.data.objects.Wall;
 import ru.spbau.mit.plansnet.data.objects.Window;
 
+import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.GRID_SIZE_MIN;
 import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.MAP_HEIGHT;
 import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.MAP_WIDTH;
 import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.ADD;
@@ -152,16 +153,15 @@ public class Map implements Serializable {
         }
     }
 
-    public void moveObjects(PointF at, PointF from, PointF to) {
-        if (!linearObjectsByCell.containsKey(at)) {
+    public void moveObjects(PointF from, PointF to) {
+        if (!linearObjectsByCell.containsKey(from)) {
             return;
         }
-        for (MapObjectLinear object : linearObjectsByCell.get(at)) {
+        for (MapObjectLinear object : linearObjectsByCell.get(from)) {
             if (object.getPoint1().equals(from)) {
-                object.setPoint1(to);
-            } else {
-                object.setPoint2(to);
+                object.changeDirection();
             }
+            object.setPoint2(to);
         }
     }
 
@@ -178,11 +178,12 @@ public class Map implements Serializable {
         if (!linearObjectsByCell.containsKey(at)) {
             return;
         }
-        for (MapObjectLinear object : linearObjectsByCell.get(at)) {
+        List<MapObjectLinear> tmp = new ArrayList<>(linearObjectsByCell.get(at));
+        linearObjectsByCell.get(at).clear();
+        for (MapObjectLinear object : tmp) {
             addObjectToHashTable(object.getPoint1(), object);
             addObjectToHashTable(object.getPoint2(), object);
         }
-        linearObjectsByCell.get(at).clear();
     }
 
     public void addObject(MapObjectSprite object) {
@@ -259,6 +260,7 @@ public class Map implements Serializable {
         removedRooms.addAll(rooms);
         objects.clear();
         rooms.clear();
+        linearObjectsByCell.clear();
     }
 
     public boolean hasIntersections(PointF pPoint) {
@@ -266,7 +268,7 @@ public class Map implements Serializable {
             return false;
         }
         for (MapObjectLinear object : linearObjectsByCell.get(pPoint)) {
-            if (hasIntersections(object)) {
+            if (hasIntersections(object) || Geometry.length(object.getPosition()) == 0) {
                 return true;
             }
         }
@@ -309,5 +311,23 @@ public class Map implements Serializable {
         room.attachSelf(pScene);
         pScene.sortChildren();
         return room;
+    }
+
+    public PointF getNearestWallOrNull(PointF currentPoint) {
+        int nearestDist = 3 * GRID_SIZE_MIN;
+        PointF result = null;
+        for (int i = -GRID_SIZE_MIN; i <= GRID_SIZE_MIN; i += GRID_SIZE_MIN) {
+            for (int j = -GRID_SIZE_MIN; j <= GRID_SIZE_MIN; j += GRID_SIZE_MIN) {
+                PointF pnt = new PointF(currentPoint.x - j, currentPoint.y - i);
+                int dist = Math.abs(i) + Math.abs(j);
+                if (linearObjectsByCell.containsKey(pnt) &&
+                        !linearObjectsByCell.get(pnt).isEmpty() &&
+                        dist <= nearestDist) {
+                    result = dist == nearestDist ? null : pnt;
+                    nearestDist = dist;
+                }
+            }
+        }
+        return result;
     }
 }

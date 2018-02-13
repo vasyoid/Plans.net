@@ -22,8 +22,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
-import org.andengine.entity.IEntity;
-import org.andengine.entity.IEntityMatcher;
 import org.andengine.entity.primitive.Line;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.background.Background;
@@ -52,7 +50,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
     private StickerSprite.StickerType currentSticker = EXIT;
     private List<Line> grid = new LinkedList<>();
 
-    private void removeGrid(Scene pScene) {
+    private void removeGrid() {
         Semaphore mutex = new Semaphore(0);
         getEngine().runOnUpdateThread(() -> {
             for (Line l : grid) {
@@ -112,6 +110,12 @@ public class ConstructorActivity extends BaseConstructorActivity {
             private void moveWall(TouchEvent pSceneTouchEvent) {
                 switch (pSceneTouchEvent.getAction()) {
                     case TouchEvent.ACTION_DOWN:
+                        PointF nearestWall = map.getNearestWallOrNull(currentPoint);
+                        if (nearestWall == null) {
+                            currentPoint.set(-1, -1);
+                        } else {
+                            currentPoint.set(nearestWall);
+                        }
                         firstPoint.set(currentPoint);
                         previousPoint.set(currentPoint);
                         map.setScaleByPoint(currentPoint, 1.0f, 1.4f);
@@ -120,24 +124,27 @@ public class ConstructorActivity extends BaseConstructorActivity {
                         if (previousPoint.equals(currentPoint)) {
                             break;
                         }
-                        map.moveObjects(firstPoint, previousPoint, currentPoint);
+                        map.moveObjects(firstPoint, currentPoint);
                         try {
                             map.updateRooms(pScene);
                         } catch (com.earcutj.exception.EarcutException ignored) {}
                         previousPoint.set(currentPoint);
                         break;
                     case TouchEvent.ACTION_UP:
-                        map.detachRemoved(mEngine);
+                        map.detachRemoved(getEngine());
                         map.setScaleByPoint(firstPoint, 1.0f, 1.0f);
                         if (firstPoint.equals(currentPoint)) {
                             break;
                         }
+                        currentPoint.set(Math.round(currentPoint.x / gridSize) * gridSize,
+                                Math.round(currentPoint.y / gridSize) * gridSize);
                         if (map.hasIntersections(firstPoint)) {
-                            map.moveObjects(firstPoint, currentPoint, firstPoint);
+                            map.moveObjects(firstPoint, firstPoint);
                             map.updateRooms(pScene);
                         } else {
                             map.updateObjects(firstPoint);
                         }
+                        Log.d("VASYOID", "Up, walls: " + map.linearObjectsByCell);
                         break;
                     default:
                         break;
@@ -486,8 +493,9 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     gridSize = GRID_SIZE_MIN << progress;
+                    Log.d("VASYOID", "Grid size: " + gridSize);
                     Map.setGridSize(gridSize);
-                    removeGrid(getEngine().getScene());
+                    removeGrid();
                     createGrid(getEngine().getScene());
                 }
 
