@@ -287,15 +287,15 @@ public class MainActivity extends AppCompatActivity {
         chooseGroupForNewMapDialog.show();
     }
 
-    private void createDeleteDialog(@NonNull String groupName, @Nullable String buildingName,
-                                    @Nullable String floorName) {
+    private void createDeleteDialog(@NonNull UsersGroup group, @Nullable Building building,
+                                    @Nullable FloorMap floor) {
         AlertDialog deleteDialog = new AlertDialog.Builder(MainActivity.this).create();
-        String title = groupName;
-        if (buildingName != null) {
-            title += " : " + buildingName;
+        String title = "Delete " + group.toString() + "?";
+        if (building != null) {
+            title += " : " + building.getName();
         }
-        if (floorName != null) {
-            title += " : " + floorName;
+        if (floor != null) {
+            title += " : " + floor.getName();
         }
         deleteDialog.setTitle(title);
 
@@ -304,12 +304,12 @@ public class MainActivity extends AppCompatActivity {
         deleteDialog.setView(questionText);
 
         deleteDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
-            dataController.deleteByPath(groupName, buildingName, floorName);
+            dataController.deleteByPath(group, building, floor);
             myGroupList.clear();
             myGroupList.addAll(dataController.getAccount().getValues());
             myGroupListAdapter.notifyDataSetChanged();
 
-            if (currentGroup != null && groupName.equals(currentGroup.getName())) {
+            if (currentGroup != null && group.equals(currentGroup)) {
                 currentGroup = null;
                 currentBuilding = null;
                 currentMap = null;
@@ -358,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
         groupListView.setOnItemLongClickListener((adapterView, view, i, l) -> {
             UsersGroup group = myGroupList.get(i);
             assert group != null;
-            createDeleteDialog(group.getName(), null, null);
+            createDeleteDialog(group, null, null);
             return true;
         });
     }

@@ -60,69 +60,49 @@ public class DataController {
 
     /**
      * Delete first non null element of hierarchy from local memory and server
-     * @param groupName always non null name of group
-     * @param buildingName name of building, can be null
-     * @param mapName name of map, can be null
+     * @param group always non null name of group
+     * @param building name of building, can be null
+     * @param map name of map, can be null
      * @throws IllegalArgumentException when there is non null name of elements which doesn't exists
      */
-    public void deleteByPath(@NotNull final String groupName,
-                             @Nullable final String buildingName,
-                             @Nullable final String mapName)
+    public void deleteByPath(@NotNull final UsersGroup group,
+                             @Nullable final Building building,
+                             @Nullable final FloorMap map)
             throws IllegalArgumentException {
         AbstractDataContainer ref = userAccount;
 
         File mapFile = new File(context.getApplicationContext().getFilesDir().getAbsolutePath() +
-                "/" + userAccount.getID() + "/" + groupName);
-        AbstractDataContainer next = (AbstractDataContainer) ref.findByName(groupName);
-        if (next == null) {
-            throw new IllegalArgumentException("Doesn't exists group: " + groupName);
+                "/" + userAccount.getID() + "/" + group.getName());
+        if (userAccount.findByName(group.getName()) == null
+                && userAccount.findDownloadedGroup(group.getName()) == null) {
+            throw new IllegalArgumentException("Doesn't exists group: " + group.getName());
         }
-        if (buildingName == null) {
+        if (building == null) {
             deleteRecursive(mapFile);
-            ref.getAllData().remove(groupName);
-            netManager.deleteReference(groupName, null, null);
+            ref.getAllData().remove(group);
+            netManager.deleteReference(group, null, null);
             return;
         }
 
-        ref = next;
-        next = (AbstractDataContainer) ref.findByName(buildingName);
-        mapFile = new File(mapFile, buildingName);
-        if (next == null) {
-            throw new IllegalArgumentException("Doesn't exists building: " + buildingName);
+        mapFile = new File(mapFile, building.getName());
+        if (group.findByName(building.getName()) == null) {
+            throw new IllegalArgumentException("Doesn't exists building: " + building.getName());
         }
-        if (mapName == null) {
+        if (map == null) {
             deleteRecursive(mapFile);
-            ref.getAllData().remove(buildingName);
-            netManager.deleteReference(groupName, buildingName, null);
+            ref.getAllData().remove(building.getName());
+            netManager.deleteReference(group, building, null);
             return;
         }
 
-        ref = next;
-        next = (AbstractDataContainer) ref.findByName(mapName);
-        mapFile = new File(mapFile, mapName + ".plannet");
-        if (next == null) {
-            throw new IllegalArgumentException("Doesn't exists map: " + mapName);
+        mapFile = new File(mapFile, map.getName() + ".plannet");
+        if (building.findByName(map.getName()) == null) {
+            throw new IllegalArgumentException("Doesn't exists map: " + map.getName());
         }
-        ref.getAllData().remove(mapName);
+        ref.getAllData().remove(map.getName());
         deleteRecursive(mapFile);
 
-        netManager.deleteReference(groupName, buildingName, mapName);
-    }
-
-    /**
-     * Delete map from local memory and server
-     *
-     * @param map map which will be deleted
-     */
-    public void deleteMap(@NonNull final FloorMap map) {
-        File mapFile = formingFileFromMap(map);
-        if (mapFile.exists()) {
-            deleteRecursive(mapFile);
-        }
-
-        userAccount.findByName(map.getGroupName())
-                .findByName(map.getBuildingName()).getAllData().remove(map);
-        netManager.deleteReference(map.getGroupName(), map.getBuildingName(), map.getName());
+        netManager.deleteReference(group, building, map);
     }
 
     /**

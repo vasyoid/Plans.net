@@ -27,7 +27,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.spbau.mit.plansnet.MainActivity.SearchResult;
+import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
+import ru.spbau.mit.plansnet.data.UsersGroup;
 
 /**
  * Manager of network data
@@ -193,7 +195,7 @@ class NetworkDataManager {
                         } else {
                             Log.d(STORAGE_TAG, "mkdirs returned false");
                         }
-
+                        //TODO: crash when map is deleted
                         storageReference.child(path).getFile(mapFile)
                                 .addOnSuccessListener(taskSnapshot -> {
                                     synchronized (mapCount) {
@@ -237,30 +239,34 @@ class NetworkDataManager {
                 .setValue(path);
     }
 
-    void deleteReference(@Nullable final String groupName,
-                                @Nullable final String buildingName,
-                                @Nullable final String mapName) {
+    void deleteReference(@Nullable final UsersGroup group,
+                                @Nullable final Building building,
+                                @Nullable final FloorMap map) {
         DatabaseReference ref = databaseReference.child(userAccount.getUid());
         StorageReference storageRef = storageReference.child(userAccount.getUid());
-        if (groupName != null) {
-            storageRef = storageRef.child(groupName);
+        if (group != null) {
+            storageRef = storageRef.child(group.getName());
             ref = ref.child("groups")
-                    .child(groupName);
-            if (buildingName != null) {
-                storageRef = storageRef.child(buildingName);
+                    .child(group.getName());
+            if (building != null) {
+                storageRef = storageRef.child(building.getName());
                 ref = ref.child("buildings")
-                        .child(buildingName);
-                if (mapName != null) {
-                    storageRef = storageRef.child(mapName);
+                        .child(building.getName());
+                if (map != null) {
+                    storageRef = storageRef.child(map.getName());
                     ref = ref.child("floors")
-                            .child(mapName);
+                            .child(map.getName());
                 }
             }
         } else {
             return;
         }
 
-        if (mapName != null) {
+        if (!group.getName().equals(group.toString())) {
+            ref.removeValue();
+        }
+
+        if (map != null) {
             ref.removeValue();
             storageRef.delete();
             return;
@@ -271,7 +277,7 @@ class NetworkDataManager {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 List<String> floorsPaths = new ArrayList<>();
-                if (buildingName != null) {
+                if (building.getName() != null) {
                     Log.d("delete storage", "delete building");
                     for (DataSnapshot floor : dataSnapshot.child("floors").getChildren()) {
                         floorsPaths.add((String)floor.child("path").getValue());
