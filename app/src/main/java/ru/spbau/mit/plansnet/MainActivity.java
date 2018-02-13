@@ -370,6 +370,8 @@ public class MainActivity extends AppCompatActivity {
             isPrivateBox.setVisibility(View.GONE);
         }
 
+        isPrivateBox.setChecked(group.isPrivate());
+
         pathTextView.setText(String.format("path: /%s/", group.toString()));
 
         hierarchy.setOnItemClickListener((adapterView, view, i, l) -> {

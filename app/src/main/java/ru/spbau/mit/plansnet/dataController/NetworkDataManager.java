@@ -324,7 +324,8 @@ class NetworkDataManager {
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         for (DataSnapshot user : dataSnapshot.getChildren()) {
                             for (DataSnapshot group : user.child("groups").getChildren()) {
-                                if (group.getKey().toLowerCase().contains(searchedName)) {
+                                if (!((boolean) group.child("isPrivate").getValue())
+                                     && group.getKey().toLowerCase().contains(searchedName)) {
                                     ownersAndGroups.add(new SearchResult(user.getKey(),
                                             (String) user.child("name").getValue(),
                                             group.getKey()));
@@ -351,7 +352,6 @@ class NetworkDataManager {
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-
                         for (DataSnapshot buildingShot : dataSnapshot.child("buildings").getChildren()) {
                             for (DataSnapshot floorShot : buildingShot.child("floors").getChildren()) {
                                 String path = (String) floorShot.child("path").getValue();
