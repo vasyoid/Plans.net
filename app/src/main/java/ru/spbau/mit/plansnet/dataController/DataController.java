@@ -183,6 +183,11 @@ public class DataController {
         return group.findByName(buildingName);
     }
 
+    public void setIsPrivate(@NonNull UsersGroup group, boolean isPrivate) {
+        group.setPrivate(isPrivate);
+        netManager.setIsPrivate(group, isPrivate);
+    }
+
     /**
      * Save map to account and file and send it to server
      */

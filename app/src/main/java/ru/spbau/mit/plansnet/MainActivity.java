@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -17,11 +18,14 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.SearchView;
+import android.widget.SimpleAdapter;
 import android.widget.Spinner;
 import android.widget.TabHost;
 import android.widget.TextView;
@@ -38,8 +42,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
+import java.lang.reflect.Array;
+import java.security.Identity;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
@@ -47,6 +55,8 @@ import java.util.regex.Pattern;
 
 import ru.spbau.mit.plansnet.constructor.ConstructorActivity;
 import ru.spbau.mit.plansnet.constructor.ViewerActivity;
+import ru.spbau.mit.plansnet.data.AbstractDataContainer;
+import ru.spbau.mit.plansnet.data.AbstractNamedData;
 import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
 import ru.spbau.mit.plansnet.data.UsersGroup;
@@ -292,13 +302,14 @@ public class MainActivity extends AppCompatActivity {
     private void createDeleteDialog(@NonNull UsersGroup group, @Nullable Building building,
                                     @Nullable FloorMap floor) {
         AlertDialog deleteDialog = new AlertDialog.Builder(MainActivity.this).create();
-        String title = "Delete " + group.toString() + "?";
+        String title = "Delete " + group.toString();
         if (building != null) {
-            title += " : " + building.getName();
+            title += "/" + building.getName();
         }
         if (floor != null) {
-            title += " : " + floor.getName();
+            title += "/" + floor.getName();
         }
+        title += "?";
         deleteDialog.setTitle(title);
 
         TextView questionText = new TextView(MainActivity.this);
@@ -340,16 +351,77 @@ public class MainActivity extends AppCompatActivity {
 
         LinearLayoutCompat settings = (LinearLayoutCompat) getLayoutInflater()
                 .inflate(R.layout.group_settings, null);
-//        LinearLayout hierarchyList = settings.
 
+
+        final Button backBtn = settings.findViewById(R.id.backButton);
+        final ListView hierarchy = settings.findViewById(R.id.hierarchyList);
+        final CheckBox isPrivateBox = settings.findViewById(R.id.isPrivateCheckBox);
+        final TextView pathTextView = settings.findViewById(R.id.pathTextView);
+
+        final List<AbstractNamedData> hierarchyList = new ArrayList<>();
+        final ArrayAdapter<AbstractNamedData> hierarchyListAdapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_list_item_1,
+                hierarchyList
+        );
+        hierarchy.setAdapter(hierarchyListAdapter);
+
+        if (!group.getName().equals(group.toString())) {
+            isPrivateBox.setVisibility(View.GONE);
+        }
+
+        pathTextView.setText(String.format("path: /%s/", group.toString()));
+
+        hierarchy.setOnItemClickListener((adapterView, view, i, l) -> {
+            if (hierarchyList.get(i) instanceof Building) {
+                Building building = (Building)hierarchyList.get(i);
+
+                hierarchyList.clear();
+                hierarchyList.addAll(building.getValues());
+                hierarchyListAdapter.notifyDataSetChanged();
+
+                pathTextView.setText(String.format("path: /%s/%s/",group.toString(), building.toString()));
+                backBtn.setEnabled(true);
+            }
+        });
+
+        hierarchy.setOnItemLongClickListener((adapterView, view, i, l) -> {
+            AbstractNamedData item = hierarchyList.get(i);
+            if (item instanceof FloorMap) {
+                FloorMap map = (FloorMap)item;
+                createDeleteDialog(group, group.findByName(map.getBuildingName()), map);
+                groupSettingsDialog.cancel();
+            } else if (item instanceof Building) {
+                createDeleteDialog(group, (Building)item, null);
+                groupSettingsDialog.cancel();
+            }
+            return true;
+        });
+
+        backBtn.setEnabled(false);
+        backBtn.setOnClickListener(view -> {
+            hierarchyList.clear();
+            hierarchyList.addAll(group.getValues());
+            hierarchyListAdapter.notifyDataSetChanged();
+            backBtn.setEnabled(false);
+            pathTextView.setText(String.format("path: /%s/", group.toString()));
+        });
+
+        isPrivateBox.setOnCheckedChangeListener((compoundButton, b) -> {
+            dataController.setIsPrivate(group, b);
+        });
 
         groupSettingsDialog.setView(settings);
-        groupSettingsDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, i) -> {});
+        groupSettingsDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, i) -> {
+        });
         groupSettingsDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Delete group", (dialog, i) -> {
             createDeleteDialog(group, null, null);
         });
 
         groupSettingsDialog.show();
+
+        hierarchyList.addAll(group.getValues());
+        hierarchyListAdapter.notifyDataSetChanged();
     }
 
     private void setUpMyGroupListView() {
@@ -383,7 +455,6 @@ public class MainActivity extends AppCompatActivity {
             UsersGroup group = myGroupList.get(i);
             assert group != null;
             createGroupSettingsDialog(group);
-//            createDeleteDialog(group, null, null); old choice
             return true;
         });
     }
@@ -419,7 +490,6 @@ public class MainActivity extends AppCompatActivity {
             UsersGroup group = netGroupList.get(i);
             assert group != null;
             createGroupSettingsDialog(group);
-//            createDeleteDialog(group.getName(), null, null); TODO: think about it
             return true;
         });
     }
@@ -577,7 +647,7 @@ public class MainActivity extends AppCompatActivity {
         btnAddMap.setOnClickListener(v -> createChooseGroupForNewMapDialog());
 
         btnLogOut.setOnClickListener(v -> {
-            signOut();
+            logOut();
             Toast.makeText(MainActivity.this, "Logged out", Toast.LENGTH_SHORT).show();
         });
     }
@@ -636,7 +706,17 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    private void signOut() {
+    private void logOut() {
+        myGroupList.clear();
+        netGroupList.clear();
+        buildingList.clear();
+        floorList.clear();
+
+        myGroupListAdapter.notifyDataSetChanged();
+        netGroupListAdapter.notifyDataSetChanged();
+        buildingListAdapter.notifyDataSetChanged();
+        floorListAdapter.notifyDataSetChanged();
+
         mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> logIn());
     }
 

@@ -72,7 +72,7 @@ class NetworkDataManager {
         if (map.getOwner().equals(userAccount.getUid())) {
             groupRef = userRef.child("groups").child(map.getGroupName());
 
-            groupRef.child("isPublic").setValue(true);
+            groupRef.child("isPrivate").setValue(false);
         } else {
             groupRef = userRef.child("downloads").child(map.getGroupName());
 
@@ -264,7 +264,7 @@ class NetworkDataManager {
             ref = ref.child("buildings")
                     .child(building.getName());
             if (map != null) {
-                storageRef = storageRef.child(map.getName());
+                storageRef = storageRef.child(map.getName() + ".plannet");
                 ref = ref.child("floors")
                         .child(map.getName());
             }
@@ -272,6 +272,7 @@ class NetworkDataManager {
 
         if (!group.getName().equals(group.toString())) {
             ref.removeValue();
+            return;
         }
 
         if (map != null) {
@@ -374,5 +375,12 @@ class NetworkDataManager {
                 });
     }
 
+    void setIsPrivate(@NonNull UsersGroup group, boolean isPrivate) {
+        databaseReference.child(userAccount.getUid())
+                .child("groups")
+                .child(group.getName())
+                .child("isPrivate")
+                .setValue(isPrivate);
+    }
 
 }
