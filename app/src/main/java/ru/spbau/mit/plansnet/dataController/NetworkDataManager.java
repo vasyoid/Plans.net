@@ -15,6 +15,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -165,6 +167,13 @@ class NetworkDataManager {
         for (final String path : floorsPaths) {
             storageReference.child(path).getMetadata().addOnCompleteListener(
                     task -> {
+                        if (!task.isSuccessful()) {
+                            synchronized (mapCount) {
+                                mapCount.incrementAndGet();
+                                mapCount.notify();
+                            }
+                            return;
+                        }
                         String newPath = path;
                         String owner = path.substring(1, path.substring(1).indexOf('/') + 1);
                         Log.d(STORAGE_TAG, "Owner is " + owner);
@@ -195,7 +204,6 @@ class NetworkDataManager {
                         } else {
                             Log.d(STORAGE_TAG, "mkdirs returned false");
                         }
-                        //TODO: crash when map is deleted
                         storageReference.child(path).getFile(mapFile)
                                 .addOnSuccessListener(taskSnapshot -> {
                                     synchronized (mapCount) {
@@ -239,27 +247,27 @@ class NetworkDataManager {
                 .setValue(path);
     }
 
-    void deleteReference(@Nullable final UsersGroup group,
+    void deleteReference(@NonNull final UsersGroup group,
                                 @Nullable final Building building,
                                 @Nullable final FloorMap map) {
         DatabaseReference ref = databaseReference.child(userAccount.getUid());
         StorageReference storageRef = storageReference.child(userAccount.getUid());
-        if (group != null) {
-            storageRef = storageRef.child(group.getName());
-            ref = ref.child("groups")
-                    .child(group.getName());
-            if (building != null) {
-                storageRef = storageRef.child(building.getName());
-                ref = ref.child("buildings")
-                        .child(building.getName());
-                if (map != null) {
-                    storageRef = storageRef.child(map.getName());
-                    ref = ref.child("floors")
-                            .child(map.getName());
-                }
-            }
+        storageRef = storageRef.child(group.getName());
+        if (group.getName().equals(group.toString())) {
+            ref = ref.child("groups");
         } else {
-            return;
+            ref = ref.child("downloads");
+        }
+        ref = ref.child(group.getName());
+        if (building != null) {
+            storageRef = storageRef.child(building.getName());
+            ref = ref.child("buildings")
+                    .child(building.getName());
+            if (map != null) {
+                storageRef = storageRef.child(map.getName());
+                ref = ref.child("floors")
+                        .child(map.getName());
+            }
         }
 
         if (!group.getName().equals(group.toString())) {
@@ -277,7 +285,7 @@ class NetworkDataManager {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 List<String> floorsPaths = new ArrayList<>();
-                if (building.getName() != null) {
+                if (building != null) {
                     Log.d("delete storage", "delete building");
                     for (DataSnapshot floor : dataSnapshot.child("floors").getChildren()) {
                         floorsPaths.add((String)floor.child("path").getValue());

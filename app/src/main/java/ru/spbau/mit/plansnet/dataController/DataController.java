@@ -69,7 +69,6 @@ public class DataController {
                              @Nullable final Building building,
                              @Nullable final FloorMap map)
             throws IllegalArgumentException {
-        AbstractDataContainer ref = userAccount;
 
         File mapFile = new File(context.getApplicationContext().getFilesDir().getAbsolutePath() +
                 "/" + userAccount.getID() + "/" + group.getName());
@@ -79,7 +78,7 @@ public class DataController {
         }
         if (building == null) {
             deleteRecursive(mapFile);
-            ref.getAllData().remove(group);
+            userAccount.getAllData().remove(group.getName());
             netManager.deleteReference(group, null, null);
             return;
         }
@@ -90,7 +89,7 @@ public class DataController {
         }
         if (map == null) {
             deleteRecursive(mapFile);
-            ref.getAllData().remove(building.getName());
+            group.getAllData().remove(building.getName());
             netManager.deleteReference(group, building, null);
             return;
         }
@@ -99,7 +98,7 @@ public class DataController {
         if (building.findByName(map.getName()) == null) {
             throw new IllegalArgumentException("Doesn't exists map: " + map.getName());
         }
-        ref.getAllData().remove(map.getName());
+        building.getAllData().remove(map.getName());
         deleteRecursive(mapFile);
 
         netManager.deleteReference(group, building, map);
@@ -276,6 +275,7 @@ public class DataController {
     private void deleteRecursive(File fileOrDirectory) {
         if (fileOrDirectory.isDirectory()) {
             for (File child : fileOrDirectory.listFiles()) {
+                Log.d("Delete recursive", child.getAbsolutePath());
                 deleteRecursive(child);
             }
         }

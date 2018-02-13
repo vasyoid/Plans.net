@@ -10,6 +10,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutCompat;
 import android.text.InputFilter;
 import android.util.Log;
 import android.view.View;
@@ -17,6 +18,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.SearchView;
@@ -309,6 +311,10 @@ public class MainActivity extends AppCompatActivity {
             myGroupList.addAll(dataController.getAccount().getValues());
             myGroupListAdapter.notifyDataSetChanged();
 
+            netGroupList.clear();
+            netGroupList.addAll(dataController.getAccount().getDownloadedGroups());
+            netGroupListAdapter.notifyDataSetChanged();
+
             if (currentGroup != null && group.equals(currentGroup)) {
                 currentGroup = null;
                 currentBuilding = null;
@@ -326,6 +332,24 @@ public class MainActivity extends AppCompatActivity {
                 (dialog, which) -> {});
 
         deleteDialog.show();
+    }
+
+    private void createGroupSettingsDialog(@NonNull final UsersGroup group) {
+        AlertDialog groupSettingsDialog = new AlertDialog.Builder(MainActivity.this).create();
+        groupSettingsDialog.setTitle("Group settings: " + group.toString());
+
+        LinearLayoutCompat settings = (LinearLayoutCompat) getLayoutInflater()
+                .inflate(R.layout.group_settings, null);
+//        LinearLayout hierarchyList = settings.
+
+
+        groupSettingsDialog.setView(settings);
+        groupSettingsDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, i) -> {});
+        groupSettingsDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Delete group", (dialog, i) -> {
+            createDeleteDialog(group, null, null);
+        });
+
+        groupSettingsDialog.show();
     }
 
     private void setUpMyGroupListView() {
@@ -358,7 +382,8 @@ public class MainActivity extends AppCompatActivity {
         groupListView.setOnItemLongClickListener((adapterView, view, i, l) -> {
             UsersGroup group = myGroupList.get(i);
             assert group != null;
-            createDeleteDialog(group, null, null);
+            createGroupSettingsDialog(group);
+//            createDeleteDialog(group, null, null); old choice
             return true;
         });
     }
@@ -393,7 +418,7 @@ public class MainActivity extends AppCompatActivity {
         groupListView.setOnItemLongClickListener((adapterView, view, i, l) -> {
             UsersGroup group = netGroupList.get(i);
             assert group != null;
-
+            createGroupSettingsDialog(group);
 //            createDeleteDialog(group.getName(), null, null); TODO: think about it
             return true;
         });
