@@ -104,6 +104,10 @@ public class MainActivity extends AppCompatActivity {
     private ArrayAdapter<SearchResult> findListAdapter;
     private GoogleSignInClient mGoogleSignInClient;
 
+    private Button btnViewer;
+    private Button btnConstructor;
+    private Button btnCopyMap;
+
     private void createNewGroupDialog() {
         AlertDialog newGroupDialog = new AlertDialog.Builder(MainActivity.this).create();
         newGroupDialog.setTitle("enter name of new group");
@@ -235,11 +239,7 @@ public class MainActivity extends AppCompatActivity {
                     newMapName
             );
             dataController.saveMap(floor);
-            floorList.clear();
-            if (currentBuilding == chosenBuilding) {
-                floorList.addAll(currentBuilding.getValues());
-            }
-            floorListAdapter.notifyDataSetChanged();
+            floorListActivate();
         });
 
         newMapNameDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
@@ -302,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
     private void createDeleteDialog(@NonNull UsersGroup group, @Nullable Building building,
                                     @Nullable FloorMap floor) {
         AlertDialog deleteDialog = new AlertDialog.Builder(MainActivity.this).create();
-        String title = "Delete " + group.toString();
+        String title = "Delete /" + group.toString();
         if (building != null) {
             title += "/" + building.getName();
         }
@@ -314,6 +314,7 @@ public class MainActivity extends AppCompatActivity {
 
         TextView questionText = new TextView(MainActivity.this);
         questionText.setText("Do you want to delete this?");
+        questionText.setPadding(10, 10, 10, 10);
         deleteDialog.setView(questionText);
 
         deleteDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
@@ -332,10 +333,9 @@ public class MainActivity extends AppCompatActivity {
                 currentMap = null;
 
                 buildingList.clear();
-                floorList.clear();
-
                 buildingListAdapter.notifyDataSetChanged();
-                floorListAdapter.notifyDataSetChanged();
+
+                floorListInactivate();
             }
         });
 
@@ -445,12 +445,10 @@ public class MainActivity extends AppCompatActivity {
             }
             buildingListAdapter.notifyDataSetChanged();
 
-            floorList.clear();
             if (buildingList.size() != 0) {
                 currentBuilding = buildingList.get(0);
-                floorList.addAll(currentBuilding.getValues());
             }
-            floorListAdapter.notifyDataSetChanged();
+            floorListActivate();
         });
 
         groupListView.setOnItemLongClickListener((adapterView, view, i, l) -> {
@@ -480,12 +478,11 @@ public class MainActivity extends AppCompatActivity {
             }
             buildingListAdapter.notifyDataSetChanged();
 
-            floorList.clear();
             if (buildingList.size() != 0) {
                 currentBuilding = buildingList.get(0);
-                floorList.addAll(currentBuilding.getValues());
             }
-            floorListAdapter.notifyDataSetChanged();
+
+            floorListActivate();
         });
 
         groupListView.setOnItemLongClickListener((adapterView, view, i, l) -> {
@@ -508,17 +505,14 @@ public class MainActivity extends AppCompatActivity {
         buildingSpinnerView.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                floorList.clear();
                 if (currentGroup == null) {
-                    myGroupList.clear();
-                    myGroupListAdapter.notifyDataSetChanged();
+                    buildingList.clear();
+                    buildingListAdapter.notifyDataSetChanged();
                     return;
                 }
 
                 currentBuilding = buildingList.get(i);
-                assert currentBuilding != null;
-                floorList.addAll(currentBuilding.getValues());
-                floorListAdapter.notifyDataSetChanged();
+                floorListActivate();
             }
 
             @Override
@@ -549,8 +543,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 if (currentBuilding == null) {
-                    floorList.clear();
-                    floorListAdapter.notifyDataSetChanged();
+                    floorListInactivate();
                     return;
                 }
                 currentMap = floorList.get(i);
@@ -559,10 +552,27 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
                 Log.d("Spinner", "OnNothingSelected in floor");
-//                floorList.clear();
-//                floorListAdapter.notifyDataSetChanged();
             }
         });
+    }
+
+    private void floorListInactivate() {
+        floorList.clear();
+        floorListAdapter.notifyDataSetChanged();
+//        btnConstructor.setEnabled(false);// for easy debug TODO: uncomment on release
+        btnViewer.setEnabled(false);
+        btnCopyMap.setEnabled(false);
+    }
+
+    private void floorListActivate() {
+        floorList.clear();
+        if (currentBuilding != null) {
+            floorList.addAll(currentBuilding.getValues());
+        }
+        floorListAdapter.notifyDataSetChanged();
+        btnConstructor.setEnabled(true);
+        btnViewer.setEnabled(true);
+        btnCopyMap.setEnabled(true);
     }
 
     private void setUpFindListView() {
@@ -605,10 +615,6 @@ public class MainActivity extends AppCompatActivity {
             findListAdapter.notifyDataSetChanged();
             return false;
         });
-
-        searchView.setOnQueryTextFocusChangeListener((view, b) -> {
-            Log.d("SearchView", "bool is " + b);
-        });
     }
 
     private void setUpTabHost() {
@@ -635,8 +641,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Button btnLogOut = findViewById(R.id.btnLogOut);
-        FloatingActionButton btnAddMap = findViewById(R.id.btnAddMap);
+
+        btnViewer = findViewById(R.id.btnViewer);
+        btnConstructor = findViewById(R.id.btnConstructor);
+        btnCopyMap = findViewById(R.id.btnCopyMap);
 
         setUpBuildingSpinnerView();
         setUpFloorSpinnerView();
@@ -645,13 +653,6 @@ public class MainActivity extends AppCompatActivity {
         setUpFindListView();
         setUpSearchView();
         setUpTabHost();
-
-        btnAddMap.setOnClickListener(v -> createChooseGroupForNewMapDialog());
-
-        btnLogOut.setOnClickListener(v -> {
-            logOut();
-            Toast.makeText(MainActivity.this, "Logged out", Toast.LENGTH_SHORT).show();
-        });
     }
 
     @Override
@@ -706,20 +707,6 @@ public class MainActivity extends AppCompatActivity {
                     user = auth.getCurrentUser();
                     afterAuth();
                 });
-    }
-
-    private void logOut() {
-        myGroupList.clear();
-        netGroupList.clear();
-        buildingList.clear();
-        floorList.clear();
-
-        myGroupListAdapter.notifyDataSetChanged();
-        netGroupListAdapter.notifyDataSetChanged();
-        buildingListAdapter.notifyDataSetChanged();
-        floorListAdapter.notifyDataSetChanged();
-
-        mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> logIn());
     }
 
     private void afterAuth() {
@@ -873,11 +860,11 @@ public class MainActivity extends AppCompatActivity {
             netGroupList.addAll(dataController.getAccount().getDownloadedGroups());
 
             buildingList.clear();
-            floorList.clear();
 
             myGroupListAdapter.notifyDataSetChanged();
             buildingListAdapter.notifyDataSetChanged();
-            floorListAdapter.notifyDataSetChanged();
+
+            floorListInactivate();
         }
     }
 
@@ -1042,5 +1029,39 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("currentMap", currentMap);
         }
         startActivityForResult(intent, CONSTRUCTOR_TOKEN);
+    }
+
+    public void logOut(View v) {
+        myGroupList.clear();
+        netGroupList.clear();
+        buildingList.clear();
+
+        myGroupListAdapter.notifyDataSetChanged();
+        netGroupListAdapter.notifyDataSetChanged();
+        buildingListAdapter.notifyDataSetChanged();
+
+        floorListInactivate();
+
+        mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> logIn());
+        Toast.makeText(MainActivity.this, "Logged out", Toast.LENGTH_SHORT).show();
+    }
+
+    public void copyMap(View v) {
+        Toast.makeText(this, "this is doesn't work now", Toast.LENGTH_SHORT).show();
+    }
+
+    public void openHelp(View v) {
+        AlertDialog help = new AlertDialog.Builder(MainActivity.this).create();
+
+        TextView helpText = new TextView(MainActivity.this);
+        help.setView(helpText);
+
+        helpText.setText(getText(R.string.helpText));
+        helpText.setPadding(20, 20, 20, 0);
+        help.show();
+    }
+
+    public void addMap(View v) {
+        createChooseGroupForNewMapDialog();
     }
 }
