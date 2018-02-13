@@ -161,13 +161,15 @@
             android:id="@+id/btnConstructor"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:layout_marginBottom="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
+            android:freezesText="false"
             android:onClick="openConstructor"
             android:text="Open constructor"
-            android:layout_gravity="center"
+            android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.505"
@@ -175,18 +177,47 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.628" />
 
+        <Button
+            android:id="@+id/btnCopyMap"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:onClick="copyMap"
+            android:text="copy map" />
+
         <Space
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1" />
 
-        <Button
-            android:id="@+id/btnLogOut"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="right"
-            android:text="log out"
-            android:textSize="14sp" />
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnHelp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="openHelp"
+                android:text="Help" />
+
+            <Space
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="10" />
+
+            <Button
+                android:id="@+id/btnLogOut"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:layout_weight="1"
+                android:onClick="logOut"
+                android:text="log out"
+                android:textSize="14sp" />
+        </LinearLayout>
 
     </LinearLayout>
 

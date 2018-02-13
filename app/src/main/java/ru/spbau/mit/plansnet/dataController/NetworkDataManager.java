@@ -15,6 +15,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +29,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.spbau.mit.plansnet.MainActivity.SearchResult;
+import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
+import ru.spbau.mit.plansnet.data.UsersGroup;
 
 /**
  * Manager of network data
@@ -68,7 +72,7 @@ class NetworkDataManager {
         if (map.getOwner().equals(userAccount.getUid())) {
             groupRef = userRef.child("groups").child(map.getGroupName());
 
-            groupRef.child("isPublic").setValue(true);
+            groupRef.child("isPrivate").setValue(false);
         } else {
             groupRef = userRef.child("downloads").child(map.getGroupName());
 
@@ -163,6 +167,13 @@ class NetworkDataManager {
         for (final String path : floorsPaths) {
             storageReference.child(path).getMetadata().addOnCompleteListener(
                     task -> {
+                        if (!task.isSuccessful()) {
+                            synchronized (mapCount) {
+                                mapCount.incrementAndGet();
+                                mapCount.notify();
+                            }
+                            return;
+                        }
                         String newPath = path;
                         String owner = path.substring(1, path.substring(1).indexOf('/') + 1);
                         Log.d(STORAGE_TAG, "Owner is " + owner);
@@ -193,7 +204,6 @@ class NetworkDataManager {
                         } else {
                             Log.d(STORAGE_TAG, "mkdirs returned false");
                         }
-
                         storageReference.child(path).getFile(mapFile)
                                 .addOnSuccessListener(taskSnapshot -> {
                                     synchronized (mapCount) {
@@ -237,30 +247,35 @@ class NetworkDataManager {
                 .setValue(path);
     }
 
-    void deleteReference(@Nullable final String groupName,
-                                @Nullable final String buildingName,
-                                @Nullable final String mapName) {
+    void deleteReference(@NonNull final UsersGroup group,
+                                @Nullable final Building building,
+                                @Nullable final FloorMap map) {
         DatabaseReference ref = databaseReference.child(userAccount.getUid());
         StorageReference storageRef = storageReference.child(userAccount.getUid());
-        if (groupName != null) {
-            storageRef = storageRef.child(groupName);
-            ref = ref.child("groups")
-                    .child(groupName);
-            if (buildingName != null) {
-                storageRef = storageRef.child(buildingName);
-                ref = ref.child("buildings")
-                        .child(buildingName);
-                if (mapName != null) {
-                    storageRef = storageRef.child(mapName);
-                    ref = ref.child("floors")
-                            .child(mapName);
-                }
-            }
+        storageRef = storageRef.child(group.getName());
+        if (group.getName().equals(group.toString())) {
+            ref = ref.child("groups");
         } else {
+            ref = ref.child("downloads");
+        }
+        ref = ref.child(group.getName());
+        if (building != null) {
+            storageRef = storageRef.child(building.getName());
+            ref = ref.child("buildings")
+                    .child(building.getName());
+            if (map != null) {
+                storageRef = storageRef.child(map.getName() + ".plannet");
+                ref = ref.child("floors")
+                        .child(map.getName());
+            }
+        }
+
+        if (!group.getName().equals(group.toString())) {
+            ref.removeValue();
             return;
         }
 
-        if (mapName != null) {
+        if (map != null) {
             ref.removeValue();
             storageRef.delete();
             return;
@@ -271,7 +286,7 @@ class NetworkDataManager {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 List<String> floorsPaths = new ArrayList<>();
-                if (buildingName != null) {
+                if (building != null) {
                     Log.d("delete storage", "delete building");
                     for (DataSnapshot floor : dataSnapshot.child("floors").getChildren()) {
                         floorsPaths.add((String)floor.child("path").getValue());
@@ -309,7 +324,8 @@ class NetworkDataManager {
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         for (DataSnapshot user : dataSnapshot.getChildren()) {
                             for (DataSnapshot group : user.child("groups").getChildren()) {
-                                if (group.getKey().toLowerCase().contains(searchedName)) {
+                                if (!((boolean) group.child("isPrivate").getValue())
+                                     && group.getKey().toLowerCase().contains(searchedName)) {
                                     ownersAndGroups.add(new SearchResult(user.getKey(),
                                             (String) user.child("name").getValue(),
                                             group.getKey()));
@@ -336,7 +352,6 @@ class NetworkDataManager {
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-
                         for (DataSnapshot buildingShot : dataSnapshot.child("buildings").getChildren()) {
                             for (DataSnapshot floorShot : buildingShot.child("floors").getChildren()) {
                                 String path = (String) floorShot.child("path").getValue();
@@ -360,5 +375,12 @@ class NetworkDataManager {
                 });
     }
 
+    void setIsPrivate(@NonNull UsersGroup group, boolean isPrivate) {
+        databaseReference.child(userAccount.getUid())
+                .child("groups")
+                .child(group.getName())
+                .child("isPrivate")
+                .setValue(isPrivate);
+    }
 
 }
