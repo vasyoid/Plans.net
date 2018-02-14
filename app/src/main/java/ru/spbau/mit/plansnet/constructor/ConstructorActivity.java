@@ -1,6 +1,5 @@
 package ru.spbau.mit.plansnet.constructor;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -144,7 +143,6 @@ public class ConstructorActivity extends BaseConstructorActivity {
                         } else {
                             map.updateObjects(firstPoint);
                         }
-                        Log.d("VASYOID", "Up, walls: " + map.linearObjectsByCell);
                         break;
                     default:
                         break;
@@ -319,9 +317,12 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     public void showParams(RoomSprite pRoom) {
-        Semaphore mutex = new Semaphore(1);
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
+        Semaphore mutex = new Semaphore(0);
         runOnUiThread(() -> {
-            findViewById(R.id.constructorView).setEnabled(false);
+            disableAll();
             View paramsView = findViewById(R.id.roomParamsView);
             paramsView.setVisibility(View.VISIBLE);
             EditText roomName = findViewById(R.id.roomName);
@@ -335,7 +336,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 pRoom.setTitle(title);
                 pRoom.setDescription(description);
                 paramsView.setVisibility(View.GONE);
-                findViewById(R.id.constructorView).setEnabled(true);
+                enableAll();
             });
             mutex.release();
         });
@@ -347,6 +348,9 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     public void setSticker(View v) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
         ((ImageView) findViewById(R.id.imageExit)).setColorFilter(TRANSPARENT);
         ((ImageView) findViewById(R.id.imageLift)).setColorFilter(TRANSPARENT);
         ((ImageView) findViewById(R.id.imageStairs)).setColorFilter(TRANSPARENT);
@@ -371,6 +375,9 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     public void setItem(View v) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
         if (v.getId() != R.id.buttonSticker) {
             findViewById(R.id.stickersLayout).setVisibility(View.GONE);
         } else {
@@ -400,6 +407,9 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     public void setState(View v) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
         if (v.getId() != R.id.buttonAdd) {
             findViewById(R.id.itemsLayout).setVisibility(View.GONE);
         } else {
@@ -441,17 +451,40 @@ public class ConstructorActivity extends BaseConstructorActivity {
         map.setActionState(state);
     }
 
-    public void clearField(View v) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Clear the map?")
-                .setTitle("Clear")
-                .setPositiveButton(R.string.ok, (dialog, which) -> {
-                    map.clear();
-                    map.detachRemoved(mEngine);
-                })
-                .setNegativeButton(R.string.cancel, (dialog, which) -> {})
-                .create()
-                .show();
+    private void disableAll() {
+        findViewById(R.id.constructorView).setEnabled(false);
+    }
+
+    private void enableAll() {
+        findViewById(R.id.constructorView).setEnabled(true);
+    }
+
+    public void clearMap(View v) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
+        Semaphore mutex = new Semaphore(0);
+        runOnUiThread(() -> {
+            disableAll();
+            View confirmClearView = findViewById(R.id.confirmClearView);
+            confirmClearView.setVisibility(View.VISIBLE);
+            confirmClearView.findViewById(R.id.confirmClearOk).setOnClickListener(v1 -> {
+                map.clear();
+                map.detachRemoved(getEngine());
+                confirmClearView.setVisibility(View.GONE);
+                enableAll();
+            });
+            confirmClearView.findViewById(R.id.confirmClearCancel).setOnClickListener(v1 -> {
+                confirmClearView.setVisibility(View.GONE);
+                enableAll();
+            });
+            mutex.release();
+        });
+        try {
+            mutex.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -477,23 +510,29 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     public void setBackground(View view) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
         Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
         photoPickerIntent.setType("image/*");
         startActivityForResult(photoPickerIntent, PICK_IMAGE_TOKEN);
     }
 
     public void setGridSize(View view) {
-        Semaphore mutex = new Semaphore(1);
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
+        Semaphore mutex = new Semaphore(0);
         runOnUiThread(() -> {
-            findViewById(R.id.constructorView).setEnabled(false);
+            disableAll();
             View gridSizeView = findViewById(R.id.gridSizeView);
             gridSizeView.setVisibility(View.VISIBLE);
             SeekBar sizeSeekBar = gridSizeView.findViewById(R.id.sizeSeekBar);
             sizeSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     gridSize = GRID_SIZE_MIN << progress;
-                    Log.d("VASYOID", "Grid size: " + gridSize);
                     Map.setGridSize(gridSize);
                     removeGrid();
                     createGrid(getEngine().getScene());
@@ -504,10 +543,11 @@ public class ConstructorActivity extends BaseConstructorActivity {
 
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {}
+
             });
             gridSizeView.findViewById(R.id.gridSizeOk).setOnClickListener(v1 -> {
                 gridSizeView.setVisibility(View.GONE);
-                findViewById(R.id.constructorView).setEnabled(true);
+                enableAll();
             });
             mutex.release();
         });

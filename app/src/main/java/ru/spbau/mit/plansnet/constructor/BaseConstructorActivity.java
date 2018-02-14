@@ -10,7 +10,6 @@ import android.view.MotionEvent;
 import android.view.WindowManager;
 
 import org.andengine.engine.camera.Camera;
-import org.andengine.engine.camera.SmoothCamera;
 import org.andengine.engine.camera.ZoomCamera;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
@@ -68,11 +67,10 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
     @Override
     public EngineOptions onCreateEngineOptions() {
         setCameraResolution();
-        final SmoothCamera camera = new SmoothCamera(0, 0, cameraWidth, cameraHeight,
-                5000, 5000, 100);
+        final ZoomCamera camera = new ZoomCamera(0, 0, cameraWidth, cameraHeight);
         camera.setCenter(MAP_WIDTH / 2, MAP_HEIGHT / 2);
-        camera.setBounds(-2 * gridSize, -2 * gridSize,
-                MAP_WIDTH + 2 * gridSize, MAP_HEIGHT + 2 * gridSize);
+        camera.setBounds(-gridSize, -gridSize,
+                MAP_WIDTH + gridSize, MAP_HEIGHT + gridSize);
         camera.setBoundsEnabled(true);
         cameraZoomFactor = Math.min(1f, (float) cameraHeight / camera.getBoundsHeight());
         camera.setZoomFactor(cameraZoomFactor);

@@ -25,4 +25,5 @@
     <string name="gridSize">Grid size</string>
     <string name="delBkgnd">Del bkgnd</string>
     <string name="chooseGridSize">Choose grid size:</string>
+    <string name="confirmClear">Are you sure you want to clear?</string>
 </resources>

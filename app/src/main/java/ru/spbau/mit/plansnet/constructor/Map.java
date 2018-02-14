@@ -220,7 +220,7 @@ public class Map implements Serializable {
     public void removeObject(MapObjectSprite object) {
         objects.remove(object);
         if (object instanceof MapObjectLinear) {
-        MapObjectLinear objectLinear = (MapObjectLinear) object;
+            MapObjectLinear objectLinear = (MapObjectLinear) object;
             linearObjectsByCell.get(objectLinear.getPoint1()).remove(object);
             linearObjectsByCell.get(objectLinear.getPoint2()).remove(object);
         }

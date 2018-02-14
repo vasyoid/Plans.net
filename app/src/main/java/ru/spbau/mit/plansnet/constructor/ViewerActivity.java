@@ -72,7 +72,7 @@ public class ViewerActivity extends BaseConstructorActivity {
     }
 
     public void showParams(RoomSprite pRoom) {
-        Semaphore mutex = new Semaphore(1);
+        Semaphore mutex = new Semaphore(0);
         runOnUiThread(() -> {
             findViewById(R.id.viewerView).setEnabled(false);
             View paramsView = findViewById(R.id.roomPropertiesView);

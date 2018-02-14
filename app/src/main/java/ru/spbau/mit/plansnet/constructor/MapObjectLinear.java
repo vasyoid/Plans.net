@@ -13,7 +13,7 @@ import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.
 
 public abstract class MapObjectLinear extends MapObjectSprite {
 
-    private static final int THICKNESS = 80;
+    private static final int THICKNESS = 100;
     private Line position;
     private PointF point1 = new PointF(), point2 = new PointF();
     private PointF firstPoint1, firstPoint2;
