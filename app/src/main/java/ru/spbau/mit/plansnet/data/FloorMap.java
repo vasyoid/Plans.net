@@ -1,6 +1,7 @@
 package ru.spbau.mit.plansnet.data;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -74,6 +75,12 @@ public class FloorMap extends AbstractNamedData implements Serializable {
             objects.add(new Room(room));
         }
         return newMap;
+    }
+
+    public void copyMap(@Nullable FloorMap map) {
+        if (map != null) {
+            objects = map.objects;
+        }
     }
 
     public String getOwner() {

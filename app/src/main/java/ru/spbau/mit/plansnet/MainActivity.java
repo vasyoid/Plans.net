@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnConstructor;
     private Button btnCopyMap;
 
-    private void createNewGroupDialog() {
+    private void createNewGroupDialog(@Nullable final FloorMap toSave) {
         AlertDialog newGroupDialog = new AlertDialog.Builder(MainActivity.this).create();
         newGroupDialog.setTitle("enter name of new group");
 
@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
             myGroupList.add(group);
             myGroupListAdapter.notifyDataSetChanged();
 
-            createNewBuildingDialog(group);
+            createNewBuildingDialog(group, toSave);
         });
 
         newGroupDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
@@ -141,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
         newGroupDialog.show();
     }
 
-    private void createNewBuildingDialog(UsersGroup chosenGroup) {
+    private void createNewBuildingDialog(UsersGroup chosenGroup, @Nullable final FloorMap toSave) {
         AlertDialog newBuildingDialog = new AlertDialog.Builder(MainActivity.this).create();
         newBuildingDialog.setTitle("enter name of new building");
 
@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
                 buildingList.addAll(currentGroup.getValues());
             }
             buildingListAdapter.notifyDataSetChanged();
-            createNewMapDialog(chosenGroup, building);
+            createNewMapDialog(chosenGroup, building, toSave);
         });
 
         newBuildingDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
@@ -176,42 +176,8 @@ public class MainActivity extends AppCompatActivity {
         newBuildingDialog.show();
     }
 
-    private void createNewMapDialog(UsersGroup chosenGroup, Building chosenBuilding) {
-        AlertDialog newMapDialog = new AlertDialog.Builder(MainActivity.this).create();
-        newMapDialog.setTitle("choose how to create new floor");
-
-        RadioGroup createMode = (RadioGroup) getLayoutInflater()
-                .inflate(R.layout.create_mode,null);
-        if (createMode == null) {
-            Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show();
-            return;
-        }
-        newMapDialog.setView(createMode);
-        newMapDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
-            switch (createMode.getCheckedRadioButtonId()) {
-                case R.id.createModeEmpty:
-                    Toast.makeText(this, "Grid", Toast.LENGTH_LONG).show();
-                    createNewMapNameDialog(chosenGroup, chosenBuilding);
-                    break;
-                case R.id.createModeBackground:
-                    Toast.makeText(this, "Background", Toast.LENGTH_LONG).show();
-                    break;
-                case R.id.createModeCopy:
-                    Toast.makeText(this, "Copy", Toast.LENGTH_LONG).show();
-                    break;
-                default:
-                    Toast.makeText(this, "Nothing is chosen", Toast.LENGTH_LONG).show();
-                    break;
-            }
-        });
-
-        newMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
-                (dialog, which) -> {});
-
-        newMapDialog.show();
-    }
-
-    private void createNewMapNameDialog(UsersGroup chosenGroup, Building chosenBuilding) {
+    private void createNewMapDialog(UsersGroup chosenGroup, Building chosenBuilding,
+                                    @Nullable FloorMap toSave) {
         AlertDialog newMapNameDialog = new AlertDialog.Builder(MainActivity.this).create();
         newMapNameDialog.setTitle("enter name of new floor");
 
@@ -239,6 +205,7 @@ public class MainActivity extends AppCompatActivity {
                     newMapName
             );
             dataController.saveMap(floor);
+            floor.copyMap(toSave);
             floorListActivate();
         });
 
@@ -248,7 +215,9 @@ public class MainActivity extends AppCompatActivity {
         newMapNameDialog.show();
     }
 
-    private void createChooseBuildingForNewMapDialog(UsersGroup chosenGroup) {
+
+    private void createChooseBuildingForNewMapDialog(UsersGroup chosenGroup,
+                                                     @Nullable final FloorMap toSave) {
         AlertDialog chooseBuildingsForNewMapDialog = new AlertDialog.Builder(MainActivity.this).create();
         chooseBuildingsForNewMapDialog.setTitle("select building");
 
@@ -263,18 +232,18 @@ public class MainActivity extends AppCompatActivity {
         buildingsSuggestedList.setOnItemClickListener((adapterView, view, i, l) -> {
             Building chosenBuilding = buildingList.get(i);
             chooseBuildingsForNewMapDialog.cancel();
-            createNewMapDialog(chosenGroup, chosenBuilding);
+            createNewMapDialog(chosenGroup, chosenBuilding, null);
         });
 
         chooseBuildingsForNewMapDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Add new building",
-                (dialog, which) -> createNewBuildingDialog(chosenGroup));
+                (dialog, which) -> createNewBuildingDialog(chosenGroup, toSave));
         chooseBuildingsForNewMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
                 (dialog, which) -> {});
 
         chooseBuildingsForNewMapDialog.show();
     }
 
-    private void createChooseGroupForNewMapDialog() {
+    private void createChooseGroupForNewMapDialog(@Nullable final FloorMap toSave) {
         AlertDialog chooseGroupForNewMapDialog = new AlertDialog.Builder(MainActivity.this).create();
         chooseGroupForNewMapDialog.setTitle("select group");
 
@@ -288,12 +257,12 @@ public class MainActivity extends AppCompatActivity {
         groupsSuggestedList.setOnItemClickListener((adapterView, view, i, l) -> {
             UsersGroup chosenGroup = myGroupList.get(i);
             chooseGroupForNewMapDialog.cancel();
-            createChooseBuildingForNewMapDialog(chosenGroup);
+            createChooseBuildingForNewMapDialog(chosenGroup, toSave);
         });
 
         groupAdapter.notifyDataSetChanged();
         chooseGroupForNewMapDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Add new group",
-                (dialog, which) -> createNewGroupDialog());
+                (dialog, which) -> createNewGroupDialog(null));
         chooseGroupForNewMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
                 (dialog, which) -> {});
         chooseGroupForNewMapDialog.show();
@@ -1062,6 +1031,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void addMap(View v) {
-        createChooseGroupForNewMapDialog();
+        createChooseGroupForNewMapDialog(currentMap);
     }
 }
