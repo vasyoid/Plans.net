@@ -63,6 +63,7 @@
                     android:id="@+id/searchLayout"
                     android:layout_width="180dp"
                     android:layout_height="match_parent"
+                    android:focusableInTouchMode="true"
                     android:orientation="vertical">
 
                     <SearchView

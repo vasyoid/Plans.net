@@ -553,6 +553,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextSubmit(String text) {
                 new SearchAsyncTask(MainActivity.this).execute(text);
+                searchView.clearFocus();
                 return false;
             }
 
@@ -562,14 +563,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        searchView.setOnSearchClickListener(View::clearFocus);
-//
-//        searchView.setOnCloseListener(() -> {
-//            searchView.clearFocus();
-//            findList.clear();
-//            findListAdapter.notifyDataSetChanged();
-//            return false;
-//        });
+        searchView.setOnCloseListener(() -> {
+            findList.clear();
+            findListAdapter.notifyDataSetChanged();
+            return false;
+        });
     }
 
     private void setUpTabHost() {
