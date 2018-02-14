@@ -7,7 +7,9 @@ import android.support.annotation.NonNull;
  */
 
 public class UsersGroup extends AbstractDataContainer<Building> {
-    private boolean isPrivate;
+    private boolean isPrivate = false;
+    private boolean isEditable = false;
+
     @NonNull
     private String visibleName;
 
@@ -29,7 +31,15 @@ public class UsersGroup extends AbstractDataContainer<Building> {
         return isPrivate;
     }
 
+    public boolean isEditable() {
+        return isEditable;
+    }
+
     public void setPrivate(boolean isPrivate) {
         this.isPrivate = isPrivate;
+    }
+
+    public void setEditable(boolean isEditable) {
+        this.isEditable = isEditable;
     }
 }

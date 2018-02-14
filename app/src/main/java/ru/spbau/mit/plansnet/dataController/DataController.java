@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.spbau.mit.plansnet.MainActivity;
-import ru.spbau.mit.plansnet.data.AbstractDataContainer;
 import ru.spbau.mit.plansnet.data.Account;
 import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
@@ -72,13 +71,18 @@ public class DataController {
 
         File mapFile = new File(context.getApplicationContext().getFilesDir().getAbsolutePath() +
                 "/" + userAccount.getID() + "/" + group.getName());
+        boolean isDownloaded = userAccount.findDownloadedGroup(group.getName()) != null;
         if (userAccount.findByName(group.getName()) == null
                 && userAccount.findDownloadedGroup(group.getName()) == null) {
             throw new IllegalArgumentException("Doesn't exists group: " + group.getName());
         }
         if (building == null) {
             deleteRecursive(mapFile);
-            userAccount.getAllData().remove(group.getName());
+            if (isDownloaded) {
+                userAccount.getDownloadedGroupsMap().remove(group.getName());
+            } else {
+                userAccount.getAllData().remove(group.getName());
+            }
             netManager.deleteReference(group, null, null);
             return;
         }
@@ -188,6 +192,11 @@ public class DataController {
         netManager.setIsPrivate(group, isPrivate);
     }
 
+    public void setIsEditable(@NonNull UsersGroup group, boolean isEditable) {
+        group.setEditable(isEditable);
+        netManager.setIsEditable(group, isEditable);
+    }
+
     /**
      * Save map to account and file and send it to server
      */
@@ -217,8 +226,7 @@ public class DataController {
         Toast.makeText(context, "Map saved", Toast.LENGTH_SHORT).show();
 
 
-        netManager.putMapOnServer(map);
-
+        netManager.putMapOnServer(map, userGroup);
     }
 
     //private function for writing map to file
@@ -243,6 +251,8 @@ public class DataController {
             FloorMap map = (FloorMap) ois.readObject();
             UsersGroup group;
 
+            Log.d("readMap", map.getGroupName() + "/" + map.getName());
+
             if (!map.getOwner().equals(userAccount.getID())) {
                 //add prefix "owner_" to groupName
                 String oldGroupName = map.getGroupName();
@@ -255,14 +265,18 @@ public class DataController {
                 if (group == null) {
                     group = new UsersGroup(map.getGroupName());
                     userAccount.addDownloadedGroup(group);
+                    group.setVisibleName(oldGroupName + " by " + map.getOwner());
+                    netManager.setUpDownloadedGroup(group, map.getOwner());
                 }
-                group.setVisibleName(oldGroupName + " by " + map.getOwner());
             } else {
                 group = userAccount.findByName(map.getGroupName());
                 if (group == null) {
                     group = userAccount.setElementToContainer(new UsersGroup(map.getGroupName()));
+                    netManager.setUpDownloadedGroup(group, map.getOwner());
                 }
             }
+            netManager.setUpDownloadedGroup(group, map.getOwner());
+
             Building building = group.findByName(map.getBuildingName());
             if (building == null) {
                 building = group.setElementToContainer(new Building(map.getBuildingName()));

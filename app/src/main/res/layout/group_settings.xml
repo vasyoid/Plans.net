@@ -20,7 +20,8 @@
             android:layout_weight="1"
             android:elevation="0dp"
             android:paddingLeft="5dp"
-            android:text="Back" />
+            android:text="Back"
+            android:tooltipText="Go up in hierarchy" />
 
         <Space
             android:layout_width="wrap_content"
@@ -28,11 +29,20 @@
             android:layout_weight="5" />
 
         <CheckBox
+            android:id="@+id/isEditableCheckBox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Is editable group"
+            android:tooltipText="Maps from this group are editable for others" />
+
+        <CheckBox
             android:id="@+id/isPrivateCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Is private group" />
+            android:text="Is private group"
+            android:tooltipText="Others can't donwload this group" />
     </LinearLayout>
 
     <TextView
