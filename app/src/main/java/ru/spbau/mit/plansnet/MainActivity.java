@@ -5,7 +5,6 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -21,13 +20,11 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.RadioGroup;
 import android.widget.SearchView;
-import android.widget.SimpleAdapter;
 import android.widget.Spinner;
 import android.widget.TabHost;
+import android.widget.TabWidget;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -586,8 +583,17 @@ public class MainActivity extends AppCompatActivity {
 
         spec = tabHost.newTabSpec("Tag3");
         spec.setContent(R.id.searchLayout);
-        spec.setIndicator("SEARCH");
+        spec.setIndicator("SRCH");
         tabHost.addTab(spec);
+
+        LinearLayout ll = (LinearLayout) tabHost.getChildAt(0);
+        TabWidget tabWidget = (TabWidget) ll.getChildAt(0);
+        for (int i = 0; i < tabWidget.getChildCount(); i++)
+        {
+            View tabView = tabWidget.getChildTabViewAt(i);
+            TextView tv = tabView.findViewById(android.R.id.title);
+            tv.setTextSize(i < 2 ? 10 : 8);
+        }
     }
 
     private void floorListActivate() {
