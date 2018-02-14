@@ -1,17 +1,24 @@
 package ru.spbau.mit.plansnet.constructor;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 
 import org.andengine.entity.primitive.Line;
@@ -35,29 +42,52 @@ import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.WC;
 
 public class ConstructorActivity extends BaseConstructorActivity {
 
+    private static final int PICK_IMAGE_TOKEN = 42;
+
     private ActionState state = ActionState.ADD;
     private MapItem item = MapItem.WALL;
     private StickerSprite.StickerType currentSticker = EXIT;
+    private List<Line> grid = new LinkedList<>();
+
+    private void removeGrid() {
+        Semaphore mutex = new Semaphore(0);
+        getEngine().runOnUpdateThread(() -> {
+            for (Line l : grid) {
+                l.detachSelf();
+            }
+            grid.clear();
+            mutex.release();
+        });
+        try {
+            mutex.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
     private void createGrid(Scene pScene) {
-        for (int i = 0; i <= GRID_COLS; i++) {
-            Line line = new Line(GRID_SIZE * i, 0,
-                    GRID_SIZE * i, GRID_SIZE * GRID_ROWS,
-                    3, getVertexBufferObjectManager());
+        for (int i = 0; i <= MAP_WIDTH; i += gridSize) {
+            Line line = new Line(i, 0, i, MAP_HEIGHT, 3,
+                    getVertexBufferObjectManager());
             line.setColor(0.7f, 0.7f, 0.7f);
+            line.setZIndex(-1);
+            grid.add(line);
             pScene.attachChild(line);
         }
-        for (int i = 0; i <= GRID_ROWS; i++) {
-            Line line = new Line(0, GRID_SIZE * i,
-                    GRID_SIZE * GRID_COLS, GRID_SIZE * i,
-                    3, getVertexBufferObjectManager());
+        for (int i = 0; i <= MAP_HEIGHT; i += gridSize) {
+            Line line = new Line(0, i, MAP_WIDTH, i, 3,
+                    getVertexBufferObjectManager());
             line.setColor(0.7f, 0.7f, 0.7f);
+            line.setZIndex(-1);
+            grid.add(line);
             pScene.attachChild(line);
         }
+        pScene.sortChildren();
     }
 
     private void initScene(Scene pScene) {
         pScene.setOnSceneTouchListener(new IOnSceneTouchListener() {
+
             private PointF firstPoint = new PointF();
             private PointF currentPoint = new PointF();
             private PointF previousPoint = new PointF();
@@ -79,6 +109,12 @@ public class ConstructorActivity extends BaseConstructorActivity {
             private void moveWall(TouchEvent pSceneTouchEvent) {
                 switch (pSceneTouchEvent.getAction()) {
                     case TouchEvent.ACTION_DOWN:
+                        PointF nearestWall = map.getNearestWallOrNull(currentPoint);
+                        if (nearestWall == null) {
+                            currentPoint.set(-1, -1);
+                        } else {
+                            currentPoint.set(nearestWall);
+                        }
                         firstPoint.set(currentPoint);
                         previousPoint.set(currentPoint);
                         map.setScaleByPoint(currentPoint, 1.0f, 1.4f);
@@ -87,20 +123,22 @@ public class ConstructorActivity extends BaseConstructorActivity {
                         if (previousPoint.equals(currentPoint)) {
                             break;
                         }
-                        map.moveObjects(firstPoint, previousPoint, currentPoint);
+                        map.moveObjects(firstPoint, currentPoint);
                         try {
                             map.updateRooms(pScene);
                         } catch (com.earcutj.exception.EarcutException ignored) {}
                         previousPoint.set(currentPoint);
                         break;
                     case TouchEvent.ACTION_UP:
-                        map.detachRemoved(mEngine);
+                        map.detachRemoved(getEngine());
                         map.setScaleByPoint(firstPoint, 1.0f, 1.0f);
                         if (firstPoint.equals(currentPoint)) {
                             break;
                         }
+                        currentPoint.set(Math.round(currentPoint.x / gridSize) * gridSize,
+                                Math.round(currentPoint.y / gridSize) * gridSize);
                         if (map.hasIntersections(firstPoint)) {
-                            map.moveObjects(firstPoint, currentPoint, firstPoint);
+                            map.moveObjects(firstPoint, firstPoint);
                             map.updateRooms(pScene);
                         } else {
                             map.updateObjects(firstPoint);
@@ -175,10 +213,17 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 if (pSceneTouchEvent.isActionDown()) {
                     room = map.getRoomTouched(pSceneTouchEvent);
                 }
-                float currentX = Math.round(pSceneTouchEvent.getX() / GRID_SIZE) * GRID_SIZE;
-                float currentY = Math.round(pSceneTouchEvent.getY() / GRID_SIZE) * GRID_SIZE;
-                currentX = Math.max(Math.min(currentX, GRID_SIZE * GRID_COLS), 0);
-                currentY = Math.max(Math.min(currentY, GRID_SIZE * GRID_ROWS), 0);
+                float currentX = pSceneTouchEvent.getX();
+                float currentY = pSceneTouchEvent.getY();
+                if (state == ActionState.MOVE_WALL && !pSceneTouchEvent.isActionMove()) {
+                    currentX = Math.round(currentX / GRID_SIZE_MIN) * GRID_SIZE_MIN;
+                    currentY = Math.round(currentY / GRID_SIZE_MIN) * GRID_SIZE_MIN;
+                } else {
+                    currentX = Math.round(currentX / gridSize) * gridSize;
+                    currentY = Math.round(currentY / gridSize) * gridSize;
+                }
+                currentX = Math.max(Math.min(currentX, MAP_WIDTH), 0);
+                currentY = Math.max(Math.min(currentY, MAP_HEIGHT), 0);
                 currentPoint.set(currentX, currentY);
                 switch (state) {
                     case MOVE_STICKER:
@@ -271,9 +316,12 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     public void showParams(RoomSprite pRoom) {
-        Semaphore mutex = new Semaphore(1);
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
+        Semaphore mutex = new Semaphore(0);
         runOnUiThread(() -> {
-            findViewById(R.id.constructorView).setEnabled(false);
+            disableAll();
             View paramsView = findViewById(R.id.roomParamsView);
             paramsView.setVisibility(View.VISIBLE);
             EditText roomName = findViewById(R.id.roomName);
@@ -287,7 +335,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 pRoom.setTitle(title);
                 pRoom.setDescription(description);
                 paramsView.setVisibility(View.GONE);
-                findViewById(R.id.constructorView).setEnabled(true);
+                enableAll();
             });
             mutex.release();
         });
@@ -299,6 +347,9 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     public void setSticker(View v) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
         ((ImageView) findViewById(R.id.imageExit)).setColorFilter(TRANSPARENT);
         ((ImageView) findViewById(R.id.imageLift)).setColorFilter(TRANSPARENT);
         ((ImageView) findViewById(R.id.imageStairs)).setColorFilter(TRANSPARENT);
@@ -323,6 +374,9 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     public void setItem(View v) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
         if (v.getId() != R.id.buttonSticker) {
             findViewById(R.id.stickersLayout).setVisibility(View.GONE);
         } else {
@@ -352,6 +406,9 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     public void setState(View v) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
         if (v.getId() != R.id.buttonAdd) {
             findViewById(R.id.itemsLayout).setVisibility(View.GONE);
         } else {
@@ -393,17 +450,111 @@ public class ConstructorActivity extends BaseConstructorActivity {
         map.setActionState(state);
     }
 
-    public void clearField(View v) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Clear the map?")
-                .setTitle("Clear")
-                .setPositiveButton(R.string.ok, (dialog, which) -> {
-                    map.clear();
-                    map.detachRemoved(mEngine);
-                })
-                .setNegativeButton(R.string.cancel, (dialog, which) -> {})
-                .create()
-                .show();
+    private void disableAll() {
+        findViewById(R.id.constructorView).setEnabled(false);
+    }
+
+    private void enableAll() {
+        findViewById(R.id.constructorView).setEnabled(true);
+    }
+
+    public void clearMap(View v) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
+        Semaphore mutex = new Semaphore(0);
+        runOnUiThread(() -> {
+            disableAll();
+            View confirmClearView = findViewById(R.id.confirmClearView);
+            confirmClearView.setVisibility(View.VISIBLE);
+            confirmClearView.findViewById(R.id.confirmClearOk).setOnClickListener(v1 -> {
+                map.clear();
+                map.detachRemoved(getEngine());
+                confirmClearView.setVisibility(View.GONE);
+                enableAll();
+            });
+            confirmClearView.findViewById(R.id.confirmClearCancel).setOnClickListener(v1 -> {
+                confirmClearView.setVisibility(View.GONE);
+                enableAll();
+            });
+            mutex.release();
+        });
+        try {
+            mutex.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case PICK_IMAGE_TOKEN:
+                if (resultCode != RESULT_OK) {
+                    break;
+                }
+                try {
+                    Uri imageUri = data.getData();
+                    if (imageUri == null) {
+                        break;
+                    }
+                    InputStream imageStream = getContentResolver().openInputStream(imageUri);
+                    Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
+                    map.setBackground(selectedImage, getEngine());
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+        }
+
+    }
+
+    public void setBackground(View view) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
+        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+        photoPickerIntent.setType("image/*");
+        startActivityForResult(photoPickerIntent, PICK_IMAGE_TOKEN);
+    }
+
+    public void setGridSize(View view) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
+        Semaphore mutex = new Semaphore(0);
+        runOnUiThread(() -> {
+            disableAll();
+            View gridSizeView = findViewById(R.id.gridSizeView);
+            gridSizeView.setVisibility(View.VISIBLE);
+            SeekBar sizeSeekBar = gridSizeView.findViewById(R.id.sizeSeekBar);
+            sizeSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    gridSize = GRID_SIZE_MIN << progress;
+                    Map.setGridSize(gridSize);
+                    removeGrid();
+                    createGrid(getEngine().getScene());
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {}
+
+            });
+            gridSizeView.findViewById(R.id.gridSizeOk).setOnClickListener(v1 -> {
+                gridSizeView.setVisibility(View.GONE);
+                enableAll();
+            });
+            mutex.release();
+        });
+        try {
+            mutex.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public enum ActionState {

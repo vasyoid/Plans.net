@@ -13,7 +13,7 @@ import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.
 
 public abstract class MapObjectLinear extends MapObjectSprite {
 
-    private static final int THICKNESS = 80;
+    private static final int THICKNESS = 100;
     private Line position;
     private PointF point1 = new PointF(), point2 = new PointF();
     private PointF firstPoint1, firstPoint2;
@@ -81,10 +81,12 @@ public abstract class MapObjectLinear extends MapObjectSprite {
                     * Map.getGridSize();
             float currentTouchY = Math.round(pSceneTouchEvent.getY() / Map.getGridSize())
                     * Map.getGridSize();
-            PointF currentPoint = new PointF(currentTouchX, currentTouchY);
             switch (pSceneTouchEvent.getAction()) {
                 case TouchEvent.ACTION_DOWN:
-                    if (currentPoint.equals(point1) || currentPoint.equals(point2)) {
+                    PointF currentPoint = new PointF(pSceneTouchEvent.getX(),
+                            pSceneTouchEvent.getY());
+                    if (Geometry.distance(currentPoint, point1) < 2 * THICKNESS ||
+                            Geometry.distance(currentPoint, point2) < 2 * THICKNESS) {
                         return false;
                     }
                     firstPoint1 = new PointF(point1.x, point1.y);

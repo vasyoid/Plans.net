@@ -1,10 +1,16 @@
 package ru.spbau.mit.plansnet.constructor;
 
+import android.graphics.Bitmap;
 import android.graphics.PointF;
 
 import org.andengine.engine.Engine;
 import org.andengine.entity.scene.Scene;
+import org.andengine.entity.scene.background.SpriteBackground;
+import org.andengine.entity.sprite.Sprite;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
+import org.andengine.opengl.texture.region.TextureRegion;
+import org.andengine.opengl.texture.region.TextureRegionFactory;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -22,13 +28,14 @@ import ru.spbau.mit.plansnet.data.objects.Sticker;
 import ru.spbau.mit.plansnet.data.objects.Wall;
 import ru.spbau.mit.plansnet.data.objects.Window;
 
+import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.GRID_SIZE_MIN;
+import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.MAP_HEIGHT;
+import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.MAP_WIDTH;
 import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.ADD;
 
 public class Map implements Serializable {
 
-    private static final int GRID_SIZE = 140;
-    private static final int GRID_COLS = 30;
-    private static final int GRID_ROWS = 20;
+    private static int gridSize = 0;
 
     private List<MapObjectSprite> objects = new LinkedList<>();
     private List<RoomSprite> rooms = new LinkedList<>();
@@ -65,14 +72,38 @@ public class Map implements Serializable {
     public static List<PointF> getGridPolygon() {
         List<PointF> result = new ArrayList<>();
         result.add(new PointF(-1.0f, -1.0f));
-        result.add(new PointF(-1.0f, GRID_ROWS * GRID_SIZE + 1.0f));
-        result.add(new PointF(GRID_COLS * GRID_SIZE + 1.0f, GRID_ROWS * GRID_SIZE + 1.0f));
-        result.add(new PointF(GRID_COLS * GRID_SIZE + 1.0f, -1.0f));
+        result.add(new PointF(-1.0f, MAP_HEIGHT + 1.0f));
+        result.add(new PointF(MAP_WIDTH + 1.0f, MAP_HEIGHT + 1.0f));
+        result.add(new PointF(MAP_WIDTH + 1.0f, -1.0f));
         return result;
     }
 
     public static int getGridSize() {
-        return GRID_SIZE;
+        return gridSize;
+    }
+
+    public static void setGridSize(int pSize) {
+        gridSize = pSize;
+    }
+
+    public void setBackground(Bitmap background, Engine pEngine) {
+        BitmapTextureAtlasSource source = new BitmapTextureAtlasSource(background);
+        BitmapTextureAtlas texture = new BitmapTextureAtlas(pEngine.getTextureManager(),
+                background.getWidth(), background.getHeight());
+        texture.addTextureAtlasSource(source, 0, 0);
+        texture.load();
+        TextureRegion backgroundTexture = TextureRegionFactory.createFromSource(texture, source,
+                0, 0);
+        Sprite backgroundSprite = new Sprite(0, 0, backgroundTexture,
+                pEngine.getVertexBufferObjectManager());
+        backgroundSprite.setScaleCenter(0, 0);
+        if (backgroundSprite.getHeight() / backgroundSprite.getWidth() <
+                pEngine.getSurfaceHeight() / pEngine.getSurfaceWidth()) {
+            backgroundSprite.setScale(pEngine.getSurfaceWidth() / backgroundSprite.getWidth());
+        } else {
+            backgroundSprite.setScale(pEngine.getSurfaceHeight() / backgroundSprite.getHeight());
+        }
+        pEngine.getScene().setBackground(new SpriteBackground(backgroundSprite));
     }
 
     public void setActionState(ConstructorActivity.ActionState state) {
@@ -122,16 +153,15 @@ public class Map implements Serializable {
         }
     }
 
-    public void moveObjects(PointF at, PointF from, PointF to) {
-        if (!linearObjectsByCell.containsKey(at)) {
+    public void moveObjects(PointF from, PointF to) {
+        if (!linearObjectsByCell.containsKey(from)) {
             return;
         }
-        for (MapObjectLinear object : linearObjectsByCell.get(at)) {
+        for (MapObjectLinear object : linearObjectsByCell.get(from)) {
             if (object.getPoint1().equals(from)) {
-                object.setPoint1(to);
-            } else {
-                object.setPoint2(to);
+                object.changeDirection();
             }
+            object.setPoint2(to);
         }
     }
 
@@ -148,11 +178,12 @@ public class Map implements Serializable {
         if (!linearObjectsByCell.containsKey(at)) {
             return;
         }
-        for (MapObjectLinear object : linearObjectsByCell.get(at)) {
+        List<MapObjectLinear> tmp = new ArrayList<>(linearObjectsByCell.get(at));
+        linearObjectsByCell.get(at).clear();
+        for (MapObjectLinear object : tmp) {
             addObjectToHashTable(object.getPoint1(), object);
             addObjectToHashTable(object.getPoint2(), object);
         }
-        linearObjectsByCell.get(at).clear();
     }
 
     public void addObject(MapObjectSprite object) {
@@ -189,7 +220,7 @@ public class Map implements Serializable {
     public void removeObject(MapObjectSprite object) {
         objects.remove(object);
         if (object instanceof MapObjectLinear) {
-        MapObjectLinear objectLinear = (MapObjectLinear) object;
+            MapObjectLinear objectLinear = (MapObjectLinear) object;
             linearObjectsByCell.get(objectLinear.getPoint1()).remove(object);
             linearObjectsByCell.get(objectLinear.getPoint2()).remove(object);
         }
@@ -229,6 +260,7 @@ public class Map implements Serializable {
         removedRooms.addAll(rooms);
         objects.clear();
         rooms.clear();
+        linearObjectsByCell.clear();
     }
 
     public boolean hasIntersections(PointF pPoint) {
@@ -236,7 +268,7 @@ public class Map implements Serializable {
             return false;
         }
         for (MapObjectLinear object : linearObjectsByCell.get(pPoint)) {
-            if (hasIntersections(object)) {
+            if (hasIntersections(object) || Geometry.length(object.getPosition()) == 0) {
                 return true;
             }
         }
@@ -279,5 +311,23 @@ public class Map implements Serializable {
         room.attachSelf(pScene);
         pScene.sortChildren();
         return room;
+    }
+
+    public PointF getNearestWallOrNull(PointF currentPoint) {
+        int nearestDist = 3 * GRID_SIZE_MIN;
+        PointF result = null;
+        for (int i = -GRID_SIZE_MIN; i <= GRID_SIZE_MIN; i += GRID_SIZE_MIN) {
+            for (int j = -GRID_SIZE_MIN; j <= GRID_SIZE_MIN; j += GRID_SIZE_MIN) {
+                PointF pnt = new PointF(currentPoint.x - j, currentPoint.y - i);
+                int dist = Math.abs(i) + Math.abs(j);
+                if (linearObjectsByCell.containsKey(pnt) &&
+                        !linearObjectsByCell.get(pnt).isEmpty() &&
+                        dist <= nearestDist) {
+                    result = dist == nearestDist ? null : pnt;
+                    nearestDist = dist;
+                }
+            }
+        }
+        return result;
     }
 }

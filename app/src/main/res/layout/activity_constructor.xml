@@ -23,7 +23,8 @@
             android:onClick="setItem"
             android:textColor="#ff0000"
             android:textSize="@dimen/button_text_size"
-            android:text="@string/wall" />
+            android:text="@string/wall"
+            android:duplicateParentState="true" />
 
         <Button
             android:id="@+id/buttonDoor"
@@ -31,7 +32,8 @@
             android:layout_height="@dimen/button_height"
             android:onClick="setItem"
             android:textSize="@dimen/button_text_size"
-            android:text="@string/door" />
+            android:text="@string/door"
+            android:duplicateParentState="true" />
 
         <Button
             android:id="@+id/buttonWindow"
@@ -39,7 +41,8 @@
             android:layout_height="@dimen/button_height"
             android:onClick="setItem"
             android:textSize="@dimen/button_text_size"
-            android:text="@string/window" />
+            android:text="@string/window"
+            android:duplicateParentState="true" />
 
         <Button
             android:id="@+id/buttonSticker"
@@ -47,18 +50,21 @@
             android:layout_height="@dimen/button_height"
             android:onClick="setItem"
             android:textSize="@dimen/button_text_size"
-            android:text="@string/sticker" />
+            android:text="@string/sticker"
+            android:duplicateParentState="true" />
 
         <ScrollView
             android:layout_height="match_parent"
-            android:layout_width="match_parent" >
+            android:layout_width="match_parent"
+            android:duplicateParentState="true" >
 
         <LinearLayout
             android:visibility="gone"
             android:id="@+id/stickersLayout"
             android:orientation="vertical"
             android:layout_height="wrap_content"
-            android:layout_width="match_parent">
+            android:layout_width="match_parent"
+            android:duplicateParentState="true" >
 
             <ImageView
                 android:id="@+id/imageExit"
@@ -66,7 +72,8 @@
                 android:layout_height="@dimen/picture_size"
                 android:src="@drawable/exit"
                 android:onClick="setSticker"
-                android:contentDescription="@string/sticker" />
+                android:contentDescription="@string/sticker"
+                android:duplicateParentState="true" />
 
             <ImageView
                 android:id="@+id/imageLift"
@@ -74,7 +81,8 @@
                 android:layout_height="@dimen/picture_size"
                 android:src="@drawable/lift"
                 android:onClick="setSticker"
-                android:contentDescription="@string/sticker" />
+                android:contentDescription="@string/sticker"
+                android:duplicateParentState="true" />
 
             <ImageView
                 android:id="@+id/imageStairs"
@@ -82,7 +90,8 @@
                 android:layout_height="@dimen/picture_size"
                 android:src="@drawable/stairs"
                 android:onClick="setSticker"
-                android:contentDescription="@string/sticker" />
+                android:contentDescription="@string/sticker"
+                android:duplicateParentState="true" />
 
             <ImageView
                 android:id="@+id/imageWC"
@@ -90,7 +99,8 @@
                 android:layout_height="@dimen/picture_size"
                 android:src="@drawable/wc"
                 android:onClick="setSticker"
-                android:contentDescription="@string/sticker" />
+                android:contentDescription="@string/sticker"
+                android:duplicateParentState="true" />
 
         </LinearLayout>
         </ScrollView>
@@ -103,79 +113,197 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true" >
 
+        <LinearLayout
+            android:id="@+id/statesLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/buttonDel"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:onClick="setState"
+                android:textSize="@dimen/button_text_size"
+                android:text="@string/remove"
+                android:duplicateParentState="true" />
+
+            <Button
+                android:id="@+id/buttonClear"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:onClick="clearMap"
+                android:textSize="@dimen/button_text_size"
+                android:text="@string/clear"
+                android:duplicateParentState="true" />
+
+            <Button
+                android:id="@+id/buttonMove"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:onClick="setState"
+                android:textSize="@dimen/button_text_size"
+                android:text="@string/moveMap"
+                android:duplicateParentState="true" />
+
+            <Button
+                android:id="@+id/buttonMoveWall"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:onClick="setState"
+                android:textSize="@dimen/button_text_size"
+                android:text="@string/moveWall"
+                android:duplicateParentState="true" />
+
+            <Button
+                android:id="@+id/buttonMoveSticker"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:onClick="setState"
+                android:textSize="@dimen/button_text_size"
+                android:text="@string/moveSticker"
+                android:duplicateParentState="true" />
+
+            <Button
+                android:id="@+id/buttonAdd"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:textColor="#ff0000"
+                android:onClick="setState"
+                android:textSize="@dimen/button_text_size"
+                android:text="@string/add"
+                android:duplicateParentState="true" />
+
+            <Button
+                android:id="@+id/buttonColor"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:onClick="setState"
+                android:textSize="@dimen/button_text_size"
+                android:text="@string/paint"
+                android:duplicateParentState="true" />
+
+            <Button
+                android:id="@+id/buttonParams"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:onClick="setState"
+                android:textSize="@dimen/button_text_size"
+                android:text="@string/params"
+                android:duplicateParentState="true" />
+
+            <Button
+                android:id="@+id/addBackground"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:onClick="setBackground"
+                android:textSize="@dimen/button_text_size"
+                android:text="@string/addBkgnd"
+                android:duplicateParentState="true" />
+
+            <Button
+                android:id="@+id/gridSize"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/button_height"
+                android:onClick="setGridSize"
+                android:textSize="@dimen/button_text_size"
+                android:text="@string/gridSize"
+                android:duplicateParentState="true" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
     <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/confirmClearView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:background="@android:color/holo_blue_bright"
+        android:visibility="gone" >
 
-        <Button
-            android:id="@+id/buttonDel"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height"
-            android:onClick="setState"
-            android:textSize="@dimen/button_text_size"
-            android:text="@string/remove" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:textSize="16sp"
+            android:text="@string/confirmClear" />
 
-        <Button
-            android:id="@+id/buttonClear"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height"
-            android:onClick="clearField"
-            android:textSize="@dimen/button_text_size"
-            android:text="@string/clear" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:orientation="horizontal"
+            android:layout_gravity="end"
+            style="android:attr/buttonBarStyle">
 
-        <Button
-            android:id="@+id/buttonMove"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height"
-            android:onClick="setState"
-            android:textSize="@dimen/button_text_size"
-            android:text="@string/moveMap" />
+            <Button
+                android:id="@+id/confirmClearCancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:alpha="255"
+                android:text="@string/cancel"
+                style="android:attr/buttonBarButtonStyle" />
 
-        <Button
-            android:id="@+id/buttonMoveWall"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height"
-            android:onClick="setState"
-            android:textSize="@dimen/button_text_size"
-            android:text="@string/moveWall" />
+            <Button
+                android:id="@+id/confirmClearOk"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:alpha="255"
+                android:text="@string/ok"
+                style="android:attr/buttonBarButtonStyle" />
 
-        <Button
-            android:id="@+id/buttonMoveSticker"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height"
-            android:onClick="setState"
-            android:textSize="@dimen/button_text_size"
-            android:text="@string/moveSticker" />
-
-        <Button
-            android:id="@+id/buttonAdd"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height"
-            android:textColor="#ff0000"
-            android:onClick="setState"
-            android:textSize="@dimen/button_text_size"
-            android:text="@string/add" />
-
-        <Button
-            android:id="@+id/buttonColor"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height"
-            android:onClick="setState"
-            android:textSize="@dimen/button_text_size"
-            android:text="@string/paint" />
-
-        <Button
-            android:id="@+id/buttonParams"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/button_height"
-            android:onClick="setState"
-            android:textSize="@dimen/button_text_size"
-            android:text="@string/params" />
+        </LinearLayout>
 
     </LinearLayout>
 
-    </ScrollView>
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/gridSizeView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:background="@android:color/holo_blue_bright"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="300dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:textSize="16sp"
+            android:text="@string/chooseGridSize" />
+
+        <SeekBar
+            android:id="@+id/sizeSeekBar"
+            android:layout_height="wrap_content"
+            android:layout_width="300dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:theme="@style/Widget.AppCompat.SeekBar.Discrete"
+            android:max="3"
+            android:progress="2" />
+
+        <Button
+            android:id="@+id/gridSizeOk"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:layout_gravity="end"
+            android:alpha="255"
+            android:text="@string/ok" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:orientation="vertical"
@@ -183,7 +311,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp"
+        android:layout_centerVertical="true"
         android:background="@android:color/holo_orange_light"
         android:visibility="gone">
 
