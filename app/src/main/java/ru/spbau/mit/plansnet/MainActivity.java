@@ -597,9 +597,9 @@ public class MainActivity extends AppCompatActivity {
         }
         floorListAdapter.notifyDataSetChanged();
         if (currentGroup != null && !currentGroup.getName().equals(currentGroup.toString())) {
-            btnViewer.setEnabled(currentGroup.isPrivate());
-            btnConstructor.setEnabled(currentGroup.isPrivate() && currentGroup.isEditable());
-            btnCopyMap.setEnabled(currentGroup.isPrivate());
+            btnViewer.setEnabled(!currentGroup.isPrivate());
+            btnConstructor.setEnabled(!currentGroup.isPrivate() && currentGroup.isEditable());
+            btnCopyMap.setEnabled(!currentGroup.isPrivate());
         } else {
             btnViewer.setEnabled(true);
             btnConstructor.setEnabled(true);
