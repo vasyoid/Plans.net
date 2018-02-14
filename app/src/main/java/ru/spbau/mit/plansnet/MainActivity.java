@@ -39,12 +39,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
-import java.lang.reflect.Array;
-import java.security.Identity;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
@@ -52,7 +48,6 @@ import java.util.regex.Pattern;
 
 import ru.spbau.mit.plansnet.constructor.ConstructorActivity;
 import ru.spbau.mit.plansnet.constructor.ViewerActivity;
-import ru.spbau.mit.plansnet.data.AbstractDataContainer;
 import ru.spbau.mit.plansnet.data.AbstractNamedData;
 import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
@@ -296,7 +291,6 @@ public class MainActivity extends AppCompatActivity {
             if (currentGroup != null && group.equals(currentGroup)) {
                 currentGroup = null;
                 currentBuilding = null;
-                currentMap = null;
 
                 buildingList.clear();
                 buildingListAdapter.notifyDataSetChanged();
@@ -492,15 +486,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("Spinner", "OnNothingSelected in building");
             }
         });
-
-        buildingSpinnerView.setOnItemLongClickListener((adapterView, view, i, l) -> {
-//            assert currentGroup != null;
-//            Building building = currentGroup.findByName(myGroupList.get(i));
-//            assert building != null;
-//            createDeleteDialog(currentGroup.getName(), building.getName(), null);
-//
-            return true;
-        });
     }
 
     private void setUpFloorSpinnerView() {
@@ -600,6 +585,9 @@ public class MainActivity extends AppCompatActivity {
         floorList.clear();
         if (currentBuilding != null) {
             floorList.addAll(currentBuilding.getValues());
+            if (currentBuilding.getValues().size() > 0) {
+                currentMap = currentBuilding.getValues().iterator().next();
+            }
         }
         floorListAdapter.notifyDataSetChanged();
         if (currentGroup != null && !currentGroup.getName().equals(currentGroup.toString())) {
@@ -616,6 +604,7 @@ public class MainActivity extends AppCompatActivity {
     private void floorListInactivate() {
         floorList.clear();
         floorListAdapter.notifyDataSetChanged();
+        currentMap = null;
 //        btnConstructor.setEnabled(false);// for easy debug TODO: uncomment on release
         btnViewer.setEnabled(false);
         btnCopyMap.setEnabled(false);

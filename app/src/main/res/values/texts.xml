@@ -5,8 +5,8 @@
         Click an element in the list on the left panel to choose a group.\n
         Long-click an element in the list on the left pannel to open the group settings window.\n
         Click a spinner at the top of the screen to choose a building or a floor.\n
-        Long-click an element in the group settings window to delete it.
-        You can't view, edit or copy a downloaded map if it is private.\n
-        You can't edit a downloaded map if it isn't editable.
+        Long-click an element in the group settings window to delete it.\n
+        You can\'t view, edit or copy a downloaded map if it is private.\n
+        You can\'t edit a downloaded map if it isn\'t editable.
     </string>
 </resources>
