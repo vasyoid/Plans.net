@@ -31,7 +31,7 @@ public class FloorMap extends AbstractNamedData implements Serializable {
     private String buildingName;
     @NonNull
     private String groupName;
-    @NonNull
+    @NonNull //isUnique for each user
     private String owner;
 
     public FloorMap(@NonNull final String owner, @NonNull final String groupName,

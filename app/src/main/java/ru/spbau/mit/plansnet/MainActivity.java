@@ -5,7 +5,6 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -21,13 +20,11 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.RadioGroup;
 import android.widget.SearchView;
-import android.widget.SimpleAdapter;
 import android.widget.Spinner;
 import android.widget.TabHost;
+import android.widget.TabWidget;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -204,8 +201,8 @@ public class MainActivity extends AppCompatActivity {
                     chosenBuilding.getName(),
                     newMapName
             );
-            dataController.saveMap(floor);
             floor.copyMap(toSave);
+            dataController.saveMap(floor);
             floorListActivate();
         });
 
@@ -325,6 +322,7 @@ public class MainActivity extends AppCompatActivity {
         final Button backBtn = settings.findViewById(R.id.backButton);
         final ListView hierarchy = settings.findViewById(R.id.hierarchyList);
         final CheckBox isPrivateBox = settings.findViewById(R.id.isPrivateCheckBox);
+        final CheckBox isEditableBox = settings.findViewById(R.id.isEditableCheckBox);
         final TextView pathTextView = settings.findViewById(R.id.pathTextView);
 
         final List<AbstractNamedData> hierarchyList = new ArrayList<>();
@@ -337,9 +335,11 @@ public class MainActivity extends AppCompatActivity {
 
         if (!group.getName().equals(group.toString())) {
             isPrivateBox.setVisibility(View.GONE);
+            isEditableBox.setVisibility(View.GONE);
         }
 
         isPrivateBox.setChecked(group.isPrivate());
+        isEditableBox.setChecked(group.isEditable());
 
         pathTextView.setText(String.format("path: /%s/", group.toString()));
 
@@ -380,6 +380,9 @@ public class MainActivity extends AppCompatActivity {
 
         isPrivateBox.setOnCheckedChangeListener((compoundButton, b) -> {
             dataController.setIsPrivate(group, b);
+        });
+        isEditableBox.setOnCheckedChangeListener((compoundButton, b) -> {
+            dataController.setIsEditable(group, b);
         });
 
         groupSettingsDialog.setView(settings);
@@ -525,25 +528,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void floorListInactivate() {
-        floorList.clear();
-        floorListAdapter.notifyDataSetChanged();
-//        btnConstructor.setEnabled(false);// for easy debug TODO: uncomment on release
-        btnViewer.setEnabled(false);
-        btnCopyMap.setEnabled(false);
-    }
-
-    private void floorListActivate() {
-        floorList.clear();
-        if (currentBuilding != null) {
-            floorList.addAll(currentBuilding.getValues());
-        }
-        floorListAdapter.notifyDataSetChanged();
-        btnConstructor.setEnabled(true);
-        btnViewer.setEnabled(true);
-        btnCopyMap.setEnabled(true);
-    }
-
     private void setUpFindListView() {
         ListView findListView = findViewById(R.id.findListView);
         findListAdapter = new ArrayAdapter<>(this,
@@ -555,7 +539,6 @@ public class MainActivity extends AppCompatActivity {
         findListView.setOnItemClickListener((parent, view, i, id) -> {
             SearchResult searchResult = findList.get(i);
             findList.clear();
-            findViewById(R.id.searchView).clearFocus();
             findListAdapter.notifyDataSetChanged();
             new SearchAndDownloadGroupAsyncTask(MainActivity.this).execute(searchResult);
         });
@@ -567,6 +550,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextSubmit(String text) {
                 new SearchAsyncTask(MainActivity.this).execute(text);
+                searchView.clearFocus();
                 return false;
             }
 
@@ -576,10 +560,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        searchView.setOnSearchClickListener(View::clearFocus);
-
         searchView.setOnCloseListener(() -> {
-            searchView.clearFocus();
             findList.clear();
             findListAdapter.notifyDataSetChanged();
             return false;
@@ -602,8 +583,42 @@ public class MainActivity extends AppCompatActivity {
 
         spec = tabHost.newTabSpec("Tag3");
         spec.setContent(R.id.searchLayout);
-        spec.setIndicator("SEARCH");
+        spec.setIndicator("SRCH");
         tabHost.addTab(spec);
+
+        LinearLayout ll = (LinearLayout) tabHost.getChildAt(0);
+        TabWidget tabWidget = (TabWidget) ll.getChildAt(0);
+        for (int i = 0; i < tabWidget.getChildCount(); i++)
+        {
+            View tabView = tabWidget.getChildTabViewAt(i);
+            TextView tv = tabView.findViewById(android.R.id.title);
+            tv.setTextSize(i < 2 ? 10 : 8);
+        }
+    }
+
+    private void floorListActivate() {
+        floorList.clear();
+        if (currentBuilding != null) {
+            floorList.addAll(currentBuilding.getValues());
+        }
+        floorListAdapter.notifyDataSetChanged();
+        if (currentGroup != null && !currentGroup.getName().equals(currentGroup.toString())) {
+            btnViewer.setEnabled(!currentGroup.isPrivate());
+            btnConstructor.setEnabled(!currentGroup.isPrivate() && currentGroup.isEditable());
+            btnCopyMap.setEnabled(!currentGroup.isPrivate());
+        } else {
+            btnViewer.setEnabled(true);
+            btnConstructor.setEnabled(true);
+            btnCopyMap.setEnabled(true);
+        }
+    }
+
+    private void floorListInactivate() {
+        floorList.clear();
+        floorListAdapter.notifyDataSetChanged();
+//        btnConstructor.setEnabled(false);// for easy debug TODO: uncomment on release
+        btnViewer.setEnabled(false);
+        btnCopyMap.setEnabled(false);
     }
 
     @Override

@@ -61,7 +61,7 @@ class NetworkDataManager {
         databaseReference = database.getReference();
     }
 
-    void putMapOnServer(@NonNull FloorMap map) {
+    void putMapOnServer(@NonNull FloorMap map, @NonNull UsersGroup group) {
         //put on database
         DatabaseReference userRef = databaseReference.child(userAccount.getUid());
         userRef.child("mail").setValue(userAccount.getEmail());
@@ -72,7 +72,8 @@ class NetworkDataManager {
         if (map.getOwner().equals(userAccount.getUid())) {
             groupRef = userRef.child("groups").child(map.getGroupName());
 
-            groupRef.child("isPrivate").setValue(false);
+            groupRef.child("isPrivate").setValue(group.isPrivate());
+            groupRef.child("isEditable").setValue(group.isEditable());
         } else {
             groupRef = userRef.child("downloads").child(map.getGroupName());
 
@@ -375,12 +376,41 @@ class NetworkDataManager {
                 });
     }
 
+    void setUpDownloadedGroup(@NonNull UsersGroup group, @NonNull String owner) {
+        databaseReference.child(owner).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String name = (String)dataSnapshot.child("name").getValue();
+                String oldName = group.getName().replace(owner + "_", "");
+                if (!oldName.equals(group.getName())) {
+                    group.setVisibleName(oldName + " by " + name);
+                }
+                DataSnapshot groupShot = dataSnapshot.child("groups").child(oldName);
+                group.setPrivate((boolean)groupShot.child("isPrivate").getValue());
+                group.setEditable((boolean)groupShot.child("isEditable").getValue());
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d("SetUpGroup", "error: " + databaseError.getMessage());
+            }
+        });
+    }
+
     void setIsPrivate(@NonNull UsersGroup group, boolean isPrivate) {
         databaseReference.child(userAccount.getUid())
                 .child("groups")
                 .child(group.getName())
                 .child("isPrivate")
                 .setValue(isPrivate);
+    }
+
+    void setIsEditable(@NonNull UsersGroup group, boolean isEditable) {
+        databaseReference.child(userAccount.getUid())
+                .child("groups")
+                .child(group.getName())
+                .child("isEditable")
+                .setValue(isEditable);
     }
 
 }
