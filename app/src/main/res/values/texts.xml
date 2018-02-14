@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="helpText">
-        Click to the button in the upper right corner to add a new plan.\n
-        Click to an element in the list in the left panel to choose a group.\n
-        Long Click to an element in the list in the left pannel to open the group settings.\n
-        Click to a spinner on the top of the screen to choose a building or floor.\n
-        Long Click to an element in the setting of group to delete this.
+        Click the button in the upper right corner to add a new plan.\n
+        Click an element in the list on the left panel to choose a group.\n
+        Long-click an element in the list on the left pannel to open the group settings window.\n
+        Click a spinner at the top of the screen to choose a building or a floor.\n
+        Long-click an element in the group settings window to delete it.
     </string>
 </resources>
