@@ -614,6 +614,7 @@ public class MainActivity extends AppCompatActivity {
         btnViewer = findViewById(R.id.btnViewer);
         btnConstructor = findViewById(R.id.btnConstructor);
         btnCopyMap = findViewById(R.id.btnCopyMap);
+        FloatingActionButton btnAddMap = findViewById(R.id.btnAddMap);
 
         setUpBuildingSpinnerView();
         setUpFloorSpinnerView();
@@ -622,6 +623,7 @@ public class MainActivity extends AppCompatActivity {
         setUpFindListView();
         setUpSearchView();
         setUpTabHost();
+
     }
 
     @Override
@@ -1016,7 +1018,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void copyMap(View v) {
-        Toast.makeText(this, "this is doesn't work now", Toast.LENGTH_SHORT).show();
+        createChooseGroupForNewMapDialog(currentMap);
     }
 
     public void openHelp(View v) {
@@ -1031,6 +1033,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void addMap(View v) {
-        createChooseGroupForNewMapDialog(currentMap);
+        createChooseGroupForNewMapDialog(null);
     }
 }
