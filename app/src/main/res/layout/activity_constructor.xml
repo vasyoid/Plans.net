@@ -152,16 +152,7 @@
                 android:layout_height="@dimen/button_height"
                 android:onClick="setState"
                 android:textSize="@dimen/button_text_size"
-                android:text="@string/moveWall"
-                android:duplicateParentState="true" />
-
-            <Button
-                android:id="@+id/buttonMoveSticker"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/button_height"
-                android:onClick="setState"
-                android:textSize="@dimen/button_text_size"
-                android:text="@string/moveSticker"
+                android:text="@string/moveObj"
                 android:duplicateParentState="true" />
 
             <Button

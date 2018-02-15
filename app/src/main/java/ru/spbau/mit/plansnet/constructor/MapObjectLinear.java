@@ -9,7 +9,7 @@ import org.andengine.opengl.texture.region.ITextureRegion;
 import java.util.List;
 
 import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.DEL;
-import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.MOVE_WALL;
+import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.MOVE_OBJECT;
 
 public abstract class MapObjectLinear extends MapObjectSprite {
 
@@ -76,7 +76,7 @@ public abstract class MapObjectLinear extends MapObjectSprite {
         if (MAP.getTouchState() == DEL) {
             MAP.removeObject(this);
             MAP.removeRoomsBySection(point1, point2);
-        } else if (MAP.getTouchState() == MOVE_WALL) {
+        } else if (MAP.getTouchState() == MOVE_OBJECT) {
             float currentTouchX = Math.round(pSceneTouchEvent.getX() / Map.getGridSize())
                     * Map.getGridSize();
             float currentTouchY = Math.round(pSceneTouchEvent.getY() / Map.getGridSize())

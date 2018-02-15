@@ -64,7 +64,7 @@ public class StickerSprite extends MapObjectSprite {
     @Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent,
                                  float pTouchAreaLocalX, float pTouchAreaLocalY) {
-        if (MAP.getTouchState() == ConstructorActivity.ActionState.MOVE_STICKER) {
+        if (MAP.getTouchState() == ConstructorActivity.ActionState.MOVE_OBJECT) {
             switch (pSceneTouchEvent.getAction()) {
                 case ACTION_DOWN:
                     firstTouch = previousTouch = new PointF(pSceneTouchEvent.getX(),
@@ -80,7 +80,7 @@ public class StickerSprite extends MapObjectSprite {
                     break;
                 case ACTION_MOVE:
                     if (firstTouch == null || previousTouch == null) {
-                        break;
+                        return false;
                     }
                     PointF currentTouch = new PointF(pSceneTouchEvent.getX(),
                             pSceneTouchEvent.getY());

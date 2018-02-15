@@ -9,9 +9,6 @@ import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -217,7 +214,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 }
                 float currentX = pSceneTouchEvent.getX();
                 float currentY = pSceneTouchEvent.getY();
-                if (state == ActionState.MOVE_WALL && !pSceneTouchEvent.isActionMove()) {
+                if (state == ActionState.MOVE_OBJECT && !pSceneTouchEvent.isActionMove()) {
                     currentX = Math.round(currentX / GRID_SIZE_MIN) * GRID_SIZE_MIN;
                     currentY = Math.round(currentY / GRID_SIZE_MIN) * GRID_SIZE_MIN;
                 } else {
@@ -228,8 +225,6 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 currentY = Math.max(Math.min(currentY, MAP_HEIGHT), 0);
                 currentPoint.set(currentX, currentY);
                 switch (state) {
-                    case MOVE_STICKER:
-                        break;
                     case MOVE_MAP:
                         moveMap(pSceneTouchEvent);
                         break;
@@ -248,7 +243,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
                     case CREATE_ROOM:
                         createRoom(room, pSceneTouchEvent);
                         break;
-                    case MOVE_WALL:
+                    case MOVE_OBJECT:
                         moveWall(pSceneTouchEvent);
                         break;
                     case ADD:
@@ -422,7 +417,6 @@ public class ConstructorActivity extends BaseConstructorActivity {
         ((Button) findViewById(R.id.buttonMoveWall)).setTextColor(BLACK);
         ((Button) findViewById(R.id.buttonAdd)).setTextColor(BLACK);
         ((Button) findViewById(R.id.buttonParams)).setTextColor(BLACK);
-        ((Button) findViewById(R.id.buttonMoveSticker)).setTextColor(BLACK);
         ((Button) v).setTextColor(RED);
         switch (v.getId()) {
             case R.id.buttonAdd:
@@ -435,10 +429,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 state = ActionState.MOVE_MAP;
                 break;
             case R.id.buttonMoveWall:
-                state = ActionState.MOVE_WALL;
-                break;
-            case R.id.buttonMoveSticker:
-                state = ActionState.MOVE_STICKER;
+                state = ActionState.MOVE_OBJECT;
                 break;
             case R.id.buttonColor:
                 state = ActionState.CREATE_ROOM;
@@ -587,7 +578,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     public enum ActionState {
-        ADD, DEL, MOVE_MAP, MOVE_WALL, MOVE_STICKER, CREATE_ROOM, SHOW_PARAMS
+        ADD, DEL, MOVE_MAP, MOVE_OBJECT, CREATE_ROOM, SHOW_PARAMS
     }
 
     private enum MapItem {
