@@ -1,5 +1,6 @@
 package ru.spbau.mit.plansnet.constructor;
 
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
@@ -33,7 +34,9 @@ public class ViewerActivity extends BaseConstructorActivity {
     private void initScene(Scene pScene) {
         pScene.setOnSceneTouchListener((pScene1, pSceneTouchEvent) -> {
             mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
-            if (pSceneTouchEvent.isActionDown()) {
+            MotionEvent event = pSceneTouchEvent.getMotionEvent();
+            if (pSceneTouchEvent.isActionUp() &&
+                    event.getEventTime() - event.getDownTime() < 200) {
                 RoomSprite room = map.getRoomTouched(pSceneTouchEvent);
                 if (room != null) {
                     showParams(room);
@@ -72,7 +75,7 @@ public class ViewerActivity extends BaseConstructorActivity {
     }
 
     public void showParams(RoomSprite pRoom) {
-        Semaphore mutex = new Semaphore(0);
+        Semaphore mutex = new Semaphore(1);
         runOnUiThread(() -> {
             findViewById(R.id.viewerView).setEnabled(false);
             View paramsView = findViewById(R.id.roomPropertiesView);
