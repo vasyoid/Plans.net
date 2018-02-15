@@ -415,8 +415,10 @@ class NetworkDataManager {
 
                 group.setVisibleName(oldName + " by " + name);
                 DataSnapshot groupShot = ownerSnapshot.child("groups").child(oldName);
-                group.setPrivate((boolean)groupShot.child("isPrivate").getValue());
-                group.setEditable((boolean)groupShot.child("isEditable").getValue());
+                if (groupShot.hasChild("isPrivate") && groupShot.hasChild("isEditable")) {
+                    group.setPrivate((boolean) groupShot.child("isPrivate").getValue());
+                    group.setEditable((boolean) groupShot.child("isEditable").getValue());
+                }
             }
 
             @Override
