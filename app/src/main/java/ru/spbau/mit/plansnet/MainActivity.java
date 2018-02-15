@@ -280,13 +280,7 @@ public class MainActivity extends AppCompatActivity {
 
         deleteDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, which) -> {
             dataController.deleteByPath(group, building, floor);
-            myGroupList.clear();
-            myGroupList.addAll(dataController.getAccount().getValues());
-            myGroupListAdapter.notifyDataSetChanged();
-
-            netGroupList.clear();
-            netGroupList.addAll(dataController.getAccount().getDownloadedGroups());
-            netGroupListAdapter.notifyDataSetChanged();
+            updateGroupLists();
 
             if (currentGroup != null && group.equals(currentGroup)) {
                 currentGroup = null;
@@ -828,15 +822,9 @@ public class MainActivity extends AppCompatActivity {
                 dialog.dismiss();
             }
 
-            myGroupList.clear();
-            myGroupList.addAll(dataController.getAccount().getValues());
-
-            netGroupList.clear();
-            netGroupList.addAll(dataController.getAccount().getDownloadedGroups());
+            updateGroupLists();
 
             buildingList.clear();
-
-            myGroupListAdapter.notifyDataSetChanged();
             buildingListAdapter.notifyDataSetChanged();
 
             floorListInactivate();
@@ -982,8 +970,8 @@ public class MainActivity extends AppCompatActivity {
                 dataController.saveMap(toSaveMap);
                 floorListAdapter.notifyDataSetChanged();
             }
-            currentMap = toSaveMap;
-            myGroupList.clear();
+//            currentMap = toSaveMap;
+//            myGroupList.clear();for what?
             break;
         }
     }
@@ -1006,14 +994,26 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, CONSTRUCTOR_TOKEN);
     }
 
+    private void updateGroupLists() {
+        myGroupList.clear();
+        myGroupList.addAll(dataController.getAccount().getValues());
+        myGroupListAdapter.notifyDataSetChanged();
+
+        netGroupList.clear();
+        netGroupList.addAll(dataController.getAccount().getDownloadedGroups());
+        netGroupListAdapter.notifyDataSetChanged();
+    }
+
     public void logOut(View v) {
         myGroupList.clear();
         netGroupList.clear();
         buildingList.clear();
+        findList.clear();
 
         myGroupListAdapter.notifyDataSetChanged();
         netGroupListAdapter.notifyDataSetChanged();
         buildingListAdapter.notifyDataSetChanged();
+        findListAdapter.notifyDataSetChanged();
 
         floorListInactivate();
 

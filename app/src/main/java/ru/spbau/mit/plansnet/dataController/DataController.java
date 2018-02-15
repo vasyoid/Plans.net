@@ -144,14 +144,14 @@ public class DataController {
         }
     }
 
-        public void searchGroupMaps(@NonNull String owner, @NonNull String group,
+    public void searchGroupMaps(@NonNull String owner, @NonNull String group,
                                 @NonNull List<String> floorsPaths, @NonNull AtomicBoolean isFinished) {
-        netManager.searchGroupMaps(owner, group, floorsPaths, isFinished);
+        netManager.searchGroupMaps(owner, group, floorsPaths, isFinished, userAccount);
     }
 
 
     public void searchMaps(@NonNull List<String> floorsPaths, @NonNull AtomicBoolean isFinished) {
-        netManager.searchMaps(floorsPaths, isFinished);
+        netManager.searchMaps(floorsPaths, isFinished, userAccount);
     }
 
     @NonNull
@@ -275,7 +275,6 @@ public class DataController {
                     netManager.setUpDownloadedGroup(group, map.getOwner());
                 }
             }
-            netManager.setUpDownloadedGroup(group, map.getOwner());
 
             Building building = group.findByName(map.getBuildingName());
             if (building == null) {

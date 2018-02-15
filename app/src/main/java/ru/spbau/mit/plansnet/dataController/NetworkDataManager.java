@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ru.spbau.mit.plansnet.MainActivity.SearchResult;
+import ru.spbau.mit.plansnet.data.Account;
 import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;
 import ru.spbau.mit.plansnet.data.UsersGroup;
@@ -76,6 +77,7 @@ class NetworkDataManager {
             groupRef.child("isEditable").setValue(group.isEditable());
         } else {
             groupRef = userRef.child("downloads").child(map.getGroupName());
+            groupRef.child("owner").setValue(map.getOwner());
 
             map = new FloorMap(map);
             map.setPath(map.getGroupName().replace(map.getOwner() + "_", ""),
@@ -122,18 +124,34 @@ class NetworkDataManager {
      * Searches map on server and add it to list of paths
      */
     void searchMaps(@NonNull final List<String> floorsPaths,
-                    @NonNull final AtomicBoolean isFinished) {
+                    @NonNull final AtomicBoolean isFinished,
+                    @NonNull final Account user) {
         Log.d("SearchMaps", "Start Searching in network manager");
         databaseReference
                 .child(userAccount.getUid())
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onDataChange(final DataSnapshot dataSnapshot) {
-                        DataSnapshot groups = dataSnapshot.child("groups");
-                        addToFloorsPaths(groups, floorsPaths);
+                    public void onDataChange(final DataSnapshot ownerSnapshot) {
+                        DataSnapshot groups = ownerSnapshot.child("groups");
+                        for (DataSnapshot group : groups.getChildren()) {
+                            if (user.findByName(group.getKey()) == null) {
+                                UsersGroup newGroup = new UsersGroup(group.getKey());
+                                newGroup.setPrivate((boolean) group.child("isPrivate").getValue());
+                                newGroup.setEditable((boolean) group.child("isEditable").getValue());
+                                user.addData(newGroup);
+                            }
+                            addToFloorsPaths(group, floorsPaths);
+                        }
 
-                        groups = dataSnapshot.child("downloads");
-                        addToFloorsPaths(groups, floorsPaths);
+                        groups = ownerSnapshot.child("downloads");
+                        for (DataSnapshot group : groups.getChildren()) {
+                            if (user.findDownloadedGroup(group.getKey()) == null) {
+                                UsersGroup newGroup = new UsersGroup(group.getKey());
+                                setUpDownloadedGroup(newGroup, (String) group.child("owner").getValue());
+                                user.addDownloadedGroup(newGroup);
+                            }
+                            addToFloorsPaths(group, floorsPaths);
+                        }
 
                         synchronized (isFinished) {
                             isFinished.set(true);
@@ -153,15 +171,14 @@ class NetworkDataManager {
                 });
     }
 
-    private void addToFloorsPaths(DataSnapshot groups, List<String> floorsPaths) {
-        for (DataSnapshot group : groups.getChildren()) {
+    private void addToFloorsPaths(DataSnapshot group, List<String> floorsPaths) {
             for (DataSnapshot building : group.child("buildings").getChildren()) {
                 for (DataSnapshot floor : building.child("floors").getChildren()) {
                     floorsPaths.add((String) floor.child("path").getValue());
                     Log.d("SearchMaps", "found " + floor.getKey());
                 }
             }
-        }
+
     }
 
     void downloadByPaths(@NonNull final List<String> floorsPaths, AtomicInteger mapCount) {
@@ -182,7 +199,7 @@ class NetworkDataManager {
                         if (!owner.equals(userAccount.getUid())) {
                             newPath = path.replace(owner + "/",
                                     userAccount.getUid() + "/" + owner + "_");
-                            memoriseDownloadedMap(newPath, path);
+                            memoriseDownloadedMap(newPath, path, owner);
                             Log.d("Path replace", path + " -> " + newPath);
                         }
 
@@ -225,7 +242,7 @@ class NetworkDataManager {
         }
     }
 
-    private void memoriseDownloadedMap(String newPath, String path) {
+    private void memoriseDownloadedMap(String newPath, String path, String owner) {
         DatabaseReference downloads = databaseReference
                 .child(userAccount.getUid())
                 .child("downloads");
@@ -238,6 +255,10 @@ class NetworkDataManager {
         floorName = floorName.subSequence(0, floorName.lastIndexOf(".")).toString();
 
         Log.d("Memoriser", newGroupName + "; " + buildingName + "; " + floorName);
+
+        downloads.child(newGroupName)
+                .child("owner")
+                .setValue(owner);
 
         downloads.child(newGroupName)
                 .child("buildings")
@@ -345,20 +366,31 @@ class NetworkDataManager {
 
     void searchGroupMaps(@NonNull final String owner, @NonNull final String group,
                          @NonNull final List<String> floorsPaths,
-                         @NonNull final AtomicBoolean isFinished) {
-        databaseReference
+                         @NonNull final AtomicBoolean isFinished,
+                         @NonNull final Account user) {
+        if (owner.equals(userAccount.getUid())) {
+            synchronized (isFinished) {
+                isFinished.set(true);
+                isFinished.notify();
+            }
+            return;
+        }
+            databaseReference
                 .child(owner)
-                .child("groups")
-                .child(group)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        for (DataSnapshot buildingShot : dataSnapshot.child("buildings").getChildren()) {
-                            for (DataSnapshot floorShot : buildingShot.child("floors").getChildren()) {
-                                String path = (String) floorShot.child("path").getValue();
-                                floorsPaths.add(path);
-                            }
+                    public void onDataChange(DataSnapshot ownerSnapshot) {
+                        DataSnapshot groupSnapshot = ownerSnapshot.child("groups").child(group);
+                        if (user.findDownloadedGroup(owner + "_" + group) == null) {
+                            UsersGroup newGroup = new UsersGroup(owner + "_" + group);
+                            newGroup.setVisibleName(group + " by " + ownerSnapshot.child("name").getValue());
+                            newGroup.setPrivate((boolean) groupSnapshot.child("isPrivate").getValue());
+                            newGroup.setEditable((boolean) groupSnapshot.child("isEditable").getValue());
+
+                            user.addDownloadedGroup(newGroup);
                         }
+                        addToFloorsPaths(groupSnapshot, floorsPaths);
+
                         synchronized (isFinished) {
                             isFinished.set(true);
                             isFinished.notify();
@@ -376,16 +408,15 @@ class NetworkDataManager {
                 });
     }
 
-    void setUpDownloadedGroup(@NonNull UsersGroup group, @NonNull String owner) {
+    void setUpDownloadedGroup(@NonNull UsersGroup group, String owner) {
         databaseReference.child(owner).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                String name = (String)dataSnapshot.child("name").getValue();
+            public void onDataChange(DataSnapshot ownerSnapshot) {
+                String name = (String)ownerSnapshot.child("name").getValue();
                 String oldName = group.getName().replace(owner + "_", "");
-                if (!oldName.equals(group.getName())) {
-                    group.setVisibleName(oldName + " by " + name);
-                }
-                DataSnapshot groupShot = dataSnapshot.child("groups").child(oldName);
+
+                group.setVisibleName(oldName + " by " + name);
+                DataSnapshot groupShot = ownerSnapshot.child("groups").child(oldName);
                 group.setPrivate((boolean)groupShot.child("isPrivate").getValue());
                 group.setEditable((boolean)groupShot.child("isEditable").getValue());
             }
