@@ -2,10 +2,10 @@ package ru.spbau.mit.plansnet.constructor;
 
 import android.graphics.Bitmap;
 import android.graphics.PointF;
+import android.graphics.Rect;
 
 import org.andengine.engine.Engine;
 import org.andengine.entity.scene.Scene;
-import org.andengine.entity.scene.background.SpriteBackground;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
@@ -43,6 +43,7 @@ public class Map implements Serializable {
     private List<RoomSprite> removedRooms = new LinkedList<>();
     private HashMap<PointF, HashSet<MapObjectLinear>> linearObjectsByCell = new HashMap<>();
     private ConstructorActivity.ActionState touchState = ADD;
+    private Sprite backgroundSprite = null;
 
     Map() { }
 
@@ -87,23 +88,50 @@ public class Map implements Serializable {
     }
 
     public void setBackground(Bitmap background, Engine pEngine) {
-        BitmapTextureAtlasSource source = new BitmapTextureAtlasSource(background);
-        BitmapTextureAtlas texture = new BitmapTextureAtlas(pEngine.getTextureManager(),
-                background.getWidth(), background.getHeight());
-        texture.addTextureAtlasSource(source, 0, 0);
-        texture.load();
-        TextureRegion backgroundTexture = TextureRegionFactory.createFromSource(texture, source,
-                0, 0);
-        Sprite backgroundSprite = new Sprite(0, 0, backgroundTexture,
-                pEngine.getVertexBufferObjectManager());
-        backgroundSprite.setScaleCenter(0, 0);
-        if (backgroundSprite.getHeight() / backgroundSprite.getWidth() <
-                pEngine.getSurfaceHeight() / pEngine.getSurfaceWidth()) {
-            backgroundSprite.setScale(pEngine.getSurfaceWidth() / backgroundSprite.getWidth());
-        } else {
-            backgroundSprite.setScale(pEngine.getSurfaceHeight() / backgroundSprite.getHeight());
+        float ratio = Math.max((float) MAP_WIDTH / background.getWidth(),
+                (float) MAP_HEIGHT / background.getHeight());
+        if (ratio < 1) {
+            background = Bitmap.createScaledBitmap(background,
+                    (int) (background.getWidth() * ratio),
+                    (int) (background.getHeight() * ratio), false);
+            ratio = 1;
         }
-        pEngine.getScene().setBackground(new SpriteBackground(backgroundSprite));
+        Rect area = new Rect(0, 0, (int) (MAP_WIDTH / ratio), (int) (MAP_HEIGHT / ratio));
+        area.offset((int) (background.getWidth() - MAP_WIDTH / ratio) / 2,
+                (int) (background.getHeight() - MAP_HEIGHT / ratio) / 2);
+        BitmapTextureAtlasSource source = new BitmapTextureAtlasSource(background, area);
+        BitmapTextureAtlas textureAtlas = new BitmapTextureAtlas(pEngine.getTextureManager(),
+                area.width(), area.height());
+        textureAtlas.addTextureAtlasSource(source, 0, 0);
+        textureAtlas.load();
+        TextureRegion backgroundTexture = TextureRegionFactory.createFromSource(textureAtlas, source,
+                0, 0);
+        backgroundSprite = new Sprite(0, 0, backgroundTexture,
+                pEngine.getVertexBufferObjectManager());
+        backgroundSprite.setPosition((MAP_WIDTH - backgroundSprite.getWidth()) / 2,
+                (MAP_HEIGHT - backgroundSprite.getHeight()) / 2);
+        backgroundSprite.setScale(ratio);
+        backgroundSprite.setZIndex(-3);
+        pEngine.getScene().attachChild(backgroundSprite);
+        pEngine.getScene().sortChildren();
+    }
+
+    boolean isBackgroundSet() {
+        return backgroundSprite != null;
+    }
+
+    public void removeBackground(Engine pEngine) {
+        Semaphore mutex = new Semaphore(0);
+        pEngine.runOnUpdateThread(() -> {
+            backgroundSprite.detachSelf();
+            mutex.release();
+        });
+        try {
+            mutex.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        backgroundSprite = null;
     }
 
     public void setActionState(ConstructorActivity.ActionState state) {
@@ -330,4 +358,5 @@ public class Map implements Serializable {
         }
         return result;
     }
+
 }

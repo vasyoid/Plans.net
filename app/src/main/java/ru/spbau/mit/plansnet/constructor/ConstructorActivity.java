@@ -15,7 +15,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,7 +28,6 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.entity.scene.Scene;
 
 import ru.spbau.mit.plansnet.R;
-import ru.spbau.mit.plansnet.data.FloorMap;
 
 import static android.graphics.Color.BLACK;
 import static android.graphics.Color.GREEN;
@@ -486,6 +485,25 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
+    private Bitmap readImage(Uri pUri) {
+        BitmapFactory.Options options;
+        try (InputStream imageStream = getContentResolver().openInputStream(pUri)) {
+            options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(imageStream, null, options);
+        } catch (IOException e) {
+            return null;
+        }
+        int scale = Math.max(options.outHeight / MAP_HEIGHT * 4, options.outWidth / MAP_WIDTH * 4);
+        try (InputStream imageStream = getContentResolver().openInputStream(pUri)) {
+            options = new BitmapFactory.Options();
+            options.inSampleSize = scale;
+            return BitmapFactory.decodeStream(imageStream, null, options);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
@@ -493,17 +511,16 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 if (resultCode != RESULT_OK) {
                     break;
                 }
-                try {
-                    Uri imageUri = data.getData();
-                    if (imageUri == null) {
-                        break;
-                    }
-                    InputStream imageStream = getContentResolver().openInputStream(imageUri);
-                    Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
-                    map.setBackground(selectedImage, getEngine());
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+                Uri imageUri = data.getData();
+                if (imageUri == null) {
+                    break;
                 }
+                ((Button) findViewById(R.id.addBackground)).setText(R.string.delBkgnd);
+                Bitmap image = readImage(imageUri);
+                if (image == null) {
+                    break;
+                }
+                map.setBackground(image, getEngine());
         }
 
     }
@@ -512,9 +529,14 @@ public class ConstructorActivity extends BaseConstructorActivity {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
         }
-        Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
-        photoPickerIntent.setType("image/*");
-        startActivityForResult(photoPickerIntent, PICK_IMAGE_TOKEN);
+        if (!map.isBackgroundSet()) {
+            Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
+            photoPickerIntent.setType("image/*");
+            startActivityForResult(photoPickerIntent, PICK_IMAGE_TOKEN);
+        } else {
+            ((Button) view).setText(R.string.addBkgnd);
+            map.removeBackground(getEngine());
+        }
     }
 
     public void setGridSize(View view) {
