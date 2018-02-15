@@ -9,6 +9,9 @@ import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewPropertyAnimator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -450,10 +453,14 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     private void disableAll() {
+        View darkener = findViewById(R.id.darkenerRect);
+        darkener.animate().alpha(0.5f);
         findViewById(R.id.constructorView).setEnabled(false);
     }
 
     private void enableAll() {
+        View darkener = findViewById(R.id.darkenerRect);
+        darkener.animate().alpha(0);
         findViewById(R.id.constructorView).setEnabled(true);
     }
 
