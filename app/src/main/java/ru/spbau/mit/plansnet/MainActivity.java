@@ -7,7 +7,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutCompat;
@@ -64,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final Pattern allowedStringPattern = Pattern.compile("[a-zA-Zа-яА-ЯёЁ0-9_ ]*");
 
-    InputFilter filter = (charSequence, i, i1, spanned, i2, i3) -> {
+    private InputFilter filter = (charSequence, i, i1, spanned, i2, i3) -> {
         if (charSequence != null && !allowedStringPattern.matcher(charSequence).matches()) {
             return "";
         }
@@ -254,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
 
         groupAdapter.notifyDataSetChanged();
         chooseGroupForNewMapDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Add new group",
-                (dialog, which) -> createNewGroupDialog(null));
+                (dialog, which) -> createNewGroupDialog(toSave));
         chooseGroupForNewMapDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
                 (dialog, which) -> {});
         chooseGroupForNewMapDialog.show();
@@ -274,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
         deleteDialog.setTitle(title);
 
         TextView questionText = new TextView(MainActivity.this);
-        questionText.setText("Do you want to delete this?");
+        questionText.setText(getString(R.string.deleteQuestion));
         questionText.setPadding(10, 10, 10, 10);
         deleteDialog.setView(questionText);
 
@@ -366,19 +365,15 @@ public class MainActivity extends AppCompatActivity {
             pathTextView.setText(String.format("path: /%s/", group.toString()));
         });
 
-        isPrivateBox.setOnCheckedChangeListener((compoundButton, b) -> {
-            dataController.setIsPrivate(group, b);
-        });
-        isEditableBox.setOnCheckedChangeListener((compoundButton, b) -> {
-            dataController.setIsEditable(group, b);
-        });
+        isPrivateBox.setOnCheckedChangeListener((compoundButton, b) ->
+                dataController.setIsPrivate(group, b));
+        isEditableBox.setOnCheckedChangeListener((compoundButton, b) ->
+                dataController.setIsEditable(group, b));
 
         groupSettingsDialog.setView(settings);
-        groupSettingsDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, i) -> {
-        });
-        groupSettingsDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Delete group", (dialog, i) -> {
-            createDeleteDialog(group, null, null);
-        });
+        groupSettingsDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK", (dialog, i) -> {});
+        groupSettingsDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Delete group",
+                (dialog, i) -> createDeleteDialog(group, null, null));
 
         groupSettingsDialog.show();
 
@@ -612,7 +607,6 @@ public class MainActivity extends AppCompatActivity {
         btnViewer = findViewById(R.id.btnViewer);
         btnConstructor = findViewById(R.id.btnConstructor);
         btnCopyMap = findViewById(R.id.btnCopyMap);
-        FloatingActionButton btnAddMap = findViewById(R.id.btnAddMap);
 
         setUpBuildingSpinnerView();
         setUpFloorSpinnerView();
@@ -805,11 +799,9 @@ public class MainActivity extends AppCompatActivity {
             dialog.show();
         }
 
-        protected Void doInBackground(Void... args) { //TODO: think about void in this function
+        protected Void doInBackground(Void... args) {
             Log.d("AsyncWork", "load async starts work");
             dataController.loadLocalFiles();
-            //#1 можно сделать, чтобы эта функция возвращала массив прочитанных групп и в
-            // onPostExecute его записывала.
             Log.d("AsyncWork", "load async task done");
             return null;
         }
