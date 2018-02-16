@@ -102,6 +102,33 @@
                 android:contentDescription="@string/sticker"
                 android:duplicateParentState="true" />
 
+            <ImageView
+                android:id="@+id/imageFire"
+                android:layout_width="@dimen/picture_size"
+                android:layout_height="@dimen/picture_size"
+                android:src="@drawable/fire"
+                android:onClick="setSticker"
+                android:contentDescription="@string/sticker"
+                android:duplicateParentState="true" />
+
+            <ImageView
+                android:id="@+id/imageSmoke"
+                android:layout_width="@dimen/picture_size"
+                android:layout_height="@dimen/picture_size"
+                android:src="@drawable/smoke"
+                android:onClick="setSticker"
+                android:contentDescription="@string/sticker"
+                android:duplicateParentState="true" />
+
+            <ImageView
+                android:id="@+id/imageVoltage"
+                android:layout_width="@dimen/picture_size"
+                android:layout_height="@dimen/picture_size"
+                android:src="@drawable/voltage"
+                android:onClick="setSticker"
+                android:contentDescription="@string/sticker"
+                android:duplicateParentState="true" />
+
         </LinearLayout>
         </ScrollView>
 

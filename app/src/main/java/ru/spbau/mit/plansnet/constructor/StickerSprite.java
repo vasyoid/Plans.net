@@ -5,7 +5,6 @@ import android.graphics.PointF;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
 
-import ru.spbau.mit.plansnet.MainActivity;
 import ru.spbau.mit.plansnet.data.objects.Sticker;
 
 import static org.andengine.input.touch.TouchEvent.ACTION_DOWN;
@@ -136,7 +135,7 @@ public class StickerSprite extends MapObjectSprite {
 
     public enum StickerType {
 
-        EXIT(0), LIFT(1), STAIRS(2), WC(3);
+        EXIT(0), LIFT(1), STAIRS(2), WC(3), FIRE(4), SMOKE(5), VOLTAGE(6);
         private int value;
 
         StickerType(int pValue) {
@@ -157,6 +156,12 @@ public class StickerSprite extends MapObjectSprite {
                     return STAIRS;
                 case 3:
                     return WC;
+                case 4:
+                    return FIRE;
+                case 5:
+                    return SMOKE;
+                case 6:
+                    return VOLTAGE;
                 default:
                     return null;
             }

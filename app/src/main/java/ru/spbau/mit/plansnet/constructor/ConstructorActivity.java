@@ -35,8 +35,11 @@ import static android.graphics.Color.RED;
 import static android.graphics.Color.TRANSPARENT;
 
 import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.EXIT;
+import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.FIRE;
 import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.LIFT;
+import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.SMOKE;
 import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.STAIRS;
+import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.VOLTAGE;
 import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.WC;
 
 public class ConstructorActivity extends BaseConstructorActivity {
@@ -356,6 +359,9 @@ public class ConstructorActivity extends BaseConstructorActivity {
         ((ImageView) findViewById(R.id.imageLift)).setColorFilter(TRANSPARENT);
         ((ImageView) findViewById(R.id.imageStairs)).setColorFilter(TRANSPARENT);
         ((ImageView) findViewById(R.id.imageWC)).setColorFilter(TRANSPARENT);
+        ((ImageView) findViewById(R.id.imageFire)).setColorFilter(TRANSPARENT);
+        ((ImageView) findViewById(R.id.imageSmoke)).setColorFilter(TRANSPARENT);
+        ((ImageView) findViewById(R.id.imageVoltage)).setColorFilter(TRANSPARENT);
         ((ImageView) v).setColorFilter(GREEN, PorterDuff.Mode.ADD);
         switch (v.getId()) {
             case R.id.imageExit:
@@ -369,6 +375,15 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 break;
             case R.id.imageWC:
                 currentSticker = WC;
+                break;
+            case R.id.imageFire:
+                currentSticker = FIRE;
+                break;
+            case R.id.imageSmoke:
+                currentSticker = SMOKE;
+                break;
+            case R.id.imageVoltage:
+                currentSticker = VOLTAGE;
                 break;
             default:
                 Log.e("VASYOID", "wrong view id in setSticker function");

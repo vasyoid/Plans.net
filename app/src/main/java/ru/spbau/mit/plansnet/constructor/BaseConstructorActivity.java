@@ -101,7 +101,13 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
                     new BitmapTexture(this.getTextureManager(),
                             () -> getAssets().open("stairs.png")),
                     new BitmapTexture(this.getTextureManager(),
-                            () -> getAssets().open("wc.png"))
+                            () -> getAssets().open("wc.png")),
+                    new BitmapTexture(this.getTextureManager(),
+                            () -> getAssets().open("fire.png")),
+                    new BitmapTexture(this.getTextureManager(),
+                            () -> getAssets().open("smoke.png")),
+                    new BitmapTexture(this.getTextureManager(),
+                            () -> getAssets().open("voltage.png"))
             };
             ITextureRegion[] stickersTextureRegions = new ITextureRegion[stickersTextures.length];
             for (int i = 0; i < stickersTextures.length; i++) {
