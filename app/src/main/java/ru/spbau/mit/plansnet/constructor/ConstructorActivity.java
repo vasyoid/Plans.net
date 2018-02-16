@@ -130,6 +130,9 @@ public class ConstructorActivity extends BaseConstructorActivity {
                         break;
                     case TouchEvent.ACTION_UP:
                         map.detachRemoved(getEngine());
+                        if (firstPoint == null) {
+                            break;
+                        }
                         map.setScaleByPoint(firstPoint, 1.0f, 1.0f);
                         if (firstPoint.equals(currentPoint)) {
                             break;
@@ -195,8 +198,9 @@ public class ConstructorActivity extends BaseConstructorActivity {
                                 !map.hasIntersections(currentAdded)) {
                             map.addObject(currentAdded);
                             pScene.sortChildren();
-                            map.detachRemoved(mEngine);
+                            map.detachRemoved(getEngine());
                         } else {
+                            pScene.unregisterTouchArea(currentAdded);
                             pScene.detachChild(currentAdded);
                         }
                         currentLine.setPosition(0, 0, 0, 0);
