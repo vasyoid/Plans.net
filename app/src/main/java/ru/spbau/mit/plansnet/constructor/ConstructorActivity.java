@@ -225,7 +225,8 @@ public class ConstructorActivity extends BaseConstructorActivity {
                     currentX = Math.round(currentX / gridSize) * gridSize;
                     currentY = Math.round(currentY / gridSize) * gridSize;
                 }
-                currentX = Math.max(Math.min(currentX, MAP_WIDTH), 0);
+                currentX = Geometry.bringValueToBounds(currentX, 0, MAP_WIDTH);
+                currentY = Geometry.bringValueToBounds(currentY, 0, MAP_HEIGHT);
                 currentY = Math.max(Math.min(currentY, MAP_HEIGHT), 0);
                 currentPoint.set(currentX, currentY);
                 switch (state) {

@@ -177,6 +177,8 @@ public class Map implements Serializable {
             return;
         }
         for (MapObjectLinear object : linearObjectsByCell.get(at)) {
+            object.setScaleCenter(object.getWidth() / 2,
+                    object.getHeight() / 2);
             object.setScale(sx, sy);
         }
     }

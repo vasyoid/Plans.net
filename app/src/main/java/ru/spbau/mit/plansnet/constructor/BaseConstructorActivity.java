@@ -148,8 +148,8 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
                                             TouchEvent pTouchEvent, float pZoomFactor) {
                         float newZoomFactor = mInitialTouchZoomFactor * pZoomFactor;
                         ZoomCamera mCamera = (ZoomCamera) getEngine().getCamera();
-                        newZoomFactor = Math.min(newZoomFactor, 3.0f * cameraZoomFactor);
-                        newZoomFactor = Math.max(newZoomFactor, 0.8f * cameraZoomFactor);
+                        newZoomFactor = Geometry.bringValueToBounds(newZoomFactor,
+                                0.8f * cameraZoomFactor, 6.0f * cameraZoomFactor);
                         mCamera.setZoomFactor(newZoomFactor);
                     }
 

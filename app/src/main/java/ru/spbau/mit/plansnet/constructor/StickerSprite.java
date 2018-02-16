@@ -5,11 +5,14 @@ import android.graphics.PointF;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
 
+import ru.spbau.mit.plansnet.MainActivity;
 import ru.spbau.mit.plansnet.data.objects.Sticker;
 
 import static org.andengine.input.touch.TouchEvent.ACTION_DOWN;
 import static org.andengine.input.touch.TouchEvent.ACTION_MOVE;
 import static org.andengine.input.touch.TouchEvent.ACTION_UP;
+import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.MAP_HEIGHT;
+import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.MAP_WIDTH;
 
 public class StickerSprite extends MapObjectSprite {
 
@@ -38,6 +41,10 @@ public class StickerSprite extends MapObjectSprite {
         type = pType;
         size = pSize;
         position = new PointF(pPosition.x, pPosition.y);
+        position.x = Geometry.bringValueToBounds(position.x,
+                getWidthScaled() / 2, MAP_WIDTH - getWidthScaled() / 2);
+        position.y = Geometry.bringValueToBounds(position.y,
+                getHeightScaled() / 2, MAP_HEIGHT - getHeightScaled() /2);
         setScaleCenter(TEXTURE_SIZE / 2, TEXTURE_SIZE / 2);
         setScale(size);
         super.setPosition(position.x - TEXTURE_SIZE / 2,
@@ -87,12 +94,15 @@ public class StickerSprite extends MapObjectSprite {
                     if (zooming) {
                         currentSize = size * Geometry.distance(position, currentTouch) /
                                 Geometry.distance(position, firstTouch);
-                        currentSize = Math.min(currentSize, 1.5f);
-                        currentSize = Math.max(currentSize, 0.7f);
+                        currentSize = Geometry.bringValueToBounds(currentSize, 0.7f, 1.5f);
                         setScale(currentSize);
                     } else {
                         position.offset(currentTouch.x - previousTouch.x,
                                 currentTouch.y - previousTouch.y);
+                        position.x = Geometry.bringValueToBounds(position.x,
+                                getWidthScaled() / 2, MAP_WIDTH - getWidthScaled() / 2);
+                        position.y = Geometry.bringValueToBounds(position.y,
+                                getHeightScaled() / 2, MAP_HEIGHT - getHeightScaled() /2);
                         super.setPosition(position.x - TEXTURE_SIZE / 2,
                                 position.y - TEXTURE_SIZE / 2);
                         previousTouch = currentTouch;
@@ -104,6 +114,12 @@ public class StickerSprite extends MapObjectSprite {
                         zooming = false;
                     }
                     setScale(size);
+                    position.x = Geometry.bringValueToBounds(position.x,
+                            getWidthScaled() / 2, MAP_WIDTH - getWidthScaled() / 2);
+                    position.y = Geometry.bringValueToBounds(position.y,
+                            getHeightScaled() / 2, MAP_HEIGHT - getHeightScaled() /2);
+                    super.setPosition(position.x - TEXTURE_SIZE / 2,
+                            position.y - TEXTURE_SIZE / 2);
                     firstTouch = previousTouch = null;
                     break;
                 default:

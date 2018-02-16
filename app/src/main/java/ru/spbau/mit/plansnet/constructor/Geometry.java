@@ -269,4 +269,8 @@ public class Geometry {
         return v1;
     }
 
+    public static float bringValueToBounds(float pValue, float pMin, float pMax) {
+        return Math.min(pMax, Math.max(pMin, pValue));
+    }
+
 }
