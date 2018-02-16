@@ -249,8 +249,12 @@ public class Map implements Serializable {
         objects.remove(object);
         if (object instanceof MapObjectLinear) {
             MapObjectLinear objectLinear = (MapObjectLinear) object;
-            linearObjectsByCell.get(objectLinear.getPoint1()).remove(object);
-            linearObjectsByCell.get(objectLinear.getPoint2()).remove(object);
+            if (linearObjectsByCell.get(objectLinear.getPoint1()).contains(object)) {
+                linearObjectsByCell.get(objectLinear.getPoint1()).remove(object);
+            }
+            if (linearObjectsByCell.get(objectLinear.getPoint2()).contains(object)) {
+                linearObjectsByCell.get(objectLinear.getPoint2()).remove(object);
+            }
         }
         removedObjects.add(object);
     }
