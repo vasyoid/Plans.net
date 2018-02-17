@@ -401,6 +401,8 @@ public class MainActivity extends AppCompatActivity {
 
             if (buildingList.size() != 0) {
                 currentBuilding = buildingList.get(0);
+            } else {
+                currentBuilding = null;
             }
             floorListActivate();
         });
@@ -434,8 +436,9 @@ public class MainActivity extends AppCompatActivity {
 
             if (buildingList.size() != 0) {
                 currentBuilding = buildingList.get(0);
+            } else {
+                currentBuilding = null;
             }
-
             floorListActivate();
         });
 
@@ -578,6 +581,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         floorListAdapter.notifyDataSetChanged();
+        if (currentMap == null) {
+            return;
+        }
         if (currentGroup != null && !currentGroup.getName().equals(currentGroup.toString())) {
             btnViewer.setEnabled(!currentGroup.isPrivate());
             btnConstructor.setEnabled(!currentGroup.isPrivate() && currentGroup.isEditable());
