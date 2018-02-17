@@ -14,35 +14,74 @@ import java.util.List;
 import ru.spbau.mit.plansnet.constructor.objects.MapObjectLinear;
 import ru.spbau.mit.plansnet.constructor.objects.MapObjectSprite;
 
+/**
+ * Util class implementing methods to work with lines, points and polygons.
+ */
 public class Geometry {
 
+    /**
+     * Swaps tho lines.
+     * @param pLine1 first line.
+     * @param pLine2 second line.
+     */
     public static void swap(@NonNull Line pLine1, @NonNull Line pLine2) {
         Line tmp = copy(pLine1);
         pLine1.setPosition(pLine2.getX1(), pLine2.getY1(), pLine2.getX2(), pLine2.getY2());
         pLine2.setPosition(tmp.getX1(), tmp.getY1(), tmp.getX2(), tmp.getY2());
     }
 
+    /**
+     * Deep copies a line.
+     * @param pLine line to copy.
+     * @return copy of the line.
+     */
     public static @NonNull Line copy(@NonNull Line pLine) {
         return new Line(pLine.getX1(), pLine.getY1(), pLine.getX2(), pLine.getY2(),
                 pLine.getVertexBufferObjectManager());
     }
 
+    /**
+     * Returns the minimum x coordinate of a given line.
+     * @param pLine a line.
+     * @return the minimum x coordinate.
+     */
     public static float getMinX(@NonNull Line pLine) {
         return Math.min(pLine.getX1(), pLine.getX2());
     }
 
+    /**
+     * Returns the minimum y coordinate of a given line.
+     * @param pLine a line.
+     * @return the minimum y coordinate.
+     */
     public static float getMinY(@NonNull Line pLine) {
         return Math.min(pLine.getY1(), pLine.getY2());
     }
 
+    /**
+     * Returns the maximum x coordinate of a given line.
+     * @param pLine a line.
+     * @return the maximum x coordinate.
+     */
     public static float getMaxX(@NonNull Line pLine) {
         return Math.max(pLine.getX1(), pLine.getX2());
     }
 
+    /**
+     * Returns the maximum y coordinate of a given line.
+     * @param pLine a line.
+     * @return the maximum y coordinate.
+     */
     public static float getMaxY(@NonNull Line pLine) {
         return Math.max(pLine.getY1(), pLine.getY2());
     }
 
+    /**
+     * Says if two lines are parallel.
+     * @param pLine1 first line.
+     * @param pLine2 second line.
+     * @return true if the lines are parallel, false otherwise.
+     */
     public static boolean linesParallel(@NonNull Line pLine1, @NonNull Line pLine2) {
         PointF v1 = new PointF(pLine1.getX2() - pLine1.getX1(),
                 pLine1.getY2() - pLine1.getY1());
@@ -51,6 +90,12 @@ public class Geometry {
         return v1.x * v2.y - v1.y * v2.x == 0;
     }
 
+    /**
+     * Says if two lines have intersections.
+     * @param pLine1 first line.
+     * @param pLine2 second line.
+     * @return true if the lines intersect, false otherwise.
+     */
     public static boolean linesIntersect(@NonNull Line pLine1, @NonNull Line pLine2) {
         PointF a = new PointF(pLine1.getX1(), pLine1.getY1());
         PointF b = new PointF(pLine1.getX2(), pLine1.getY2());
@@ -60,6 +105,13 @@ public class Geometry {
                 !lineStartsWith(pLine2, b) && !lineEndsWith(pLine2, b);
     }
 
+    /**
+     * Says if two lines combined give another line.
+     * It means that they are parallel and have one common point.
+     * @param pLine1 first line.
+     * @param pLine2 second line.
+     * @return true if the lines are joinable, false otherwise.
+     */
     public static boolean linesJoinable(@NonNull Line pLine1, @NonNull Line pLine2) {
         if (!linesParallel(pLine1, pLine2) || !pLine1.collidesWith(pLine2)) {
             return false;
@@ -70,22 +122,52 @@ public class Geometry {
         return getMinX(pLine1) != getMaxX(pLine2) && getMaxX(pLine1) != getMinX(pLine2);
     }
 
+    /**
+     * Says if a line is vertical
+     * @param pLine line.
+     * @return true the line is vertical, false otherwise.
+     */
     public static boolean isVertical(@NonNull Line pLine) {
         return pLine.getX1() == pLine.getX2();
     }
 
+    /**
+     * Says if a line is horizontal
+     * @param pLine line.
+     * @return true the line is horizontal, false otherwise.
+     */
     public static boolean isHorizontal(@NonNull Line pLine) {
         return pLine.getY1() == pLine.getY2();
     }
 
+    /**
+     * Says if a line's first point is a given one.
+     * @param pLine line.
+     * @param PointF point.
+     * @return true the line starts with the point, false otherwise.
+     */
     public static boolean lineStartsWith(@NonNull Line pLine, @NonNull PointF PointF) {
         return PointF.equals(pLine.getX1(), pLine.getY1());
     }
 
+    /**
+     * Says if a line's second point is a given one.
+     * @param pLine line.
+     * @param PointF point.
+     * @return true the line ends with the point, false otherwise.
+     */
     public static boolean lineEndsWith(@NonNull Line pLine, @NonNull PointF PointF) {
         return PointF.equals(pLine.getX2(), pLine.getY2());
     }
 
+    /**
+     * Says if a point is at a corner of a rectangle.
+     * @param pPoint point to check.
+     * @param pLeftDown left down corner of the rectangle
+     * @param pRightUp right up corner of the rectangle
+     * @param bounds the maximum distance the point can be from two of the rectangle sides.
+     * @return true the point is at a corner, false otherwise.
+     */
     public static boolean isPointAtCorner(@NonNull PointF pPoint,
                                           @NonNull PointF pLeftDown,
                                           @NonNull PointF pRightUp, double bounds) {
@@ -93,22 +175,44 @@ public class Geometry {
                (pPoint.y <= pLeftDown.y + bounds || pPoint.y >= pRightUp.y - bounds);
     }
 
+    /**
+     * Returns the distance between two points.
+     * @param pPoint1 first point.
+     * @param pPoin2 second point.
+     * @return the distance between the points.
+     */
     public static float distance(@NonNull PointF pPoint1, @NonNull PointF pPoin2) {
         return length(new Line(pPoint1.x, pPoint1.y,
                 pPoin2.x, pPoin2.y, null));
     }
 
+    /**
+     * Returns the length of a line.
+     * @param pLine line.
+     * @return the line's length.
+     */
     public static float length(@NonNull Line pLine) {
         return (float) Math.sqrt((pLine.getX2() - pLine.getX1()) * (pLine.getX2() - pLine.getX1()) +
                 (pLine.getY2() - pLine.getY1()) * (pLine.getY2() - pLine.getY1()));
     }
 
+    /**
+     * Changes the the line so that its length is 1.
+     * @param pLine line to normalize.
+     * @return new line.
+     */
     public static @NonNull Line normalize(@NonNull Line pLine) {
         float len = length(pLine);
         return new Line(0, 0, pLine.getX2() / len, pLine.getY2() / len,
                 pLine.getVertexBufferObjectManager());
     }
 
+    /**
+     * returns the smaller angle between two lines.
+     * @param pLine1 first line.
+     * @param pLine2 second line.
+     * @return angle between the lines.
+     */
     public static float getAngle(@NonNull Line pLine1, @NonNull Line pLine2) {
         pLine1 = new Line(0, 0, pLine1.getX2() - pLine1.getX1(),
                 pLine1.getY2() - pLine1.getY1(), null);
@@ -127,10 +231,22 @@ public class Geometry {
         return result;
     }
 
+    /**
+     * Says if a line's ends coincide.
+     * This means that the length of the line is 0.
+     * @param pLine line.
+     * @return true if the length of the line is 0, false otherwise.
+     */
     public static boolean isOnePoint(@NonNull Line pLine) {
         return pLine.getX1() == pLine.getX2() && pLine.getY1() == pLine.getY2();
     }
 
+    /**
+     * Returns the intersection of two lines if there is exactly one.
+     * @param pLine1 first line
+     * @param pLine2 second line
+     * @return the intersection point if there is one, null otherwise.
+     */
     public static @Nullable PointF getIntersectionPointOrNull(@NonNull Line pLine1,
                                                               @NonNull Line pLine2) {
         pLine1 = copy(pLine1);
@@ -180,6 +296,12 @@ public class Geometry {
         return result;
     }
 
+    /**
+     * Returns a polygon covering a point and consisting of linear objects if exists.
+     * @param pObjects list of linear objects.
+     * @param pPoint point.
+     * @return the polygon if it exists, null otherwise.
+     */
     public static @Nullable List<PointF> roomPolygonOrNull(@NonNull List<MapObjectSprite> pObjects,
                                                            @NonNull PointF pPoint) {
         List<PointF> polygon = new ArrayList<>();
@@ -242,15 +364,21 @@ public class Geometry {
         return polygon;
     }
 
-    public static boolean isPointInsidePolygon(@NonNull List<PointF> polygon,
+    /**
+     * Says if a point is inside a polygon.
+     * @param pPolygon polygon
+     * @param pPoint point.
+     * @return true if the point is inside the polygon, false otherwise.
+     */
+    public static boolean isPointInsidePolygon(@NonNull List<PointF> pPolygon,
                                                @NonNull PointF pPoint) {
         int cntIntersections = 0;
         Line line = new Line(pPoint.x, pPoint.y,
                 pPoint.x + 0.5f, -1e5f, null);
-        for (int i = 0; i < polygon.size(); i++) {
-            Line side = new Line(polygon.get(i).x, polygon.get(i).y,
-                    polygon.get((i + 1) % polygon.size()).x,
-                    polygon.get((i + 1) % polygon.size()).y, null);
+        for (int i = 0; i < pPolygon.size(); i++) {
+            Line side = new Line(pPolygon.get(i).x, pPolygon.get(i).y,
+                    pPolygon.get((i + 1) % pPolygon.size()).x,
+                    pPolygon.get((i + 1) % pPolygon.size()).y, null);
             if (side.collidesWith(line)) {
                 cntIntersections++;
             }
@@ -258,6 +386,11 @@ public class Geometry {
         return cntIntersections % 2 == 1;
     }
 
+    /**
+     * Takes a polygon and triangulates it.
+     * @param pPolygon polygon.
+     * @return array of coordinates representing the triangulation.
+     */
     public static @NonNull float[] makeTriangles(@NonNull List<PointF> pPolygon) {
         float[][][] vertices = new float[1][pPolygon.size()][2];
         for (int i = 0; i < pPolygon.size(); i++) {
@@ -275,6 +408,11 @@ public class Geometry {
         return vertexData;
     }
 
+    /**
+     * Returns a point inside a polygon.
+     * @param pBufferData array of coordinates representing the polygon.
+     * @return a point strictly inside the polygon.
+     */
     public static @NonNull PointF getPointInside(@NonNull float[] pBufferData) {
         PointF v1 = new PointF(pBufferData[3] - pBufferData[0],
                 pBufferData[4] - pBufferData[1]);
@@ -286,6 +424,13 @@ public class Geometry {
         return v1;
     }
 
+    /**
+     * Brings a numeric value into a numeric segment.
+     * @param pValue value.
+     * @param pMin segment min value.
+     * @param pMax segment max value.
+     * @return value closest to the given that belongs to the segment.
+     */
     public static float bringValueToBounds(float pValue, float pMin, float pMax) {
         return Math.min(pMax, Math.max(pMin, pValue));
     }

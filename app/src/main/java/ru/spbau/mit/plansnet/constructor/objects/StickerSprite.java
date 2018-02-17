@@ -17,6 +17,9 @@ import static org.andengine.input.touch.TouchEvent.ACTION_UP;
 import static ru.spbau.mit.plansnet.constructor.constructorController.BaseConstructorActivity.MAP_HEIGHT;
 import static ru.spbau.mit.plansnet.constructor.constructorController.BaseConstructorActivity.MAP_WIDTH;
 
+/**
+ * Map object representing a sign (exit, lift, etc)
+ */
 public class StickerSprite extends MapObjectSprite {
 
     private final static int TEXTURE_SIZE = 400;
@@ -31,16 +34,32 @@ public class StickerSprite extends MapObjectSprite {
     private float mSize;
     private float mCurrentSize;
 
+    /**
+     * Constructor taking sticker type and position.
+     * @param pType type of sign.
+     * @param pPosition position.
+     */
     public StickerSprite(@NonNull StickerType pType, @NonNull PointF pPosition) {
         this(pType, pPosition, 1.0f);
     }
 
+    /**
+     * Constructor that uses data.Sticker element.
+     * Used when a Map object is initialised to fit a FloorMap object.
+     * @param pSticker data.Sticker element.
+     */
     public StickerSprite(@NonNull Sticker pSticker) {
         this(StickerType.fromValue(pSticker.getType()),
                 new PointF(pSticker.getPosition().getX(), pSticker.getPosition().getY()),
                 pSticker.getSize());
     }
 
+    /**
+     * Constructor taking sticker type, position and initial scale.
+     * @param pType type of sign.
+     * @param pPosition position.
+     * @param pSize initial scale.
+     */
     public StickerSprite(@NonNull StickerType pType, @NonNull PointF pPosition, float pSize) {
         super(textureRegions[pType.getValue()], vertexBufferObjectManager);
         mType = pType;
@@ -57,22 +76,47 @@ public class StickerSprite extends MapObjectSprite {
         setZIndex(4);
     }
 
+    /**
+     * Textures setter.
+     * @param pTextureRegions textures that will be set to all stickers on the map
+     *                        depending on their types.
+     * Used only once when the activity is initialized.
+     */
     public static void setTextureRegions(@NonNull ITextureRegion[] pTextureRegions) {
         textureRegions = pTextureRegions;
     }
 
+    /**
+     * Size getter.
+     * @return scale of the sticker.
+     */
     public float getSize() {
         return mSize;
     }
 
+    /**
+     * Type getter.
+     * @return type of the sticker.
+     */
     public int getType() {
         return mType.getValue();
     }
 
+    /**
+     * Position getter
+     * @return sticker position.
+     */
     public @NonNull PointF getPosition() {
         return mPosition;
     }
 
+    /**
+     * Handles touch events on the sticker.
+     * @param pSceneTouchEvent event description.
+     * @param pTouchAreaLocalX local touch x.
+     * @param pTouchAreaLocalY local touch y.
+     * @return true if the touch event was accepted, false otherwise.
+     */
     @Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent,
                                  float pTouchAreaLocalX, float pTouchAreaLocalY) {
@@ -141,6 +185,9 @@ public class StickerSprite extends MapObjectSprite {
         return false;
     }
 
+    /**
+     * Sticker type defining the texture of a sticker.
+     */
     public enum StickerType {
 
         EXIT(0), LIFT(1), STAIRS(2), WC(3), FIRE(4), SMOKE(5), VOLTAGE(6);

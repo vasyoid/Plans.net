@@ -8,11 +8,19 @@ import android.graphics.Bitmap.Config;
 import android.graphics.Rect;
 import android.support.annotation.NonNull;
 
+/**
+ * Auxiliary class that helps converting a bitmap into a texture.
+ */
 public class BitmapTextureAtlasSource extends BaseTextureAtlasSource
         implements IBitmapTextureAtlasSource {
 
     private final int[] mColors;
 
+    /**
+     * Constructor taking a bitmap and an area.
+     * @param pBitmap bitmap to be converted.
+     * @param pArea the part of the bitmap to be converted.
+     */
     public BitmapTextureAtlasSource(@NonNull Bitmap pBitmap, @NonNull Rect pArea) {
         super(0,0, pArea.width(), pArea.height());
         mColors = new int[mTextureWidth * mTextureHeight];
@@ -24,6 +32,10 @@ public class BitmapTextureAtlasSource extends BaseTextureAtlasSource
         }
     }
 
+    /**
+     * Constructor taking a bitmap.
+     * @param pBitmap bitmap to be converted.
+     */
     public BitmapTextureAtlasSource(@NonNull Bitmap pBitmap) {
         this(pBitmap, new Rect(0, 0, pBitmap.getWidth(), pBitmap.getHeight()));
     }

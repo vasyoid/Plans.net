@@ -15,6 +15,10 @@ import ru.spbau.mit.plansnet.constructor.Map;
 import static ru.spbau.mit.plansnet.constructor.constructorController.ConstructorActivity.ActionState.DEL;
 import static ru.spbau.mit.plansnet.constructor.constructorController.ConstructorActivity.ActionState.MOVE_OBJECT;
 
+/**
+ * The base class for all linear map objects (wall, door, window).
+ * Provides common methods related to positioning and touch event handling.
+ */
 public abstract class MapObjectLinear extends MapObjectSprite {
 
     private static final int THICKNESS = 100;
@@ -25,11 +29,18 @@ public abstract class MapObjectLinear extends MapObjectSprite {
     private float mFirstTouchX, mFirstTouchY;
     private List<RoomSprite> mRoomsToRemove;
 
+    /**
+     * Constructor.
+     * @param pTextureRegion texture of the object.
+     */
     public MapObjectLinear(@NonNull ITextureRegion pTextureRegion) {
         super(pTextureRegion, vertexBufferObjectManager);
         setHeight(THICKNESS);
     }
 
+    /**
+     * Swaps the two ends of the object.
+     */
     public void changeDirection() {
         PointF tmp = mPoint1;
         mPoint1 = mPoint2;
@@ -37,22 +48,42 @@ public abstract class MapObjectLinear extends MapObjectSprite {
         setPosition(mPoint1.x, mPoint1.y, mPoint2.x, mPoint2.y);
     }
 
+    /**
+     * First end point getter.
+     * @return first end point.
+     */
     public @NonNull PointF getPoint1() {
         return mPoint1;
     }
 
+    /**
+     * Second end point getter.
+     * @return second end point.
+     */
     public @NonNull PointF getPoint2() {
         return mPoint2;
     }
 
+    /**
+     * First end point setter.
+     * @param pPoint new first end point.
+     */
     public void setPoint1(@NonNull PointF pPoint) {
         setPosition(pPoint.x, pPoint.y, mPoint2.x, mPoint2.y);
     }
 
+    /**
+     * Second end point setter.
+     * @param pPoint new second end point.
+     */
     public void setPoint2(@NonNull PointF pPoint) {
         setPosition(mPoint1.x, mPoint1.y, pPoint.x, pPoint.y);
     }
 
+    /**
+     * Sets the object position to fit a given line.
+     * @param pLine line representing the new position.
+     */
     public void setObjectPosition(@NonNull Line pLine) {
         mPosition = Geometry.copy(pLine);
         mPoint1.set(pLine.getX1(), pLine.getY1());
@@ -68,14 +99,32 @@ public abstract class MapObjectLinear extends MapObjectSprite {
         setRotation((float)Math.toDegrees(angle));
     }
 
+    /**
+     * Sets the object position to fit given coordinates.
+     * @param pX1 first end x.
+     * @param pY1 first end y.
+     * @param pX2 second end x.
+     * @param pY2 second end y.
+     */
     public void setPosition(float pX1, float pY1, float pX2, float pY2) {
         setObjectPosition(new Line(pX1, pY1, pX2, pY2, null));
     }
 
+    /**
+     * Position getter.
+     * @return line representing the object position.
+     */
     public @NonNull Line getPosition() {
         return mPosition;
     }
 
+    /**
+     * Handles touch events on the object.
+     * @param pSceneTouchEvent event description.
+     * @param pTouchAreaLocalX local touch x.
+     * @param pTouchAreaLocalY local touch y.
+     * @return true if the touch event was accepted, false otherwise.
+     */
     @Override
     public boolean onAreaTouched(@NonNull TouchEvent pSceneTouchEvent,
                                  float pTouchAreaLocalX,

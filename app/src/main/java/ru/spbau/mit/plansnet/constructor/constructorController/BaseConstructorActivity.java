@@ -142,7 +142,7 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
     }
 
     /**
-     * Handles touch events corresponding map shifting.
+     * Handles touch events corresponding to map shifting.
      * @param pSceneTouchEvent touch event to handle.
      */
     protected void moveMap(@NonNull TouchEvent pSceneTouchEvent) {
@@ -170,15 +170,16 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
                     float mInitialTouchZoomFactor;
 
                     @Override
-                    public void onPinchZoomStarted(PinchZoomDetector pPinchZoomDetector,
-                                                   TouchEvent pSceneTouchEvent) {
+                    public void onPinchZoomStarted(@NonNull PinchZoomDetector pPinchZoomDetector,
+                                                   @NonNull TouchEvent pSceneTouchEvent) {
                         ZoomCamera mCamera = (ZoomCamera) getEngine().getCamera();
                         mInitialTouchZoomFactor = mCamera.getZoomFactor();
                     }
 
                     @Override
-                    public void onPinchZoom(PinchZoomDetector pPinchZoomDetector,
-                                            TouchEvent pTouchEvent, float pZoomFactor) {
+                    public void onPinchZoom(@NonNull PinchZoomDetector pPinchZoomDetector,
+                                            @NonNull TouchEvent pTouchEvent,
+                                            float pZoomFactor) {
                         float newZoomFactor = mInitialTouchZoomFactor * pZoomFactor;
                         ZoomCamera mCamera = (ZoomCamera) getEngine().getCamera();
                         newZoomFactor = Geometry.bringValueToBounds(newZoomFactor,
@@ -187,8 +188,9 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
                     }
 
                     @Override
-                    public void onPinchZoomFinished(PinchZoomDetector pPinchZoomDetector,
-                                                    TouchEvent pTouchEvent, float pZoomFactor) {
+                    public void onPinchZoomFinished(@NonNull PinchZoomDetector pPinchZoomDetector,
+                                                    @NonNull TouchEvent pTouchEvent,
+                                                    float pZoomFactor) {
                         onPinchZoom(pPinchZoomDetector, pTouchEvent, pZoomFactor);
                     }
                 });

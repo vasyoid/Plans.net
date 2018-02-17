@@ -41,6 +41,10 @@ public class ViewerActivity extends BaseConstructorActivity {
         }
     }
 
+    /**
+     * Sets onSceneTouchListener to a scene.
+     * @param pScene scene which the listener is set to.
+     */
     private void initScene(@NonNull Scene pScene) {
         pScene.setOnSceneTouchListener((pScene1, pSceneTouchEvent) -> {
             mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
@@ -61,6 +65,10 @@ public class ViewerActivity extends BaseConstructorActivity {
         pScene.setOnSceneTouchListenerBindingOnActionDownEnabled(true);
     }
 
+    /**
+     * Creates a new scene and initializes classes that will be placed on the scene.
+     * @return created scene.
+     */
     @Override
     protected @NonNull Scene onCreateScene() {
         final Scene scene = new Scene();
@@ -74,11 +82,19 @@ public class ViewerActivity extends BaseConstructorActivity {
         return scene;
     }
 
+    /**
+     * Layout ID getter.
+     * @return layout ID.
+     */
     @Override
     protected int getLayoutID() {
         return R.layout.activity_viewer;
     }
 
+    /**
+     * Surface view ID getter.
+     * @return surface view ID.
+     */
     @Override
     protected int getRenderSurfaceViewID() {
         return R.id.viewerView;

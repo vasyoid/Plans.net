@@ -65,6 +65,9 @@ public class ConstructorActivity extends BaseConstructorActivity {
     private StickerSprite.StickerType mCurrentSticker = EXIT;
     private List<Line> mGrid = new LinkedList<>();
 
+    /**
+     * Removes an existing grid from the current scene.
+     */
     private void removeGrid() {
         Semaphore mutex = new Semaphore(0);
         getEngine().runOnUpdateThread(() -> {
@@ -81,6 +84,11 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
+
+    /**
+     * Creates a grid on a scene.
+     * @param pScene scene where to draw the grid.
+     */
     private void createGrid(@NonNull Scene pScene) {
         for (int i = 0; i <= MAP_WIDTH; i += mGridSize) {
             Line line = new Line(i, 0, i, MAP_HEIGHT, 3,
@@ -101,6 +109,10 @@ public class ConstructorActivity extends BaseConstructorActivity {
         pScene.sortChildren();
     }
 
+    /**
+     * Sets onSceneTouchListener to a scene.
+     * @param pScene scene which the listener is set to.
+     */
     private void initScene(@NonNull Scene pScene) {
         pScene.setOnSceneTouchListener(new IOnSceneTouchListener() {
 
@@ -111,7 +123,13 @@ public class ConstructorActivity extends BaseConstructorActivity {
                     getVertexBufferObjectManager());
             private MapObjectLinear mCurrentAdded;
 
-            void createRoom(RoomSprite pTouchedRoom, TouchEvent pSceneTouchEvent) {
+            /**
+             * Creates a new room at the touched point if is does not already exist.
+             * @param pTouchedRoom if not null then no room will be created.
+             * @param pSceneTouchEvent touch event containing the touched point.
+             */
+            public void createRoom(@Nullable RoomSprite pTouchedRoom,
+                                   @NonNull TouchEvent pSceneTouchEvent) {
                 if (!pSceneTouchEvent.isActionDown() || pTouchedRoom != null) {
                     return;
                 }
@@ -122,7 +140,11 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 }
             }
 
-            private void moveWall(TouchEvent pSceneTouchEvent) {
+            /**
+             * Handles touch events corresponding to wall corner shifts.
+             * @param pSceneTouchEvent touch event to handle.
+             */
+            private void moveWall(@NonNull TouchEvent pSceneTouchEvent) {
                 switch (pSceneTouchEvent.getAction()) {
                     case TouchEvent.ACTION_DOWN:
                         PointF nearestWall = mMap.getNearestWallOrNull(mCurrentPoint);
@@ -168,7 +190,11 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 }
             }
 
-            void addSticker(TouchEvent pSceneTouchEvent) {
+            /**
+             * Adds a new sticker to the map.
+             * @param pSceneTouchEvent point where to put the sticker.
+             */
+            public void addSticker(@NonNull TouchEvent pSceneTouchEvent) {
                 if (pSceneTouchEvent.getAction() != TouchEvent.ACTION_DOWN) {
                     return;
                 }
@@ -179,7 +205,11 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 pScene.sortChildren();
             }
 
-            void addLinear(TouchEvent pSceneTouchEvent) {
+            /**
+             * Adds a new linear object (wall, door or window) to the map.
+             * @param pSceneTouchEvent point where to put the sticker.
+             */
+            public void addLinear(@NonNull TouchEvent pSceneTouchEvent) {
                 switch (pSceneTouchEvent.getAction()) {
                     case TouchEvent.ACTION_DOWN:
                         mFirstPoint.set(mCurrentPoint);
@@ -227,6 +257,14 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 }
             }
 
+            /**
+             *
+             * @param pScene The scene that the touch event has been dispatched to.
+             * @param pSceneTouchEvent The touch event
+             *                         object containing full information about the event.
+             *
+             * @return true if the touch was accepted, false otherwise.
+             */
             @Override
             public boolean onSceneTouchEvent(final Scene pScene, TouchEvent pSceneTouchEvent) {
                 RoomSprite room = null;
@@ -286,6 +324,10 @@ public class ConstructorActivity extends BaseConstructorActivity {
         pScene.setOnSceneTouchListenerBindingOnActionDownEnabled(true);
     }
 
+    /**
+     * Creates a new scene and initializes classes that will be placed on the scene.
+     * @return created scene.
+     */
     @Override
     protected @NonNull Scene onCreateScene() {
         final Scene scene = new Scene();
@@ -315,16 +357,27 @@ public class ConstructorActivity extends BaseConstructorActivity {
         super.onBackPressed();
     }
 
+    /**
+     * Layout ID getter.
+     * @return layout ID.
+     */
     @Override
     protected int getLayoutID() {
         return R.layout.activity_constructor;
     }
 
+    /**
+     * Surface view ID getter.
+     * @return surface view ID.
+     */
     @Override
     protected int getRenderSurfaceViewID() {
         return R.id.constructorView;
     }
 
+    /**
+     * hides the screen keyboard after a user finishes typing.
+     */
     private void hideKeyboard() {
         InputMethodManager inputManager = (InputMethodManager)
                 getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -337,6 +390,10 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
+    /**
+     * Shows room information (name, description).
+     * @param pRoom room which information will be shown.
+     */
     public void showParams(@NonNull RoomSprite pRoom) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
@@ -368,6 +425,10 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
+    /**
+     * Sets current sticker depending on a button pressed by a user.
+     * @param pView button pressed by the user.
+     */
     public void setSticker(@NonNull View pView) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
@@ -407,6 +468,10 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
+    /**
+     * Sets current item (wall, door, window or sticker) depending on a button pressed by a user.
+     * @param pView button pressed by the user.
+     */
     public void setItem(@NonNull View pView) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
@@ -439,6 +504,10 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
+    /**
+     * Sets current touch state (add, remove, etc) depending on a button pressed by a user.
+     * @param pView button pressed by user.
+     */
     public void setState(@NonNull View pView) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
@@ -480,18 +549,28 @@ public class ConstructorActivity extends BaseConstructorActivity {
         mMap.setActionState(mState);
     }
 
+    /**
+     * Disables all interface elements and darkens them.
+     */
     private void disableAll() {
         View darkener = findViewById(R.id.darkenerRect);
         darkener.animate().alpha(0.5f);
         findViewById(R.id.constructorView).setEnabled(false);
     }
 
+    /**
+     * Enables all interface elements.
+     */
     private void enableAll() {
         View darkener = findViewById(R.id.darkenerRect);
         darkener.animate().alpha(0);
         findViewById(R.id.constructorView).setEnabled(true);
     }
 
+    /**
+     * Removes all elements from the map.
+     * @param pView button pressed.
+     */
     public void clearMap(@NonNull View pView) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
@@ -520,6 +599,10 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
+    /**
+     * @param pUri uri for the activity.
+     * @return A bitmap of the chosen image.
+     */
     private @Nullable Bitmap readImage(@NonNull Uri pUri) {
         BitmapFactory.Options options;
         try (InputStream imageStream = getContentResolver().openInputStream(pUri)) {
@@ -539,6 +622,12 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
+    /**
+     * Gets the image chosen by a user and sets it as a background of the map.
+     * @param pRequestCode activity request code.
+     * @param pResultCode activity result code.
+     * @param pData the
+     */
     @Override
     protected void onActivityResult(int pRequestCode, int pResultCode, @NonNull Intent pData) {
         switch (pRequestCode) {
@@ -560,6 +649,10 @@ public class ConstructorActivity extends BaseConstructorActivity {
 
     }
 
+    /**
+     * Calls a system activity to choose an image file from the device storage.,
+     * @param pView button pressed
+     */
     public void setBackground(@NonNull View pView) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
@@ -574,6 +667,10 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
+    /**
+     * Shows an interface to change the size of the grid.
+     * @param pView button pressed.
+     */
     public void setGridSize(@NonNull View pView) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
@@ -614,10 +711,16 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
+    /**
+     * State that determines how to handle touch events.
+     */
     public enum ActionState {
         ADD, DEL, MOVE_MAP, MOVE_OBJECT, CREATE_ROOM, SHOW_PARAMS
     }
 
+    /**
+     * Current item (object) that will be added to the map next.
+     */
     private enum MapItem {
         WALL, DOOR, WINDOW, STICKER
     }
