@@ -1,4 +1,4 @@
-package ru.spbau.mit.plansnet.constructor;
+package ru.spbau.mit.plansnet.constructor.constructorController;
 
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +7,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.net.Uri;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -28,36 +30,44 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.entity.scene.Scene;
 
 import ru.spbau.mit.plansnet.R;
+import ru.spbau.mit.plansnet.constructor.objects.DoorSprite;
+import ru.spbau.mit.plansnet.constructor.Geometry;
+import ru.spbau.mit.plansnet.constructor.Map;
+import ru.spbau.mit.plansnet.constructor.objects.MapObjectLinear;
+import ru.spbau.mit.plansnet.constructor.objects.RoomSprite;
+import ru.spbau.mit.plansnet.constructor.objects.StickerSprite;
+import ru.spbau.mit.plansnet.constructor.objects.WallSprite;
+import ru.spbau.mit.plansnet.constructor.objects.WindowSprite;
 
 import static android.graphics.Color.BLACK;
 import static android.graphics.Color.GREEN;
 import static android.graphics.Color.RED;
 import static android.graphics.Color.TRANSPARENT;
 
-import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.EXIT;
-import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.FIRE;
-import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.LIFT;
-import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.SMOKE;
-import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.STAIRS;
-import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.VOLTAGE;
-import static ru.spbau.mit.plansnet.constructor.StickerSprite.StickerType.WC;
+import static ru.spbau.mit.plansnet.constructor.objects.StickerSprite.StickerType.EXIT;
+import static ru.spbau.mit.plansnet.constructor.objects.StickerSprite.StickerType.FIRE;
+import static ru.spbau.mit.plansnet.constructor.objects.StickerSprite.StickerType.LIFT;
+import static ru.spbau.mit.plansnet.constructor.objects.StickerSprite.StickerType.SMOKE;
+import static ru.spbau.mit.plansnet.constructor.objects.StickerSprite.StickerType.STAIRS;
+import static ru.spbau.mit.plansnet.constructor.objects.StickerSprite.StickerType.VOLTAGE;
+import static ru.spbau.mit.plansnet.constructor.objects.StickerSprite.StickerType.WC;
 
 public class ConstructorActivity extends BaseConstructorActivity {
 
     private static final int PICK_IMAGE_TOKEN = 42;
 
-    private ActionState state = ActionState.ADD;
-    private MapItem item = MapItem.WALL;
-    private StickerSprite.StickerType currentSticker = EXIT;
-    private List<Line> grid = new LinkedList<>();
+    private ActionState mState = ActionState.ADD;
+    private MapItem mItem = MapItem.WALL;
+    private StickerSprite.StickerType mCurrentSticker = EXIT;
+    private List<Line> mGrid = new LinkedList<>();
 
     private void removeGrid() {
         Semaphore mutex = new Semaphore(0);
         getEngine().runOnUpdateThread(() -> {
-            for (Line l : grid) {
+            for (Line l : mGrid) {
                 l.detachSelf();
             }
-            grid.clear();
+            mGrid.clear();
             mutex.release();
         });
         try {
@@ -67,41 +77,41 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
-    private void createGrid(Scene pScene) {
-        for (int i = 0; i <= MAP_WIDTH; i += gridSize) {
+    private void createGrid(@NonNull Scene pScene) {
+        for (int i = 0; i <= MAP_WIDTH; i += mGridSize) {
             Line line = new Line(i, 0, i, MAP_HEIGHT, 3,
                     getVertexBufferObjectManager());
             line.setColor(0.7f, 0.7f, 0.7f);
             line.setZIndex(-1);
-            grid.add(line);
+            mGrid.add(line);
             pScene.attachChild(line);
         }
-        for (int i = 0; i <= MAP_HEIGHT; i += gridSize) {
+        for (int i = 0; i <= MAP_HEIGHT; i += mGridSize) {
             Line line = new Line(0, i, MAP_WIDTH, i, 3,
                     getVertexBufferObjectManager());
             line.setColor(0.7f, 0.7f, 0.7f);
             line.setZIndex(-1);
-            grid.add(line);
+            mGrid.add(line);
             pScene.attachChild(line);
         }
         pScene.sortChildren();
     }
 
-    private void initScene(Scene pScene) {
+    private void initScene(@NonNull Scene pScene) {
         pScene.setOnSceneTouchListener(new IOnSceneTouchListener() {
 
-            private PointF firstPoint = new PointF();
-            private PointF currentPoint = new PointF();
-            private PointF previousPoint = new PointF();
-            private Line currentLine = new Line(0, 0, 0, 0,
+            private PointF mFirstPoint = new PointF();
+            private PointF mCurrentPoint = new PointF();
+            private PointF mPreviousPoint = new PointF();
+            private Line mCurrentLine = new Line(0, 0, 0, 0,
                     getVertexBufferObjectManager());
-            private MapObjectLinear currentAdded;
+            private MapObjectLinear mCurrentAdded;
 
             void createRoom(RoomSprite pTouchedRoom, TouchEvent pSceneTouchEvent) {
                 if (!pSceneTouchEvent.isActionDown() || pTouchedRoom != null) {
                     return;
                 }
-                RoomSprite currentRoom = map.createRoom(pSceneTouchEvent.getX(),
+                RoomSprite currentRoom = mMap.createRoomOrNull(pSceneTouchEvent.getX(),
                         pSceneTouchEvent.getY(), pScene);
                 if (currentRoom != null) {
                     showParams(currentRoom);
@@ -111,42 +121,42 @@ public class ConstructorActivity extends BaseConstructorActivity {
             private void moveWall(TouchEvent pSceneTouchEvent) {
                 switch (pSceneTouchEvent.getAction()) {
                     case TouchEvent.ACTION_DOWN:
-                        PointF nearestWall = map.getNearestWallOrNull(currentPoint);
+                        PointF nearestWall = mMap.getNearestWallOrNull(mCurrentPoint);
                         if (nearestWall == null) {
-                            currentPoint.set(-1, -1);
+                            mCurrentPoint.set(-1, -1);
                         } else {
-                            currentPoint.set(nearestWall);
+                            mCurrentPoint.set(nearestWall);
                         }
-                        firstPoint.set(currentPoint);
-                        previousPoint.set(currentPoint);
-                        map.setScaleByPoint(currentPoint, 1.0f, 1.4f);
+                        mFirstPoint.set(mCurrentPoint);
+                        mPreviousPoint.set(mCurrentPoint);
+                        mMap.setScaleByPoint(mCurrentPoint, 1.0f, 1.4f);
                         break;
                     case TouchEvent.ACTION_MOVE:
-                        if (previousPoint.equals(currentPoint)) {
+                        if (mPreviousPoint.equals(mCurrentPoint)) {
                             break;
                         }
-                        map.moveObjects(firstPoint, currentPoint);
+                        mMap.moveObjects(mFirstPoint, mCurrentPoint);
                         try {
-                            map.updateRooms(pScene);
+                            mMap.updateRooms(pScene);
                         } catch (com.earcutj.exception.EarcutException ignored) {}
-                        previousPoint.set(currentPoint);
+                        mPreviousPoint.set(mCurrentPoint);
                         break;
                     case TouchEvent.ACTION_UP:
-                        map.detachRemoved(getEngine());
-                        if (firstPoint == null) {
+                        mMap.detachRemoved(getEngine());
+                        if (mFirstPoint == null) {
                             break;
                         }
-                        map.setScaleByPoint(firstPoint, 1.0f, 1.0f);
-                        if (firstPoint.equals(currentPoint)) {
+                        mMap.setScaleByPoint(mFirstPoint, 1.0f, 1.0f);
+                        if (mFirstPoint.equals(mCurrentPoint)) {
                             break;
                         }
-                        currentPoint.set(Math.round(currentPoint.x / gridSize) * gridSize,
-                                Math.round(currentPoint.y / gridSize) * gridSize);
-                        if (map.hasIntersections(firstPoint)) {
-                            map.moveObjects(firstPoint, firstPoint);
-                            map.updateRooms(pScene);
+                        mCurrentPoint.set(Math.round(mCurrentPoint.x / mGridSize) * mGridSize,
+                                Math.round(mCurrentPoint.y / mGridSize) * mGridSize);
+                        if (mMap.hasIntersections(mFirstPoint)) {
+                            mMap.moveObjects(mFirstPoint, mFirstPoint);
+                            mMap.updateRooms(pScene);
                         } else {
-                            map.updateObjects(firstPoint);
+                            mMap.updateObjects(mFirstPoint);
                         }
                         break;
                     default:
@@ -158,8 +168,8 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 if (pSceneTouchEvent.getAction() != TouchEvent.ACTION_DOWN) {
                     return;
                 }
-                StickerSprite sticker = new StickerSprite(currentSticker, currentPoint);
-                map.addObject(sticker);
+                StickerSprite sticker = new StickerSprite(mCurrentSticker, mCurrentPoint);
+                mMap.addObject(sticker);
                 pScene.attachChild(sticker);
                 pScene.registerTouchArea(sticker);
                 pScene.sortChildren();
@@ -168,45 +178,45 @@ public class ConstructorActivity extends BaseConstructorActivity {
             void addLinear(TouchEvent pSceneTouchEvent) {
                 switch (pSceneTouchEvent.getAction()) {
                     case TouchEvent.ACTION_DOWN:
-                        firstPoint.set(currentPoint);
-                        previousPoint.set(currentPoint);
-                        currentLine.setPosition(firstPoint.x, firstPoint.y,
-                                currentPoint.x, currentPoint.y);
-                        switch (item) {
+                        mFirstPoint.set(mCurrentPoint);
+                        mPreviousPoint.set(mCurrentPoint);
+                        mCurrentLine.setPosition(mFirstPoint.x, mFirstPoint.y,
+                                mCurrentPoint.x, mCurrentPoint.y);
+                        switch (mItem) {
                             case WALL:
-                                currentAdded = new WallSprite();
+                                mCurrentAdded = new WallSprite();
                                 break;
                             case DOOR:
-                                currentAdded = new DoorSprite();
+                                mCurrentAdded = new DoorSprite();
                                 break;
                             case WINDOW:
-                                currentAdded = new WindowSprite();
+                                mCurrentAdded = new WindowSprite();
                                 break;
                             default:
                                 Log.e("VASYOID", "invalid item in addLinear function");
                         }
-                        currentAdded.setPosition(currentLine);
-                        pScene.attachChild(currentAdded);
-                        pScene.registerTouchArea(currentAdded);
+                        mCurrentAdded.setmPosition(mCurrentLine);
+                        pScene.attachChild(mCurrentAdded);
+                        pScene.registerTouchArea(mCurrentAdded);
                         pScene.sortChildren();
                         break;
                     case TouchEvent.ACTION_MOVE:
-                        currentLine.setPosition(firstPoint.x, firstPoint.y,
-                                currentPoint.x, currentPoint.y);
-                        currentAdded.setPosition(currentLine);
-                        previousPoint.set(currentPoint);
+                        mCurrentLine.setPosition(mFirstPoint.x, mFirstPoint.y,
+                                mCurrentPoint.x, mCurrentPoint.y);
+                        mCurrentAdded.setmPosition(mCurrentLine);
+                        mPreviousPoint.set(mCurrentPoint);
                         break;
                     case TouchEvent.ACTION_UP:
-                        if (!currentPoint.equals(firstPoint) &&
-                                !map.hasIntersections(currentAdded)) {
-                            map.addObject(currentAdded);
+                        if (!mCurrentPoint.equals(mFirstPoint) &&
+                                !mMap.hasIntersections(mCurrentAdded)) {
+                            mMap.addObject(mCurrentAdded);
                             pScene.sortChildren();
-                            map.detachRemoved(getEngine());
+                            mMap.detachRemoved(getEngine());
                         } else {
-                            pScene.unregisterTouchArea(currentAdded);
-                            pScene.detachChild(currentAdded);
+                            pScene.unregisterTouchArea(mCurrentAdded);
+                            pScene.detachChild(mCurrentAdded);
                         }
-                        currentLine.setPosition(0, 0, 0, 0);
+                        mCurrentLine.setPosition(0, 0, 0, 0);
                         break;
                     default:
                         break;
@@ -217,30 +227,30 @@ public class ConstructorActivity extends BaseConstructorActivity {
             public boolean onSceneTouchEvent(final Scene pScene, TouchEvent pSceneTouchEvent) {
                 RoomSprite room = null;
                 if (pSceneTouchEvent.isActionDown()) {
-                    room = map.getRoomTouched(pSceneTouchEvent);
+                    room = mMap.getRoomTouchedOrNull(pSceneTouchEvent);
                 }
                 float currentX = pSceneTouchEvent.getX();
                 float currentY = pSceneTouchEvent.getY();
-                if (state == ActionState.MOVE_OBJECT && !pSceneTouchEvent.isActionMove()) {
+                if (mState == ActionState.MOVE_OBJECT && !pSceneTouchEvent.isActionMove()) {
                     currentX = Math.round(currentX / GRID_SIZE_MIN) * GRID_SIZE_MIN;
                     currentY = Math.round(currentY / GRID_SIZE_MIN) * GRID_SIZE_MIN;
                 } else {
-                    currentX = Math.round(currentX / gridSize) * gridSize;
-                    currentY = Math.round(currentY / gridSize) * gridSize;
+                    currentX = Math.round(currentX / mGridSize) * mGridSize;
+                    currentY = Math.round(currentY / mGridSize) * mGridSize;
                 }
                 currentX = Geometry.bringValueToBounds(currentX, 0, MAP_WIDTH);
                 currentY = Geometry.bringValueToBounds(currentY, 0, MAP_HEIGHT);
                 currentY = Math.max(Math.min(currentY, MAP_HEIGHT), 0);
-                currentPoint.set(currentX, currentY);
-                switch (state) {
+                mCurrentPoint.set(currentX, currentY);
+                switch (mState) {
                     case MOVE_MAP:
                         moveMap(pSceneTouchEvent);
                         break;
                     case DEL:
                         if (room != null) {
-                            map.removeRoom(room);
+                            mMap.removeRoom(room);
                         }
-                        map.detachRemoved(mEngine);
+                        mMap.detachRemoved(mEngine);
                         break;
                     case SHOW_PARAMS:
                         if (room == null) {
@@ -255,7 +265,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
                         moveWall(pSceneTouchEvent);
                         break;
                     case ADD:
-                        if (item == MapItem.STICKER) {
+                        if (mItem == MapItem.STICKER) {
                             addSticker(pSceneTouchEvent);
                         } else {
                             addLinear(pSceneTouchEvent);
@@ -273,7 +283,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     @Override
-    protected Scene onCreateScene() {
+    protected @NonNull Scene onCreateScene() {
         final Scene scene = new Scene();
         scene.setBackground(new Background(0.95f, 0.95f, 1f));
         createGrid(scene);
@@ -288,11 +298,11 @@ public class ConstructorActivity extends BaseConstructorActivity {
 
     @Override
     public void onBackPressed() {
-        if (toOpenMap == null) {
+        if (mToOpenMap == null) {
             Log.e("VASYOID", "map is null!");
         } else {
             Intent intent = new Intent();
-            intent.putExtra("toSaveMap", toOpenMap.addObjectsFromMap(map));
+            intent.putExtra("toSaveMap", mToOpenMap.addObjectsFromMap(mMap));
             setResult(1, intent);
         }
         super.onBackPressed();
@@ -320,7 +330,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
-    public void showParams(RoomSprite pRoom) {
+    public void showParams(@NonNull RoomSprite pRoom) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
         }
@@ -331,14 +341,14 @@ public class ConstructorActivity extends BaseConstructorActivity {
             paramsView.setVisibility(View.VISIBLE);
             EditText roomName = findViewById(R.id.roomName);
             EditText roomDescription = findViewById(R.id.roomDescription);
-            roomName.setText(pRoom.getTitle());
-            roomDescription.setText(pRoom.getDescription());
+            roomName.setText(pRoom.getmTitle());
+            roomDescription.setText(pRoom.getmDescription());
             paramsView.findViewById(R.id.roomParamsOk).setOnClickListener(v1 -> {
                 hideKeyboard();
                 String title = roomName.getText().toString();
                 String description = roomDescription.getText().toString();
-                pRoom.setTitle(title);
-                pRoom.setDescription(description);
+                pRoom.setmTitle(title);
+                pRoom.setmDescription(description);
                 paramsView.setVisibility(View.GONE);
                 enableAll();
             });
@@ -351,7 +361,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
-    public void setSticker(View v) {
+    public void setSticker(@NonNull View pView) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
         }
@@ -362,39 +372,39 @@ public class ConstructorActivity extends BaseConstructorActivity {
         ((ImageView) findViewById(R.id.imageFire)).setColorFilter(TRANSPARENT);
         ((ImageView) findViewById(R.id.imageSmoke)).setColorFilter(TRANSPARENT);
         ((ImageView) findViewById(R.id.imageVoltage)).setColorFilter(TRANSPARENT);
-        ((ImageView) v).setColorFilter(GREEN, PorterDuff.Mode.ADD);
-        switch (v.getId()) {
+        ((ImageView) pView).setColorFilter(GREEN, PorterDuff.Mode.ADD);
+        switch (pView.getId()) {
             case R.id.imageExit:
-                currentSticker = EXIT;
+                mCurrentSticker = EXIT;
                 break;
             case R.id.imageLift:
-                currentSticker = LIFT;
+                mCurrentSticker = LIFT;
                 break;
             case R.id.imageStairs:
-                currentSticker = STAIRS;
+                mCurrentSticker = STAIRS;
                 break;
             case R.id.imageWC:
-                currentSticker = WC;
+                mCurrentSticker = WC;
                 break;
             case R.id.imageFire:
-                currentSticker = FIRE;
+                mCurrentSticker = FIRE;
                 break;
             case R.id.imageSmoke:
-                currentSticker = SMOKE;
+                mCurrentSticker = SMOKE;
                 break;
             case R.id.imageVoltage:
-                currentSticker = VOLTAGE;
+                mCurrentSticker = VOLTAGE;
                 break;
             default:
                 Log.e("VASYOID", "wrong view id in setSticker function");
         }
     }
 
-    public void setItem(View v) {
+    public void setItem(@NonNull View pView) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
         }
-        if (v.getId() != R.id.buttonSticker) {
+        if (pView.getId() != R.id.buttonSticker) {
             findViewById(R.id.stickersLayout).setVisibility(View.GONE);
         } else {
             findViewById(R.id.stickersLayout).setVisibility(View.VISIBLE);
@@ -403,30 +413,30 @@ public class ConstructorActivity extends BaseConstructorActivity {
         ((Button) findViewById(R.id.buttonWall)).setTextColor(BLACK);
         ((Button) findViewById(R.id.buttonWindow)).setTextColor(BLACK);
         ((Button) findViewById(R.id.buttonSticker)).setTextColor(BLACK);
-        ((Button) v).setTextColor(RED);
-        switch (v.getId()) {
+        ((Button) pView).setTextColor(RED);
+        switch (pView.getId()) {
             case R.id.buttonWall:
-                item = MapItem.WALL;
+                mItem = MapItem.WALL;
                 break;
             case R.id.buttonDoor:
-                item = MapItem.DOOR;
+                mItem = MapItem.DOOR;
                 break;
             case R.id.buttonWindow:
-                item = MapItem.WINDOW;
+                mItem = MapItem.WINDOW;
                 break;
             case R.id.buttonSticker:
-                item = MapItem.STICKER;
+                mItem = MapItem.STICKER;
                 break;
             default:
                 Log.e("VASYOID", "wrong view id setItem function");
         }
     }
 
-    public void setState(View v) {
+    public void setState(@NonNull View pView) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
         }
-        if (v.getId() != R.id.buttonAdd) {
+        if (pView.getId() != R.id.buttonAdd) {
             findViewById(R.id.itemsLayout).setVisibility(View.GONE);
         } else {
             findViewById(R.id.itemsLayout).setVisibility(View.VISIBLE);
@@ -437,30 +447,30 @@ public class ConstructorActivity extends BaseConstructorActivity {
         ((Button) findViewById(R.id.buttonMoveWall)).setTextColor(BLACK);
         ((Button) findViewById(R.id.buttonAdd)).setTextColor(BLACK);
         ((Button) findViewById(R.id.buttonParams)).setTextColor(BLACK);
-        ((Button) v).setTextColor(RED);
-        switch (v.getId()) {
+        ((Button) pView).setTextColor(RED);
+        switch (pView.getId()) {
             case R.id.buttonAdd:
-                state = ActionState.ADD;
+                mState = ActionState.ADD;
                 break;
             case R.id.buttonDel:
-                state = ActionState.DEL;
+                mState = ActionState.DEL;
                 break;
             case R.id.buttonMove:
-                state = ActionState.MOVE_MAP;
+                mState = ActionState.MOVE_MAP;
                 break;
             case R.id.buttonMoveWall:
-                state = ActionState.MOVE_OBJECT;
+                mState = ActionState.MOVE_OBJECT;
                 break;
             case R.id.buttonColor:
-                state = ActionState.CREATE_ROOM;
+                mState = ActionState.CREATE_ROOM;
                 break;
             case R.id.buttonParams:
-                state = ActionState.SHOW_PARAMS;
+                mState = ActionState.SHOW_PARAMS;
                 break;
             default:
                 Log.e("VASYOID", "wrong view id in setState function");
         }
-        map.setActionState(state);
+        mMap.setActionState(mState);
     }
 
     private void disableAll() {
@@ -475,7 +485,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
         findViewById(R.id.constructorView).setEnabled(true);
     }
 
-    public void clearMap(View v) {
+    public void clearMap(@NonNull View pView) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
         }
@@ -485,8 +495,8 @@ public class ConstructorActivity extends BaseConstructorActivity {
             View confirmClearView = findViewById(R.id.confirmClearView);
             confirmClearView.setVisibility(View.VISIBLE);
             confirmClearView.findViewById(R.id.confirmClearOk).setOnClickListener(v1 -> {
-                map.clear();
-                map.detachRemoved(getEngine());
+                mMap.clear();
+                mMap.detachRemoved(getEngine());
                 confirmClearView.setVisibility(View.GONE);
                 enableAll();
             });
@@ -503,7 +513,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
         }
     }
 
-    private Bitmap readImage(Uri pUri) {
+    private @Nullable Bitmap readImage(@NonNull Uri pUri) {
         BitmapFactory.Options options;
         try (InputStream imageStream = getContentResolver().openInputStream(pUri)) {
             options = new BitmapFactory.Options();
@@ -523,13 +533,13 @@ public class ConstructorActivity extends BaseConstructorActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
+    protected void onActivityResult(int pRequestCode, int pResultCode, @NonNull Intent pData) {
+        switch (pRequestCode) {
             case PICK_IMAGE_TOKEN:
-                if (resultCode != RESULT_OK) {
+                if (pResultCode != RESULT_OK) {
                     break;
                 }
-                Uri imageUri = data.getData();
+                Uri imageUri = pData.getData();
                 if (imageUri == null) {
                     break;
                 }
@@ -538,26 +548,26 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 if (image == null) {
                     break;
                 }
-                map.setBackground(image, getEngine());
+                mMap.setBackground(image, getEngine());
         }
 
     }
 
-    public void setBackground(View view) {
+    public void setBackground(@NonNull View pView) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
         }
-        if (!map.isBackgroundSet()) {
+        if (!mMap.isBackgroundSet()) {
             Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
             photoPickerIntent.setType("image/*");
             startActivityForResult(photoPickerIntent, PICK_IMAGE_TOKEN);
         } else {
-            ((Button) view).setText(R.string.addBkgnd);
-            map.removeBackground(getEngine());
+            ((Button) pView).setText(R.string.addBkgnd);
+            mMap.removeBackground(getEngine());
         }
     }
 
-    public void setGridSize(View view) {
+    public void setGridSize(@NonNull View pView) {
         if (!findViewById(R.id.constructorView).isEnabled()) {
             return;
         }
@@ -571,8 +581,8 @@ public class ConstructorActivity extends BaseConstructorActivity {
 
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    gridSize = GRID_SIZE_MIN << progress;
-                    Map.setGridSize(gridSize);
+                    mGridSize = GRID_SIZE_MIN << progress;
+                    Map.setGridSize(mGridSize);
                     removeGrid();
                     createGrid(getEngine().getScene());
                 }

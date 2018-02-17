@@ -45,8 +45,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 
-import ru.spbau.mit.plansnet.constructor.ConstructorActivity;
-import ru.spbau.mit.plansnet.constructor.ViewerActivity;
+import ru.spbau.mit.plansnet.constructor.constructorController.ConstructorActivity;
+import ru.spbau.mit.plansnet.constructor.constructorController.ViewerActivity;
 import ru.spbau.mit.plansnet.data.AbstractNamedData;
 import ru.spbau.mit.plansnet.data.Building;
 import ru.spbau.mit.plansnet.data.FloorMap;

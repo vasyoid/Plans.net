@@ -1,5 +1,7 @@
-package ru.spbau.mit.plansnet.constructor;
+package ru.spbau.mit.plansnet.constructor.objects;
 
+
+import android.support.annotation.NonNull;
 
 import org.andengine.opengl.texture.region.ITextureRegion;
 
@@ -13,13 +15,13 @@ public class WindowSprite extends MapObjectLinear {
         super(textureRegion);
     }
 
-    public WindowSprite(Window pWindow) {
+    public WindowSprite(@NonNull Window pWindow) {
         super(textureRegion);
         setPosition(pWindow.getX(), pWindow.getY(), pWindow.getX2(), pWindow.getY2());
     }
 
-    public static void setTexture(ITextureRegion texture) {
-        textureRegion = texture;
+    public static void setTexture(@NonNull ITextureRegion pTexture) {
+        textureRegion = pTexture;
     }
 
 }

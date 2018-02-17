@@ -7,12 +7,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import ru.spbau.mit.plansnet.constructor.DoorSprite;
-import ru.spbau.mit.plansnet.constructor.MapObjectSprite;
-import ru.spbau.mit.plansnet.constructor.RoomSprite;
-import ru.spbau.mit.plansnet.constructor.StickerSprite;
-import ru.spbau.mit.plansnet.constructor.WallSprite;
-import ru.spbau.mit.plansnet.constructor.WindowSprite;
+import ru.spbau.mit.plansnet.constructor.objects.DoorSprite;
+import ru.spbau.mit.plansnet.constructor.objects.MapObjectSprite;
+import ru.spbau.mit.plansnet.constructor.objects.RoomSprite;
+import ru.spbau.mit.plansnet.constructor.objects.StickerSprite;
+import ru.spbau.mit.plansnet.constructor.objects.WallSprite;
+import ru.spbau.mit.plansnet.constructor.objects.WindowSprite;
 import ru.spbau.mit.plansnet.data.objects.Door;
 import ru.spbau.mit.plansnet.data.objects.MapObject;
 import ru.spbau.mit.plansnet.data.objects.Room;
@@ -53,8 +53,8 @@ public class FloorMap extends AbstractNamedData implements Serializable {
     }
 
     public FloorMap addObjectsFromMap(@NonNull final ru.spbau.mit.plansnet.constructor.Map map) {
-        List<MapObjectSprite> objList = map.getObjects();
-        List<RoomSprite> roomList = map.getRooms();
+        List<MapObjectSprite> objList = map.getmObjects();
+        List<RoomSprite> roomList = map.getmRooms();
 
         FloorMap newMap = new FloorMap(owner, groupName, buildingName, getName());
         List<MapObject> objects = newMap.objects;
@@ -71,7 +71,7 @@ public class FloorMap extends AbstractNamedData implements Serializable {
                 objects.add(new Sticker((StickerSprite) obj));
             }
         }
-        for (ru.spbau.mit.plansnet.constructor.RoomSprite room : roomList) {
+        for (RoomSprite room : roomList) {
             objects.add(new Room(room));
         }
         return newMap;

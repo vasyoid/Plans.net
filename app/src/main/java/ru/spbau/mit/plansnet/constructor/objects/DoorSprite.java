@@ -1,4 +1,6 @@
-package ru.spbau.mit.plansnet.constructor;
+package ru.spbau.mit.plansnet.constructor.objects;
+
+import android.support.annotation.NonNull;
 
 import org.andengine.opengl.texture.region.ITextureRegion;
 
@@ -12,13 +14,13 @@ public class DoorSprite extends MapObjectLinear {
         super(textureRegion);
     }
 
-    public DoorSprite(Door pDoor) {
+    public DoorSprite(@NonNull Door pDoor) {
         super(textureRegion);
         setPosition(pDoor.getX(), pDoor.getY(), pDoor.getX2(), pDoor.getY2());
     }
 
-    public static void setTexture(ITextureRegion texture) {
-        textureRegion = texture;
+    public static void setTexture(@NonNull ITextureRegion pTexture) {
+        textureRegion = pTexture;
     }
 
 }

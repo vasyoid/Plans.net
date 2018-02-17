@@ -4,7 +4,7 @@ import android.support.annotation.NonNull;
 
 import java.io.Serializable;
 
-import ru.spbau.mit.plansnet.constructor.MapObjectLinear;
+import ru.spbau.mit.plansnet.constructor.objects.MapObjectLinear;
 
 public class Window extends LinearObject implements Serializable {
     public Window(@NonNull final MapObjectLinear obj) {

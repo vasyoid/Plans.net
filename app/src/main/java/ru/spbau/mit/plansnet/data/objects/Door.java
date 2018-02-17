@@ -4,7 +4,7 @@ import android.support.annotation.NonNull;
 
 import java.io.Serializable;
 
-import ru.spbau.mit.plansnet.constructor.MapObjectLinear;
+import ru.spbau.mit.plansnet.constructor.objects.MapObjectLinear;
 
 /**
  * Created by kostya55516 on 26.11.17.

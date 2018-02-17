@@ -1,4 +1,6 @@
-package ru.spbau.mit.plansnet.constructor;
+package ru.spbau.mit.plansnet.constructor.objects;
+
+import android.support.annotation.NonNull;
 
 import org.andengine.opengl.texture.region.ITextureRegion;
 
@@ -12,13 +14,13 @@ public class WallSprite extends MapObjectLinear {
         super(textureRegion);
     }
 
-    public WallSprite(Wall pWall) {
+    public WallSprite(@NonNull Wall pWall) {
         super(textureRegion);
         setPosition(pWall.getX(), pWall.getY(), pWall.getX2(), pWall.getY2());
     }
 
-    public static void setTexture(ITextureRegion texture) {
-        textureRegion = texture;
+    public static void setTexture(@NonNull ITextureRegion pTexture) {
+        textureRegion = pTexture;
     }
 
 }

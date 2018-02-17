@@ -1,9 +1,10 @@
-package ru.spbau.mit.plansnet.constructor;
+package ru.spbau.mit.plansnet.constructor.constructorController;
 
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -28,21 +29,29 @@ import org.andengine.util.debug.Debug;
 
 import java.io.IOException;
 
+import ru.spbau.mit.plansnet.constructor.objects.DoorSprite;
+import ru.spbau.mit.plansnet.constructor.Geometry;
+import ru.spbau.mit.plansnet.constructor.Map;
+import ru.spbau.mit.plansnet.constructor.objects.MapObjectSprite;
+import ru.spbau.mit.plansnet.constructor.objects.RoomSprite;
+import ru.spbau.mit.plansnet.constructor.objects.StickerSprite;
+import ru.spbau.mit.plansnet.constructor.objects.WallSprite;
+import ru.spbau.mit.plansnet.constructor.objects.WindowSprite;
 import ru.spbau.mit.plansnet.data.FloorMap;
 
 public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
 
-    protected final static int MAP_WIDTH = 4096;
-    protected final static int MAP_HEIGHT = 2560;
-    protected final static int GRID_SIZE_MIN = 64;
+    public final static int MAP_WIDTH = 4096;
+    public final static int MAP_HEIGHT = 2560;
+    public final static int GRID_SIZE_MIN = 64;
 
-    protected int cameraWidth = 0;
-    protected int cameraHeight = 0;
-    protected float cameraZoomFactor = 1;
-    protected int gridSize = 256;
+    protected int mCameraWidth = 0;
+    protected int mCameraHeight = 0;
+    protected float mCameraZoomFactor = 1;
+    protected int mGridSize = 256;
 
-    protected Map map;
-    protected FloorMap toOpenMap;
+    protected Map mMap;
+    protected FloorMap mToOpenMap;
     protected PinchZoomDetector mPinchZoomDetector;
 
     protected void setCameraResolution() {
@@ -53,27 +62,27 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
         Display display = wm.getDefaultDisplay();
         DisplayMetrics metrics = new DisplayMetrics();
         display.getMetrics(metrics);
-        cameraWidth = metrics.widthPixels;
-        cameraHeight = metrics.heightPixels;
+        mCameraWidth = metrics.widthPixels;
+        mCameraHeight = metrics.heightPixels;
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate(@NonNull Bundle pSavedInstanceState) {
+        super.onCreate(pSavedInstanceState);
         Intent intent = getIntent();
-        toOpenMap = (FloorMap) intent.getSerializableExtra("currentMap");
+        mToOpenMap = (FloorMap) intent.getSerializableExtra("currentMap");
     }
 
     @Override
-    public EngineOptions onCreateEngineOptions() {
+    public @NonNull EngineOptions onCreateEngineOptions() {
         setCameraResolution();
-        final ZoomCamera camera = new ZoomCamera(0, 0, cameraWidth, cameraHeight);
+        final ZoomCamera camera = new ZoomCamera(0, 0, mCameraWidth, mCameraHeight);
         camera.setCenter(MAP_WIDTH / 2, MAP_HEIGHT / 2);
-        camera.setBounds(-gridSize, -gridSize,
-                MAP_WIDTH + gridSize, MAP_HEIGHT + gridSize);
+        camera.setBounds(-mGridSize, -mGridSize,
+                MAP_WIDTH + mGridSize, MAP_HEIGHT + mGridSize);
         camera.setBoundsEnabled(true);
-        cameraZoomFactor = Math.min(1f, (float) cameraHeight / camera.getBoundsHeight());
-        camera.setZoomFactor(cameraZoomFactor);
+        mCameraZoomFactor = Math.min(1f, (float) mCameraHeight / camera.getBoundsHeight());
+        camera.setZoomFactor(mCameraZoomFactor);
         return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED,
                 new FillResolutionPolicy(), camera);
     }
@@ -121,7 +130,7 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
         }
     }
 
-    protected void moveMap(TouchEvent pSceneTouchEvent) {
+    protected void moveMap(@NonNull TouchEvent pSceneTouchEvent) {
         mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
         if (pSceneTouchEvent.isActionMove()) {
             final MotionEvent event = pSceneTouchEvent.getMotionEvent();
@@ -155,7 +164,7 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
                         float newZoomFactor = mInitialTouchZoomFactor * pZoomFactor;
                         ZoomCamera mCamera = (ZoomCamera) getEngine().getCamera();
                         newZoomFactor = Geometry.bringValueToBounds(newZoomFactor,
-                                0.8f * cameraZoomFactor, 6.0f * cameraZoomFactor);
+                                0.8f * mCameraZoomFactor, 6.0f * mCameraZoomFactor);
                         mCamera.setZoomFactor(newZoomFactor);
                     }
 
@@ -177,16 +186,16 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
                 100f, true, Color.WHITE_ABGR_PACKED_INT));
     }
 
-    protected void initMap(Scene pScene) {
-        if (toOpenMap != null) {
-            map = new Map(toOpenMap, pScene);
+    protected void initMap(@NonNull Scene pScene) {
+        if (mToOpenMap != null) {
+            mMap = new Map(mToOpenMap, pScene);
         }
-        if (map == null) {
-            map = new Map();
+        if (mMap == null) {
+            mMap = new Map();
         }
-        Map.setGridSize(gridSize);
-        MapObjectSprite.setMap(map);
-        for (MapObjectSprite o : map.getObjects()) {
+        Map.setGridSize(mGridSize);
+        MapObjectSprite.setMap(mMap);
+        for (MapObjectSprite o : mMap.getmObjects()) {
             pScene.attachChild(o);
             pScene.registerTouchArea(o);
         }

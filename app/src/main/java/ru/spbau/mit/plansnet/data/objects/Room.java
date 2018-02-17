@@ -7,7 +7,7 @@ import org.andengine.util.color.Color;
 
 import java.io.Serializable;
 
-import ru.spbau.mit.plansnet.constructor.RoomSprite;
+import ru.spbau.mit.plansnet.constructor.objects.RoomSprite;
 
 /**
  * Room class for map
@@ -20,11 +20,11 @@ public class Room extends MapObject implements Serializable {
     private CharSequence title;
     private CharSequence description;
     public Room(@NonNull final RoomSprite room) {
-        x = (int) room.getInitialX();
-        y = (int) room.getInitialY();
+        x = (int) room.getmInitialX();
+        y = (int) room.getmInitialY();
         color = room.getColor();
-        title = room.getTitle();
-        description = room.getDescription();
+        title = room.getmTitle();
+        description = room.getmDescription();
         Log.d("VASYOID", "Room.color: " + color.toString());
     }
 

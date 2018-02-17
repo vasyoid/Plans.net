@@ -3,6 +3,8 @@ package ru.spbau.mit.plansnet.constructor;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import org.andengine.engine.Engine;
 import org.andengine.entity.scene.Scene;
@@ -20,6 +22,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import ru.spbau.mit.plansnet.constructor.objects.DoorSprite;
+import ru.spbau.mit.plansnet.constructor.objects.MapObjectLinear;
+import ru.spbau.mit.plansnet.constructor.objects.MapObjectSprite;
+import ru.spbau.mit.plansnet.constructor.objects.RoomSprite;
+import ru.spbau.mit.plansnet.constructor.objects.StickerSprite;
+import ru.spbau.mit.plansnet.constructor.objects.WallSprite;
+import ru.spbau.mit.plansnet.constructor.objects.WindowSprite;
+import ru.spbau.mit.plansnet.constructor.constructorController.ConstructorActivity;
+import ru.spbau.mit.plansnet.constructor.constructorController.ConstructorActivity.ActionState;
 import ru.spbau.mit.plansnet.data.FloorMap;
 import ru.spbau.mit.plansnet.data.objects.Door;
 import ru.spbau.mit.plansnet.data.objects.MapObject;
@@ -28,26 +39,26 @@ import ru.spbau.mit.plansnet.data.objects.Sticker;
 import ru.spbau.mit.plansnet.data.objects.Wall;
 import ru.spbau.mit.plansnet.data.objects.Window;
 
-import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.GRID_SIZE_MIN;
-import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.MAP_HEIGHT;
-import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.MAP_WIDTH;
-import static ru.spbau.mit.plansnet.constructor.ConstructorActivity.ActionState.ADD;
+import static ru.spbau.mit.plansnet.constructor.constructorController.ConstructorActivity.GRID_SIZE_MIN;
+import static ru.spbau.mit.plansnet.constructor.constructorController.ConstructorActivity.MAP_HEIGHT;
+import static ru.spbau.mit.plansnet.constructor.constructorController.ConstructorActivity.MAP_WIDTH;
+import static ru.spbau.mit.plansnet.constructor.constructorController.ConstructorActivity.ActionState.ADD;
 
 public class Map implements Serializable {
 
     private static int gridSize = 0;
 
-    private List<MapObjectSprite> objects = new LinkedList<>();
-    private List<RoomSprite> rooms = new LinkedList<>();
-    private List<MapObjectSprite> removedObjects = new LinkedList<>();
-    private List<RoomSprite> removedRooms = new LinkedList<>();
-    private HashMap<PointF, HashSet<MapObjectLinear>> linearObjectsByCell = new HashMap<>();
-    private ConstructorActivity.ActionState touchState = ADD;
-    private Sprite backgroundSprite = null;
+    private List<MapObjectSprite> mObjects = new LinkedList<>();
+    private List<RoomSprite> mRooms = new LinkedList<>();
+    private List<MapObjectSprite> mRemovedObjects = new LinkedList<>();
+    private List<RoomSprite> mRemovedRooms = new LinkedList<>();
+    private HashMap<PointF, HashSet<MapObjectLinear>> mLinearObjectsByCell = new HashMap<>();
+    private ConstructorActivity.ActionState mTouchState = ADD;
+    private Sprite mBackgroundSprite = null;
 
-    Map() { }
+    public Map() { }
 
-    Map(FloorMap pMap, Scene scene) {
+    public Map(@NonNull FloorMap pMap, @NonNull  Scene pScene) {
         for (MapObject o : pMap.getArrayData()) {
             if (o instanceof Door) {
                 addObject(new DoorSprite((Door) o));
@@ -59,18 +70,18 @@ public class Map implements Serializable {
                 addObject(new StickerSprite((Sticker) o));
             } else if (o instanceof Room) {
                 Room room = (Room) o;
-                RoomSprite roomSprite = createRoom(room.getX(), room.getY(), scene);
+                RoomSprite roomSprite = createRoomOrNull(room.getX(), room.getY(), pScene);
                 if (roomSprite == null) {
                     continue;
                 }
-                roomSprite.setTitle(room.getTitle().toString());
-                roomSprite.setDescription(room.getDescription().toString());
+                roomSprite.setmTitle(room.getTitle().toString());
+                roomSprite.setmDescription(room.getDescription().toString());
                 roomSprite.setColor(room.getColor());
             }
         }
     }
 
-    public static List<PointF> getGridPolygon() {
+    public static @NonNull List<PointF> getGridPolygon() {
         List<PointF> result = new ArrayList<>();
         result.add(new PointF(-1.0f, -1.0f));
         result.add(new PointF(-1.0f, MAP_HEIGHT + 1.0f));
@@ -87,43 +98,43 @@ public class Map implements Serializable {
         gridSize = pSize;
     }
 
-    public void setBackground(Bitmap background, Engine pEngine) {
-        float ratio = Math.max((float) MAP_WIDTH / background.getWidth(),
-                (float) MAP_HEIGHT / background.getHeight());
+    public void setBackground(@NonNull Bitmap pBackground, @NonNull Engine pEngine) {
+        float ratio = Math.max((float) MAP_WIDTH / pBackground.getWidth(),
+                (float) MAP_HEIGHT / pBackground.getHeight());
         if (ratio < 1) {
-            background = Bitmap.createScaledBitmap(background,
-                    (int) (background.getWidth() * ratio),
-                    (int) (background.getHeight() * ratio), false);
+            pBackground = Bitmap.createScaledBitmap(pBackground,
+                    (int) (pBackground.getWidth() * ratio),
+                    (int) (pBackground.getHeight() * ratio), false);
             ratio = 1;
         }
         Rect area = new Rect(0, 0, (int) (MAP_WIDTH / ratio), (int) (MAP_HEIGHT / ratio));
-        area.offset((int) (background.getWidth() - MAP_WIDTH / ratio) / 2,
-                (int) (background.getHeight() - MAP_HEIGHT / ratio) / 2);
-        BitmapTextureAtlasSource source = new BitmapTextureAtlasSource(background, area);
+        area.offset((int) (pBackground.getWidth() - MAP_WIDTH / ratio) / 2,
+                (int) (pBackground.getHeight() - MAP_HEIGHT / ratio) / 2);
+        BitmapTextureAtlasSource source = new BitmapTextureAtlasSource(pBackground, area);
         BitmapTextureAtlas textureAtlas = new BitmapTextureAtlas(pEngine.getTextureManager(),
                 area.width(), area.height());
         textureAtlas.addTextureAtlasSource(source, 0, 0);
         textureAtlas.load();
-        TextureRegion backgroundTexture = TextureRegionFactory.createFromSource(textureAtlas, source,
-                0, 0);
-        backgroundSprite = new Sprite(0, 0, backgroundTexture,
+        TextureRegion backgroundTexture = TextureRegionFactory.createFromSource(textureAtlas,
+                source, 0, 0);
+        mBackgroundSprite = new Sprite(0, 0, backgroundTexture,
                 pEngine.getVertexBufferObjectManager());
-        backgroundSprite.setPosition((MAP_WIDTH - backgroundSprite.getWidth()) / 2,
-                (MAP_HEIGHT - backgroundSprite.getHeight()) / 2);
-        backgroundSprite.setScale(ratio);
-        backgroundSprite.setZIndex(-3);
-        pEngine.getScene().attachChild(backgroundSprite);
+        mBackgroundSprite.setPosition((MAP_WIDTH - mBackgroundSprite.getWidth()) / 2,
+                (MAP_HEIGHT - mBackgroundSprite.getHeight()) / 2);
+        mBackgroundSprite.setScale(ratio);
+        mBackgroundSprite.setZIndex(-3);
+        pEngine.getScene().attachChild(mBackgroundSprite);
         pEngine.getScene().sortChildren();
     }
 
-    boolean isBackgroundSet() {
-        return backgroundSprite != null;
+    public boolean isBackgroundSet() {
+        return mBackgroundSprite != null;
     }
 
-    public void removeBackground(Engine pEngine) {
+    public void removeBackground(@NonNull Engine pEngine) {
         Semaphore mutex = new Semaphore(0);
         pEngine.runOnUpdateThread(() -> {
-            backgroundSprite.detachSelf();
+            mBackgroundSprite.detachSelf();
             mutex.release();
         });
         try {
@@ -131,72 +142,75 @@ public class Map implements Serializable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        backgroundSprite = null;
+        mBackgroundSprite = null;
     }
 
-    public void setActionState(ConstructorActivity.ActionState state) {
-        touchState = state;
+    public void setActionState(@NonNull ActionState pState) {
+        mTouchState = pState;
     }
 
-    public ConstructorActivity.ActionState getTouchState() {
-        return touchState;
+    public @NonNull ActionState getTouchState() {
+        return mTouchState;
     }
 
-    public List<MapObjectSprite> getObjects() {
-        return objects;
+    public @NonNull List<MapObjectSprite> getmObjects() {
+        return mObjects;
     }
 
-    public List<RoomSprite> getRooms() {
-        return rooms;
+    public @NonNull List<RoomSprite> getmRooms() {
+        return mRooms;
     }
 
-    private void addObjectToHashTable(PointF point, MapObjectLinear object) {
-        PointF key = new PointF(point.x, point.y);
-        if (!linearObjectsByCell.containsKey(point)) {
-            linearObjectsByCell.put(key, new HashSet<>());
+    private void addObjectToHashTable(@NonNull PointF pPoint, @NonNull MapObjectLinear pObject) {
+        PointF key = new PointF(pPoint.x, pPoint.y);
+        if (!mLinearObjectsByCell.containsKey(pPoint)) {
+            mLinearObjectsByCell.put(key, new HashSet<>());
         }
-        linearObjectsByCell.get(point).add(object);
+        mLinearObjectsByCell.get(pPoint).add(pObject);
     }
 
-    private void removeObjectFromHashTable(PointF point, MapObjectLinear object) {
-        if (linearObjectsByCell.containsKey(point)) {
-            linearObjectsByCell.get(point).remove(object);
+    private void removeObjectFromHashTable(@NonNull PointF pPoint,
+                                           @NonNull MapObjectLinear pObject) {
+        if (mLinearObjectsByCell.containsKey(pPoint)) {
+            mLinearObjectsByCell.get(pPoint).remove(pObject);
         }
     }
 
-    public void updateMovedObject(PointF firstPoint1, PointF firstPoint2, MapObjectLinear object) {
-        removeObjectFromHashTable(firstPoint1, object);
-        removeObjectFromHashTable(firstPoint2, object);
-        addObjectToHashTable(object.getPoint1(), object);
-        addObjectToHashTable(object.getPoint2(), object);
+    public void updateMovedObject(@NonNull PointF pFirstPoint1,
+                                  @NonNull PointF pFirstPoint2,
+                                  @NonNull MapObjectLinear pObject) {
+        removeObjectFromHashTable(pFirstPoint1, pObject);
+        removeObjectFromHashTable(pFirstPoint2, pObject);
+        addObjectToHashTable(pObject.getmPoint1(), pObject);
+        addObjectToHashTable(pObject.getmPoint2(), pObject);
     }
 
     @SuppressWarnings("SameParameterValue")
-    public void setScaleByPoint(PointF at, float sx, float sy) {
-        if (!linearObjectsByCell.containsKey(at)) {
+    public void setScaleByPoint(PointF pAt, float pSx, float pSy) {
+        if (!mLinearObjectsByCell.containsKey(pAt)) {
             return;
         }
-        for (MapObjectLinear object : linearObjectsByCell.get(at)) {
+        for (MapObjectLinear object : mLinearObjectsByCell.get(pAt)) {
             object.setScaleCenter(object.getWidth() / 2,
                     object.getHeight() / 2);
-            object.setScale(sx, sy);
+            object.setScale(pSx, pSy);
         }
     }
 
-    public void moveObjects(PointF from, PointF to) {
-        if (!linearObjectsByCell.containsKey(from)) {
+    public void moveObjects(@NonNull PointF pFrom, @NonNull PointF pTo) {
+        if (!mLinearObjectsByCell.containsKey(pFrom)) {
             return;
         }
-        for (MapObjectLinear object : linearObjectsByCell.get(from)) {
-            if (object.getPoint1().equals(from)) {
+        for (MapObjectLinear object : mLinearObjectsByCell.get(pFrom)) {
+            if (object.getmPoint1().equals(pFrom)) {
                 object.changeDirection();
             }
-            object.setPoint2(to);
+            object.setmPoint2(pTo);
         }
     }
 
-    void updateRooms(Scene pScene) {
-        for (RoomSprite room : rooms) {
+    public void updateRooms(@NonNull Scene pScene) {
+        for (RoomSprite room : mRooms) {
             room.detachSelf();
             room.updateShape();
             room.attachSelf(pScene);
@@ -204,82 +218,83 @@ public class Map implements Serializable {
         pScene.sortChildren();
     }
 
-    void updateObjects(PointF at) {
-        if (!linearObjectsByCell.containsKey(at)) {
+    public void updateObjects(@NonNull PointF pAt) {
+        if (!mLinearObjectsByCell.containsKey(pAt)) {
             return;
         }
-        List<MapObjectLinear> tmp = new ArrayList<>(linearObjectsByCell.get(at));
-        linearObjectsByCell.get(at).clear();
+        List<MapObjectLinear> tmp = new ArrayList<>(mLinearObjectsByCell.get(pAt));
+        mLinearObjectsByCell.get(pAt).clear();
         for (MapObjectLinear object : tmp) {
-            addObjectToHashTable(object.getPoint1(), object);
-            addObjectToHashTable(object.getPoint2(), object);
+            addObjectToHashTable(object.getmPoint1(), object);
+            addObjectToHashTable(object.getmPoint2(), object);
         }
     }
 
-    public void addObject(MapObjectSprite object) {
-        removedObjects.remove(object);
-        objects.add(object);
-        if (object instanceof MapObjectLinear) {
-            MapObjectLinear objectLinear = (MapObjectLinear) object;
-            addObjectToHashTable(objectLinear.getPoint1(), objectLinear);
-            addObjectToHashTable(objectLinear.getPoint2(), objectLinear);
+    public void addObject(@NonNull MapObjectSprite pObject) {
+        mRemovedObjects.remove(pObject);
+        mObjects.add(pObject);
+        if (pObject instanceof MapObjectLinear) {
+            MapObjectLinear objectLinear = (MapObjectLinear) pObject;
+            addObjectToHashTable(objectLinear.getmPoint1(), objectLinear);
+            addObjectToHashTable(objectLinear.getmPoint2(), objectLinear);
         }
     }
 
-    public void addRoom(RoomSprite room) {
-        removedRooms.remove(room);
-        rooms.add(room);
+    public void addRoom(@NonNull RoomSprite pRoom) {
+        mRemovedRooms.remove(pRoom);
+        mRooms.add(pRoom);
     }
 
-    public List<RoomSprite> findRoomsBySection(PointF point1, PointF point2) {
+    public @NonNull List<RoomSprite> findRoomsBySection(@NonNull PointF pPoint1,
+                                                        @NonNull PointF pPoint2) {
         List<RoomSprite> result = new ArrayList<>();
-        for (RoomSprite room : rooms) {
-            if (room.contains(point1, point2)) {
+        for (RoomSprite room : mRooms) {
+            if (room.contains(pPoint1, pPoint2)) {
                 result.add(room);
             }
         }
         return result;
     }
 
-    public void removeRoomsBySection(PointF point1, PointF point2) {
-        for (RoomSprite room : findRoomsBySection(point1, point2)) {
+    public void removeRoomsBySection(@NonNull PointF pPoint1, @NonNull PointF pPoint2) {
+        for (RoomSprite room : findRoomsBySection(pPoint1, pPoint2)) {
             removeRoom(room);
         }
     }
 
-    public void removeObject(MapObjectSprite object) {
-        objects.remove(object);
-        if (object instanceof MapObjectLinear) {
-            MapObjectLinear objectLinear = (MapObjectLinear) object;
-            if (linearObjectsByCell.get(objectLinear.getPoint1()).contains(object)) {
-                linearObjectsByCell.get(objectLinear.getPoint1()).remove(object);
+    public void removeObject(@NonNull MapObjectSprite pObject) {
+        mObjects.remove(pObject);
+        if (pObject instanceof MapObjectLinear) {
+            MapObjectLinear objectLinear = (MapObjectLinear) pObject;
+            if (mLinearObjectsByCell.get(objectLinear.getmPoint1()).contains(pObject)) {
+                mLinearObjectsByCell.get(objectLinear.getmPoint1()).remove(pObject);
             }
-            if (linearObjectsByCell.get(objectLinear.getPoint2()).contains(object)) {
-                linearObjectsByCell.get(objectLinear.getPoint2()).remove(object);
+            if (mLinearObjectsByCell.get(objectLinear.getmPoint2()).contains(pObject)) {
+                mLinearObjectsByCell.get(objectLinear.getmPoint2()).remove(pObject);
             }
         }
-        removedObjects.add(object);
+        mRemovedObjects.add(pObject);
     }
 
-    public void removeRoom(RoomSprite room) {
-        rooms.remove(room);
-        removedRooms.add(room);
+    public void removeRoom(@NonNull RoomSprite pRoom) {
+        mRooms.remove(pRoom);
+        mRemovedRooms.add(pRoom);
     }
 
-    public void detachRemoved(Engine pEngine) {
-        if (removedObjects.isEmpty() && removedRooms.isEmpty()) {
+    public void detachRemoved(@NonNull Engine pEngine) {
+        if (mRemovedObjects.isEmpty() && mRemovedRooms.isEmpty()) {
             return;
         }
         Semaphore mutex = new Semaphore(1);
         pEngine.runOnUpdateThread(() -> {
-            for (MapObjectSprite o : removedObjects) {
+            for (MapObjectSprite o : mRemovedObjects) {
                 o.detachSelf();
             }
-            for (RoomSprite r : removedRooms) {
+            for (RoomSprite r : mRemovedRooms) {
                 r.detachSelf();
             }
-            removedObjects.clear();
-            removedRooms.clear();
+            mRemovedObjects.clear();
+            mRemovedRooms.clear();
             mutex.release();
         });
         try {
@@ -290,27 +305,27 @@ public class Map implements Serializable {
     }
 
     public void clear() {
-        removedObjects.addAll(objects);
-        removedRooms.addAll(rooms);
-        objects.clear();
-        rooms.clear();
-        linearObjectsByCell.clear();
+        mRemovedObjects.addAll(mObjects);
+        mRemovedRooms.addAll(mRooms);
+        mObjects.clear();
+        mRooms.clear();
+        mLinearObjectsByCell.clear();
     }
 
-    public boolean hasIntersections(PointF pPoint) {
-        if (!linearObjectsByCell.containsKey(pPoint)) {
+    public boolean hasIntersections(@NonNull PointF pPoint) {
+        if (!mLinearObjectsByCell.containsKey(pPoint)) {
             return false;
         }
-        for (MapObjectLinear object : linearObjectsByCell.get(pPoint)) {
-            if (hasIntersections(object) || Geometry.length(object.getPosition()) == 0) {
+        for (MapObjectLinear object : mLinearObjectsByCell.get(pPoint)) {
+            if (hasIntersections(object) || Geometry.length(object.getmPosition()) == 0) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean hasIntersections(MapObjectLinear pObject) {
-        for (MapObjectSprite o : objects) {
+    public boolean hasIntersections(@NonNull MapObjectLinear pObject) {
+        for (MapObjectSprite o : mObjects) {
             if (!(o instanceof MapObjectLinear)) {
                 continue;
             }
@@ -318,25 +333,25 @@ public class Map implements Serializable {
             if (ol.equals(pObject)) {
                 continue;
             }
-            if (Geometry.linesIntersect(ol.getPosition(), pObject.getPosition())) {
+            if (Geometry.linesIntersect(ol.getmPosition(), pObject.getmPosition())) {
                 return true;
             }
         }
         return false;
     }
 
-    public RoomSprite getRoomTouched(TouchEvent pTouchEvent) {
+    public @Nullable RoomSprite getRoomTouchedOrNull(@NonNull TouchEvent pTouchEvent) {
         PointF touchPoint = new PointF(pTouchEvent.getX(), pTouchEvent.getY());
-        for (RoomSprite r : rooms) {
-            if (Geometry.isPointInsidePolygon(r.getPolygon(), touchPoint)) {
+        for (RoomSprite r : mRooms) {
+            if (Geometry.isPointInsidePolygon(r.getmPolygon(), touchPoint)) {
                 return r;
             }
         }
         return null;
     }
 
-    public RoomSprite createRoom(float pX, float pY, Scene pScene) {
-        List<PointF> polygon = Geometry.roomPolygon(objects, new PointF(pX, pY));
+    public @Nullable RoomSprite createRoomOrNull(float pX, float pY, @NonNull Scene pScene) {
+        List<PointF> polygon = Geometry.roomPolygonOrNull(mObjects, new PointF(pX, pY));
         if (polygon == null || !Geometry.isPointInsidePolygon(polygon, new PointF(pX, pY))) {
             return null;
         }
@@ -347,15 +362,15 @@ public class Map implements Serializable {
         return room;
     }
 
-    public PointF getNearestWallOrNull(PointF currentPoint) {
+    public @Nullable PointF getNearestWallOrNull(@NonNull PointF pCurrentPoint) {
         int nearestDist = 3 * GRID_SIZE_MIN;
         PointF result = null;
         for (int i = -GRID_SIZE_MIN; i <= GRID_SIZE_MIN; i += GRID_SIZE_MIN) {
             for (int j = -GRID_SIZE_MIN; j <= GRID_SIZE_MIN; j += GRID_SIZE_MIN) {
-                PointF pnt = new PointF(currentPoint.x - j, currentPoint.y - i);
+                PointF pnt = new PointF(pCurrentPoint.x - j, pCurrentPoint.y - i);
                 int dist = Math.abs(i) + Math.abs(j);
-                if (linearObjectsByCell.containsKey(pnt) &&
-                        !linearObjectsByCell.get(pnt).isEmpty() &&
+                if (mLinearObjectsByCell.containsKey(pnt) &&
+                        !mLinearObjectsByCell.get(pnt).isEmpty() &&
                         dist <= nearestDist) {
                     result = dist == nearestDist ? null : pnt;
                     nearestDist = dist;

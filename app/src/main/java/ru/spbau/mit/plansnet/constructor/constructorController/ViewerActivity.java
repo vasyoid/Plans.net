@@ -1,5 +1,6 @@
-package ru.spbau.mit.plansnet.constructor;
+package ru.spbau.mit.plansnet.constructor.constructorController;
 
+import android.support.annotation.NonNull;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
@@ -11,10 +12,11 @@ import org.andengine.entity.scene.background.Background;
 import java.util.concurrent.Semaphore;
 
 import ru.spbau.mit.plansnet.R;
+import ru.spbau.mit.plansnet.constructor.objects.RoomSprite;
 
 public class ViewerActivity extends BaseConstructorActivity {
 
-    private void createBorder(Scene pScene) {
+    private void createBorder(@NonNull Scene pScene) {
         Line[] border = {
                 new Line(0, 0, 0, MAP_HEIGHT, 3,
                         getVertexBufferObjectManager()),
@@ -31,13 +33,13 @@ public class ViewerActivity extends BaseConstructorActivity {
         }
     }
 
-    private void initScene(Scene pScene) {
+    private void initScene(@NonNull Scene pScene) {
         pScene.setOnSceneTouchListener((pScene1, pSceneTouchEvent) -> {
             mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
             MotionEvent event = pSceneTouchEvent.getMotionEvent();
             if (pSceneTouchEvent.isActionUp() &&
                     event.getEventTime() - event.getDownTime() < 200) {
-                RoomSprite room = map.getRoomTouched(pSceneTouchEvent);
+                RoomSprite room = mMap.getRoomTouchedOrNull(pSceneTouchEvent);
                 if (room != null) {
                     showParams(room);
                 }
@@ -52,7 +54,7 @@ public class ViewerActivity extends BaseConstructorActivity {
     }
 
     @Override
-    protected Scene onCreateScene() {
+    protected @NonNull Scene onCreateScene() {
         final Scene scene = new Scene();
         scene.setBackground(new Background(0.95f, 0.95f, 1f));
         createBorder(scene);
@@ -74,7 +76,7 @@ public class ViewerActivity extends BaseConstructorActivity {
         return R.id.viewerView;
     }
 
-    public void showParams(RoomSprite pRoom) {
+    public void showParams(@NonNull RoomSprite pRoom) {
         Semaphore mutex = new Semaphore(1);
         runOnUiThread(() -> {
             findViewById(R.id.viewerView).setEnabled(false);
@@ -82,8 +84,8 @@ public class ViewerActivity extends BaseConstructorActivity {
             paramsView.setVisibility(View.VISIBLE);
             TextView roomName = findViewById(R.id.roomPropertiesName);
             TextView roomDescription = findViewById(R.id.roomPropertiesDescription);
-            roomName.setText(pRoom.getTitle());
-            roomDescription.setText(pRoom.getDescription());
+            roomName.setText(pRoom.getmTitle());
+            roomDescription.setText(pRoom.getmDescription());
             paramsView.findViewById(R.id.roomPropertiesOk).setOnClickListener(v1 -> {
                 paramsView.setVisibility(View.GONE);
                 findViewById(R.id.viewerView).setEnabled(true);

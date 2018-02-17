@@ -2,7 +2,7 @@ package ru.spbau.mit.plansnet.data.objects;
 
 import java.io.Serializable;
 
-import ru.spbau.mit.plansnet.constructor.StickerSprite;
+import ru.spbau.mit.plansnet.constructor.objects.StickerSprite;
 
 public class Sticker extends MapObject implements Serializable {
     private int type;
@@ -11,8 +11,8 @@ public class Sticker extends MapObject implements Serializable {
 
     public Sticker(StickerSprite obj) {
         type = obj.getType();
-        position = new PointF(obj.getPosition().x, obj.getPosition().y);
-        size = obj.getSize();
+        position = new PointF(obj.getmPosition().x, obj.getmPosition().y);
+        size = obj.getmSize();
     }
 
     public int getType() {

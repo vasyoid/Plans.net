@@ -16,8 +16,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:screenOrientation="landscape" android:name=".constructor.ConstructorActivity" />
-        <activity android:screenOrientation="landscape" android:name=".constructor.ViewerActivity" />
+        <activity android:screenOrientation="landscape" android:name=".constructor.constructorController.ConstructorActivity" />
+        <activity android:screenOrientation="landscape" android:name=".constructor.constructorController.ViewerActivity" />
 
         <meta-data
             android:name="com.google.android.gms.version"

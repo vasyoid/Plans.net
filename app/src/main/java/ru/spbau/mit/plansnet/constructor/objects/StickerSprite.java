@@ -1,70 +1,76 @@
-package ru.spbau.mit.plansnet.constructor;
+package ru.spbau.mit.plansnet.constructor.objects;
 
 import android.graphics.PointF;
+import android.support.annotation.NonNull;
 
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
 
+import ru.spbau.mit.plansnet.constructor.Geometry;
+import ru.spbau.mit.plansnet.constructor.Map;
+import ru.spbau.mit.plansnet.constructor.constructorController.ConstructorActivity;
 import ru.spbau.mit.plansnet.data.objects.Sticker;
 
 import static org.andengine.input.touch.TouchEvent.ACTION_DOWN;
 import static org.andengine.input.touch.TouchEvent.ACTION_MOVE;
 import static org.andengine.input.touch.TouchEvent.ACTION_UP;
-import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.MAP_HEIGHT;
-import static ru.spbau.mit.plansnet.constructor.BaseConstructorActivity.MAP_WIDTH;
+import static ru.spbau.mit.plansnet.constructor.constructorController.BaseConstructorActivity.MAP_HEIGHT;
+import static ru.spbau.mit.plansnet.constructor.constructorController.BaseConstructorActivity.MAP_WIDTH;
 
 public class StickerSprite extends MapObjectSprite {
 
     private final static int TEXTURE_SIZE = 400;
-    private static ITextureRegion[] textureRegions;
-    private final StickerType type;
-    private PointF position;
-    private PointF firstTouch = null;
-    private PointF previousTouch = null;
-    private boolean zooming = false;
-    private float size;
-    private float currentSize;
 
-    public StickerSprite(StickerType pType, PointF pPosition) {
+    private static ITextureRegion[] textureRegions;
+
+    private final StickerType mType;
+    private PointF mPosition;
+    private PointF mFirstTouch = null;
+    private PointF mPreviousTouch = null;
+    private boolean mZooming = false;
+    private float mSize;
+    private float mCurrentSize;
+
+    public StickerSprite(@NonNull StickerType pType, @NonNull PointF pPosition) {
         this(pType, pPosition, 1.0f);
     }
 
-    public StickerSprite(Sticker pSticker) {
+    public StickerSprite(@NonNull Sticker pSticker) {
         this(StickerType.fromValue(pSticker.getType()),
                 new PointF(pSticker.getPosition().getX(), pSticker.getPosition().getY()),
                 pSticker.getSize());
     }
 
-    public StickerSprite(StickerType pType, PointF pPosition, float pSize) {
+    public StickerSprite(@NonNull StickerType pType, @NonNull PointF pPosition, float pSize) {
         super(textureRegions[pType.getValue()], vertexBufferObjectManager);
-        type = pType;
-        size = pSize;
-        position = new PointF(pPosition.x, pPosition.y);
-        position.x = Geometry.bringValueToBounds(position.x,
+        mType = pType;
+        mSize = pSize;
+        mPosition = new PointF(pPosition.x, pPosition.y);
+        mPosition.x = Geometry.bringValueToBounds(mPosition.x,
                 getWidthScaled() / 2, MAP_WIDTH - getWidthScaled() / 2);
-        position.y = Geometry.bringValueToBounds(position.y,
+        mPosition.y = Geometry.bringValueToBounds(mPosition.y,
                 getHeightScaled() / 2, MAP_HEIGHT - getHeightScaled() /2);
         setScaleCenter(TEXTURE_SIZE / 2, TEXTURE_SIZE / 2);
-        setScale(size);
-        super.setPosition(position.x - TEXTURE_SIZE / 2,
-                position.y - TEXTURE_SIZE / 2);
+        setScale(mSize);
+        super.setPosition(mPosition.x - TEXTURE_SIZE / 2,
+                mPosition.y - TEXTURE_SIZE / 2);
         setZIndex(4);
     }
 
-    public static void setTextureRegions(ITextureRegion[] pTextureRegions) {
+    public static void setTextureRegions(@NonNull ITextureRegion[] pTextureRegions) {
         textureRegions = pTextureRegions;
     }
 
-    public float getSize() {
-        return size;
+    public float getmSize() {
+        return mSize;
     }
 
     public int getType() {
-        return type.getValue();
+        return mType.getValue();
     }
 
-    public PointF getPosition() {
-        return position;
+    public @NonNull PointF getmPosition() {
+        return mPosition;
     }
 
     @Override
@@ -73,53 +79,55 @@ public class StickerSprite extends MapObjectSprite {
         if (MAP.getTouchState() == ConstructorActivity.ActionState.MOVE_OBJECT) {
             switch (pSceneTouchEvent.getAction()) {
                 case ACTION_DOWN:
-                    firstTouch = previousTouch = new PointF(pSceneTouchEvent.getX(),
+                    mFirstTouch = mPreviousTouch = new PointF(pSceneTouchEvent.getX(),
                             pSceneTouchEvent.getY());
                     if (Geometry.isPointAtCorner(new PointF(pTouchAreaLocalX, pTouchAreaLocalY),
                             new PointF(0, 0), new PointF(TEXTURE_SIZE, TEXTURE_SIZE),
-                            Map.getGridSize() / 2.0 / size)) {
-                        zooming = true;
-                        currentSize = size;
+                            Map.getGridSize() / 2.0 / mSize)) {
+                        mZooming = true;
+                        mCurrentSize = mSize;
                     } else {
-                        setScale(size + 0.05f);
+                        setScale(mSize + 0.05f);
                     }
                     break;
                 case ACTION_MOVE:
-                    if (firstTouch == null || previousTouch == null) {
+                    if (mFirstTouch == null || mPreviousTouch == null) {
                         return false;
                     }
                     PointF currentTouch = new PointF(pSceneTouchEvent.getX(),
                             pSceneTouchEvent.getY());
-                    if (zooming) {
-                        currentSize = size * Geometry.distance(position, currentTouch) /
-                                Geometry.distance(position, firstTouch);
-                        currentSize = Geometry.bringValueToBounds(currentSize, 0.7f, 1.5f);
-                        setScale(currentSize);
+                    if (mZooming) {
+                        mCurrentSize = mSize * Geometry.distance(mPosition, currentTouch) /
+                                Geometry.distance(mPosition, mFirstTouch);
+                        mCurrentSize = Geometry.bringValueToBounds(mCurrentSize,
+                                0.7f, 1.5f);
+                        setScale(mCurrentSize);
                     } else {
-                        position.offset(currentTouch.x - previousTouch.x,
-                                currentTouch.y - previousTouch.y);
-                        position.x = Geometry.bringValueToBounds(position.x,
+                        mPosition.offset(currentTouch.x - mPreviousTouch.x,
+                                currentTouch.y - mPreviousTouch.y);
+                        mPosition.x = Geometry.bringValueToBounds(mPosition.x,
                                 getWidthScaled() / 2, MAP_WIDTH - getWidthScaled() / 2);
-                        position.y = Geometry.bringValueToBounds(position.y,
-                                getHeightScaled() / 2, MAP_HEIGHT - getHeightScaled() /2);
-                        super.setPosition(position.x - TEXTURE_SIZE / 2,
-                                position.y - TEXTURE_SIZE / 2);
-                        previousTouch = currentTouch;
+                        mPosition.y = Geometry.bringValueToBounds(mPosition.y,
+                                getHeightScaled() / 2,
+                                MAP_HEIGHT - getHeightScaled() /2);
+                        super.setPosition(mPosition.x - TEXTURE_SIZE / 2,
+                                mPosition.y - TEXTURE_SIZE / 2);
+                        mPreviousTouch = currentTouch;
                     }
                     break;
                 case ACTION_UP:
-                    if (zooming) {
-                        size = currentSize;
-                        zooming = false;
+                    if (mZooming) {
+                        mSize = mCurrentSize;
+                        mZooming = false;
                     }
-                    setScale(size);
-                    position.x = Geometry.bringValueToBounds(position.x,
+                    setScale(mSize);
+                    mPosition.x = Geometry.bringValueToBounds(mPosition.x,
                             getWidthScaled() / 2, MAP_WIDTH - getWidthScaled() / 2);
-                    position.y = Geometry.bringValueToBounds(position.y,
+                    mPosition.y = Geometry.bringValueToBounds(mPosition.y,
                             getHeightScaled() / 2, MAP_HEIGHT - getHeightScaled() /2);
-                    super.setPosition(position.x - TEXTURE_SIZE / 2,
-                            position.y - TEXTURE_SIZE / 2);
-                    firstTouch = previousTouch = null;
+                    super.setPosition(mPosition.x - TEXTURE_SIZE / 2,
+                            mPosition.y - TEXTURE_SIZE / 2);
+                    mFirstTouch = mPreviousTouch = null;
                     break;
                 default:
                     break;
@@ -146,7 +154,7 @@ public class StickerSprite extends MapObjectSprite {
             return value;
         }
 
-        public static StickerType fromValue(int pValue) {
+        public static @NonNull StickerType fromValue(int pValue) {
             switch (pValue) {
                 case 0:
                     return EXIT;
@@ -163,7 +171,7 @@ public class StickerSprite extends MapObjectSprite {
                 case 6:
                     return VOLTAGE;
                 default:
-                    return null;
+                    throw new IllegalArgumentException("Illegal sticker type");
             }
         }
 
