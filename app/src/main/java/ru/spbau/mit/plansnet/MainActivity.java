@@ -197,7 +197,6 @@ public class MainActivity extends AppCompatActivity {
             );
             floor.copyMap(toSave);
             dataController.saveMap(floor);
-            floorListActivate();
         });
 
         newMapNameDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
@@ -594,7 +593,7 @@ public class MainActivity extends AppCompatActivity {
         floorList.clear();
         floorListAdapter.notifyDataSetChanged();
         currentMap = null;
-//        btnConstructor.setEnabled(false);// for easy debug TODO: uncomment on release
+        btnConstructor.setEnabled(false);
         btnViewer.setEnabled(false);
         btnCopyMap.setEnabled(false);
     }
