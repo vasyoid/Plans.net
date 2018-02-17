@@ -52,12 +52,12 @@ public class RoomSprite {
         mMesh.setColor(mRoomColor);
     }
 
-    public void setmTitle(@NonNull String pTitle) {
+    public void setTitle(@NonNull String pTitle) {
         mTitle.setText(pTitle);
         setTitlePosition();
     }
 
-    public @NonNull CharSequence getmTitle() {
+    public @NonNull CharSequence getTitle() {
         return mTitle.getText();
     }
 
@@ -65,11 +65,11 @@ public class RoomSprite {
         return mRoomColor;
     }
 
-    public @NonNull CharSequence getmDescription() {
+    public @NonNull CharSequence getDescription() {
         return mDescription;
     }
 
-    public void setmDescription(@NonNull String pDescription) {
+    public void setDescription(@NonNull String pDescription) {
         mDescription = pDescription;
     }
 
@@ -112,15 +112,15 @@ public class RoomSprite {
         vertexBufferObjectManager = pVertexBufferObjectManager;
     }
 
-    public float getmInitialX() {
+    public float getInitialX() {
         return mInitialX;
     }
 
-    public float getmInitialY() {
+    public float getInitialY() {
         return mInitialY;
     }
 
-    public List<PointF> getmPolygon() {
+    public List<PointF> getPolygon() {
         return mPolygon;
     }
 

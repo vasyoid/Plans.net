@@ -61,7 +61,7 @@ public class StickerSprite extends MapObjectSprite {
         textureRegions = pTextureRegions;
     }
 
-    public float getmSize() {
+    public float getSize() {
         return mSize;
     }
 
@@ -69,7 +69,7 @@ public class StickerSprite extends MapObjectSprite {
         return mType.getValue();
     }
 
-    public @NonNull PointF getmPosition() {
+    public @NonNull PointF getPosition() {
         return mPosition;
     }
 

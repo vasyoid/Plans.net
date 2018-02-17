@@ -53,8 +53,8 @@ public class FloorMap extends AbstractNamedData implements Serializable {
     }
 
     public FloorMap addObjectsFromMap(@NonNull final ru.spbau.mit.plansnet.constructor.Map map) {
-        List<MapObjectSprite> objList = map.getmObjects();
-        List<RoomSprite> roomList = map.getmRooms();
+        List<MapObjectSprite> objList = map.getObjects();
+        List<RoomSprite> roomList = map.getRooms();
 
         FloorMap newMap = new FloorMap(owner, groupName, buildingName, getName());
         List<MapObject> objects = newMap.objects;

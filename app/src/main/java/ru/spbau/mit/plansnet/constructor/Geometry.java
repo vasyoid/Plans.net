@@ -191,7 +191,7 @@ public class Geometry {
                 continue;
             }
             MapObjectLinear ol = (MapObjectLinear) o;
-            PointF tmp = getIntersectionPointOrNull(ray, ol.getmPosition());
+            PointF tmp = getIntersectionPointOrNull(ray, ol.getPosition());
             if (tmp == null) {
                 continue;
             }
@@ -203,12 +203,12 @@ public class Geometry {
         if (currentObject == null) {
             return null;
         }
-        if (currentObject.getmPosition().getY1() > currentObject.getmPosition().getY2()) {
+        if (currentObject.getPosition().getY1() > currentObject.getPosition().getY2()) {
             currentObject.changeDirection();
         }
-        polygon.add(currentObject.getmPoint1());
+        polygon.add(currentObject.getPoint1());
         while (true) {
-            PointF curPoint = currentObject.getmPoint2();
+            PointF curPoint = currentObject.getPoint2();
             if (curPoint.equals(polygon.get(0))) {
                 break;
             }
@@ -220,17 +220,17 @@ public class Geometry {
                     continue;
                 }
                 MapObjectLinear ol = (MapObjectLinear) o;
-                if (linesJoinable(ol.getmPosition(), currentObject.getmPosition())) {
+                if (linesJoinable(ol.getPosition(), currentObject.getPosition())) {
                     continue;
                 }
-                if (lineEndsWith(ol.getmPosition(), curPoint)) {
+                if (lineEndsWith(ol.getPosition(), curPoint)) {
                     ol.changeDirection();
                 }
-                if (!lineStartsWith(ol.getmPosition(), curPoint)) {
+                if (!lineStartsWith(ol.getPosition(), curPoint)) {
                     continue;
                 }
-                if (currentAngle > getAngle(currentObject.getmPosition(), ol.getmPosition())) {
-                    currentAngle = getAngle(currentObject.getmPosition(), ol.getmPosition());
+                if (currentAngle > getAngle(currentObject.getPosition(), ol.getPosition())) {
+                    currentAngle = getAngle(currentObject.getPosition(), ol.getPosition());
                     nextObject = (MapObjectLinear) o;
                 }
             }

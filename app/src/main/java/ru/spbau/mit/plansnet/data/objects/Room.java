@@ -20,11 +20,11 @@ public class Room extends MapObject implements Serializable {
     private CharSequence title;
     private CharSequence description;
     public Room(@NonNull final RoomSprite room) {
-        x = (int) room.getmInitialX();
-        y = (int) room.getmInitialY();
+        x = (int) room.getInitialX();
+        y = (int) room.getInitialY();
         color = room.getColor();
-        title = room.getmTitle();
-        description = room.getmDescription();
+        title = room.getTitle();
+        description = room.getDescription();
         Log.d("VASYOID", "Room.color: " + color.toString());
     }
 

@@ -37,23 +37,23 @@ public abstract class MapObjectLinear extends MapObjectSprite {
         setPosition(mPoint1.x, mPoint1.y, mPoint2.x, mPoint2.y);
     }
 
-    public @NonNull PointF getmPoint1() {
+    public @NonNull PointF getPoint1() {
         return mPoint1;
     }
 
-    public @NonNull PointF getmPoint2() {
+    public @NonNull PointF getPoint2() {
         return mPoint2;
     }
 
-    public void setmPoint1(@NonNull PointF pPoint) {
+    public void setPoint1(@NonNull PointF pPoint) {
         setPosition(pPoint.x, pPoint.y, mPoint2.x, mPoint2.y);
     }
 
-    public void setmPoint2(@NonNull PointF pPoint) {
+    public void setPoint2(@NonNull PointF pPoint) {
         setPosition(mPoint1.x, mPoint1.y, pPoint.x, pPoint.y);
     }
 
-    public void setmPosition(@NonNull Line pLine) {
+    public void setObjectPosition(@NonNull Line pLine) {
         mPosition = Geometry.copy(pLine);
         mPoint1.set(pLine.getX1(), pLine.getY1());
         mPoint2.set(pLine.getX2(), pLine.getY2());
@@ -69,10 +69,10 @@ public abstract class MapObjectLinear extends MapObjectSprite {
     }
 
     public void setPosition(float pX1, float pY1, float pX2, float pY2) {
-        setmPosition(new Line(pX1, pY1, pX2, pY2, null));
+        setObjectPosition(new Line(pX1, pY1, pX2, pY2, null));
     }
 
-    public @NonNull Line getmPosition() {
+    public @NonNull Line getPosition() {
         return mPosition;
     }
 
@@ -117,8 +117,8 @@ public abstract class MapObjectLinear extends MapObjectSprite {
                         mFirstPoint2.y + currentTouchY - mFirstTouchY);
                 if (Geometry.isPointInsidePolygon(Map.getGridPolygon(), currentPoint1) &&
                         Geometry.isPointInsidePolygon(Map.getGridPolygon(), currentPoint2)) {
-                    setmPoint1(currentPoint1);
-                    setmPoint2(currentPoint2);
+                    setPoint1(currentPoint1);
+                    setPoint2(currentPoint2);
                 }
                 return true;
             case TouchEvent.ACTION_UP:
@@ -126,8 +126,8 @@ public abstract class MapObjectLinear extends MapObjectSprite {
                     return false;
                 }
                 if (MAP.hasIntersections(this)) {
-                    setmPoint1(mFirstPoint1);
-                    setmPoint2(mFirstPoint2);
+                    setPoint1(mFirstPoint1);
+                    setPoint2(mFirstPoint2);
                 }
                 if (!mPoint1.equals(mFirstPoint1)) {
                     for (RoomSprite room : mRoomsToRemove) {

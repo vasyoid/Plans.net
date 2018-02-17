@@ -11,8 +11,8 @@ public class Sticker extends MapObject implements Serializable {
 
     public Sticker(StickerSprite obj) {
         type = obj.getType();
-        position = new PointF(obj.getmPosition().x, obj.getmPosition().y);
-        size = obj.getmSize();
+        position = new PointF(obj.getPosition().x, obj.getPosition().y);
+        size = obj.getSize();
     }
 
     public int getType() {

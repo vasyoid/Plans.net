@@ -74,8 +74,8 @@ public class Map implements Serializable {
                 if (roomSprite == null) {
                     continue;
                 }
-                roomSprite.setmTitle(room.getTitle().toString());
-                roomSprite.setmDescription(room.getDescription().toString());
+                roomSprite.setTitle(room.getTitle().toString());
+                roomSprite.setDescription(room.getDescription().toString());
                 roomSprite.setColor(room.getColor());
             }
         }
@@ -153,11 +153,11 @@ public class Map implements Serializable {
         return mTouchState;
     }
 
-    public @NonNull List<MapObjectSprite> getmObjects() {
+    public @NonNull List<MapObjectSprite> getObjects() {
         return mObjects;
     }
 
-    public @NonNull List<RoomSprite> getmRooms() {
+    public @NonNull List<RoomSprite> getRooms() {
         return mRooms;
     }
 
@@ -181,8 +181,8 @@ public class Map implements Serializable {
                                   @NonNull MapObjectLinear pObject) {
         removeObjectFromHashTable(pFirstPoint1, pObject);
         removeObjectFromHashTable(pFirstPoint2, pObject);
-        addObjectToHashTable(pObject.getmPoint1(), pObject);
-        addObjectToHashTable(pObject.getmPoint2(), pObject);
+        addObjectToHashTable(pObject.getPoint1(), pObject);
+        addObjectToHashTable(pObject.getPoint2(), pObject);
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -202,10 +202,10 @@ public class Map implements Serializable {
             return;
         }
         for (MapObjectLinear object : mLinearObjectsByCell.get(pFrom)) {
-            if (object.getmPoint1().equals(pFrom)) {
+            if (object.getPoint1().equals(pFrom)) {
                 object.changeDirection();
             }
-            object.setmPoint2(pTo);
+            object.setPoint2(pTo);
         }
     }
 
@@ -225,8 +225,8 @@ public class Map implements Serializable {
         List<MapObjectLinear> tmp = new ArrayList<>(mLinearObjectsByCell.get(pAt));
         mLinearObjectsByCell.get(pAt).clear();
         for (MapObjectLinear object : tmp) {
-            addObjectToHashTable(object.getmPoint1(), object);
-            addObjectToHashTable(object.getmPoint2(), object);
+            addObjectToHashTable(object.getPoint1(), object);
+            addObjectToHashTable(object.getPoint2(), object);
         }
     }
 
@@ -235,8 +235,8 @@ public class Map implements Serializable {
         mObjects.add(pObject);
         if (pObject instanceof MapObjectLinear) {
             MapObjectLinear objectLinear = (MapObjectLinear) pObject;
-            addObjectToHashTable(objectLinear.getmPoint1(), objectLinear);
-            addObjectToHashTable(objectLinear.getmPoint2(), objectLinear);
+            addObjectToHashTable(objectLinear.getPoint1(), objectLinear);
+            addObjectToHashTable(objectLinear.getPoint2(), objectLinear);
         }
     }
 
@@ -266,11 +266,11 @@ public class Map implements Serializable {
         mObjects.remove(pObject);
         if (pObject instanceof MapObjectLinear) {
             MapObjectLinear objectLinear = (MapObjectLinear) pObject;
-            if (mLinearObjectsByCell.get(objectLinear.getmPoint1()).contains(pObject)) {
-                mLinearObjectsByCell.get(objectLinear.getmPoint1()).remove(pObject);
+            if (mLinearObjectsByCell.get(objectLinear.getPoint1()).contains(pObject)) {
+                mLinearObjectsByCell.get(objectLinear.getPoint1()).remove(pObject);
             }
-            if (mLinearObjectsByCell.get(objectLinear.getmPoint2()).contains(pObject)) {
-                mLinearObjectsByCell.get(objectLinear.getmPoint2()).remove(pObject);
+            if (mLinearObjectsByCell.get(objectLinear.getPoint2()).contains(pObject)) {
+                mLinearObjectsByCell.get(objectLinear.getPoint2()).remove(pObject);
             }
         }
         mRemovedObjects.add(pObject);
@@ -317,7 +317,7 @@ public class Map implements Serializable {
             return false;
         }
         for (MapObjectLinear object : mLinearObjectsByCell.get(pPoint)) {
-            if (hasIntersections(object) || Geometry.length(object.getmPosition()) == 0) {
+            if (hasIntersections(object) || Geometry.length(object.getPosition()) == 0) {
                 return true;
             }
         }
@@ -333,7 +333,7 @@ public class Map implements Serializable {
             if (ol.equals(pObject)) {
                 continue;
             }
-            if (Geometry.linesIntersect(ol.getmPosition(), pObject.getmPosition())) {
+            if (Geometry.linesIntersect(ol.getPosition(), pObject.getPosition())) {
                 return true;
             }
         }
@@ -343,7 +343,7 @@ public class Map implements Serializable {
     public @Nullable RoomSprite getRoomTouchedOrNull(@NonNull TouchEvent pTouchEvent) {
         PointF touchPoint = new PointF(pTouchEvent.getX(), pTouchEvent.getY());
         for (RoomSprite r : mRooms) {
-            if (Geometry.isPointInsidePolygon(r.getmPolygon(), touchPoint)) {
+            if (Geometry.isPointInsidePolygon(r.getPolygon(), touchPoint)) {
                 return r;
             }
         }

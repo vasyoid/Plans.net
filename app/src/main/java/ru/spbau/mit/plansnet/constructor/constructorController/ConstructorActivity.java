@@ -52,6 +52,10 @@ import static ru.spbau.mit.plansnet.constructor.objects.StickerSprite.StickerTyp
 import static ru.spbau.mit.plansnet.constructor.objects.StickerSprite.StickerType.VOLTAGE;
 import static ru.spbau.mit.plansnet.constructor.objects.StickerSprite.StickerType.WC;
 
+/**
+ * Activity for plans editor.
+ * Displays a plan with all elements and provides an interface to add, move, remove elements, etc.
+ */
 public class ConstructorActivity extends BaseConstructorActivity {
 
     private static final int PICK_IMAGE_TOKEN = 42;
@@ -195,7 +199,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
                             default:
                                 Log.e("VASYOID", "invalid item in addLinear function");
                         }
-                        mCurrentAdded.setmPosition(mCurrentLine);
+                        mCurrentAdded.setObjectPosition(mCurrentLine);
                         pScene.attachChild(mCurrentAdded);
                         pScene.registerTouchArea(mCurrentAdded);
                         pScene.sortChildren();
@@ -203,7 +207,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
                     case TouchEvent.ACTION_MOVE:
                         mCurrentLine.setPosition(mFirstPoint.x, mFirstPoint.y,
                                 mCurrentPoint.x, mCurrentPoint.y);
-                        mCurrentAdded.setmPosition(mCurrentLine);
+                        mCurrentAdded.setObjectPosition(mCurrentLine);
                         mPreviousPoint.set(mCurrentPoint);
                         break;
                     case TouchEvent.ACTION_UP:
@@ -296,6 +300,9 @@ public class ConstructorActivity extends BaseConstructorActivity {
         return scene;
     }
 
+    /**
+     * Callback function called when a user presses the Back button.
+     */
     @Override
     public void onBackPressed() {
         if (mToOpenMap == null) {
@@ -341,14 +348,14 @@ public class ConstructorActivity extends BaseConstructorActivity {
             paramsView.setVisibility(View.VISIBLE);
             EditText roomName = findViewById(R.id.roomName);
             EditText roomDescription = findViewById(R.id.roomDescription);
-            roomName.setText(pRoom.getmTitle());
-            roomDescription.setText(pRoom.getmDescription());
+            roomName.setText(pRoom.getTitle());
+            roomDescription.setText(pRoom.getDescription());
             paramsView.findViewById(R.id.roomParamsOk).setOnClickListener(v1 -> {
                 hideKeyboard();
                 String title = roomName.getText().toString();
                 String description = roomDescription.getText().toString();
-                pRoom.setmTitle(title);
-                pRoom.setmDescription(description);
+                pRoom.setTitle(title);
+                pRoom.setDescription(description);
                 paramsView.setVisibility(View.GONE);
                 enableAll();
             });

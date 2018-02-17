@@ -39,6 +39,10 @@ import ru.spbau.mit.plansnet.constructor.objects.WallSprite;
 import ru.spbau.mit.plansnet.constructor.objects.WindowSprite;
 import ru.spbau.mit.plansnet.data.FloorMap;
 
+/**
+ * Base class for activities related to plans editor and viewer.
+ * Provides common activity lifecycle methods.
+ */
 public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
 
     public final static int MAP_WIDTH = 4096;
@@ -73,6 +77,10 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
         mToOpenMap = (FloorMap) intent.getSerializableExtra("currentMap");
     }
 
+    /**
+     * Creates camera and sets screen options.
+     * @return engine options.
+     */
     @Override
     public @NonNull EngineOptions onCreateEngineOptions() {
         setCameraResolution();
@@ -87,6 +95,9 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
                 new FillResolutionPolicy(), camera);
     }
 
+    /**
+     * Loads images of stickers and linear objects.
+     */
     @Override
     protected void onCreateResources() {
         try {
@@ -130,6 +141,10 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
         }
     }
 
+    /**
+     * Handles touch events corresponding map shifting.
+     * @param pSceneTouchEvent touch event to handle.
+     */
     protected void moveMap(@NonNull TouchEvent pSceneTouchEvent) {
         mPinchZoomDetector.onTouchEvent(pSceneTouchEvent);
         if (pSceneTouchEvent.isActionMove()) {
@@ -145,6 +160,9 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
         }
     }
 
+    /**
+     * Initialises zoom detector.
+     */
     protected void initPinchZoomDetector() {
         mPinchZoomDetector = new PinchZoomDetector(
                 new PinchZoomDetector.IPinchZoomDetectorListener() {
@@ -177,6 +195,9 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
         mPinchZoomDetector.setEnabled(true);
     }
 
+    /**
+     * Initialises static fields in MapObjectSprite classes.
+     */
     protected void initSprites() {
         MapObjectSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
         RoomSprite.setVertexBufferObjectManager(getVertexBufferObjectManager());
@@ -186,6 +207,10 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
                 100f, true, Color.WHITE_ABGR_PACKED_INT));
     }
 
+    /**
+     * Initialises the map with objects.
+     * @param pScene scene where the map will be drawn.
+     */
     protected void initMap(@NonNull Scene pScene) {
         if (mToOpenMap != null) {
             mMap = new Map(mToOpenMap, pScene);
@@ -195,7 +220,7 @@ public abstract class BaseConstructorActivity extends SimpleLayoutGameActivity {
         }
         Map.setGridSize(mGridSize);
         MapObjectSprite.setMap(mMap);
-        for (MapObjectSprite o : mMap.getmObjects()) {
+        for (MapObjectSprite o : mMap.getObjects()) {
             pScene.attachChild(o);
             pScene.registerTouchArea(o);
         }

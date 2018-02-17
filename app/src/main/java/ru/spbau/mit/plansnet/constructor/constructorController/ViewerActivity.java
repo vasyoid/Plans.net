@@ -14,8 +14,16 @@ import java.util.concurrent.Semaphore;
 import ru.spbau.mit.plansnet.R;
 import ru.spbau.mit.plansnet.constructor.objects.RoomSprite;
 
+/**
+ * Activity for plans viewer.
+ * Displays a plan with all elements and shows rooms information (name, description).
+ */
 public class ViewerActivity extends BaseConstructorActivity {
 
+    /**
+     * Created the border of the plan.
+     * @param pScene scene
+     */
     private void createBorder(@NonNull Scene pScene) {
         Line[] border = {
                 new Line(0, 0, 0, MAP_HEIGHT, 3,
@@ -76,6 +84,10 @@ public class ViewerActivity extends BaseConstructorActivity {
         return R.id.viewerView;
     }
 
+    /**
+     * Shows room information (name, description).
+     * @param pRoom room which information will be shown.
+     */
     public void showParams(@NonNull RoomSprite pRoom) {
         Semaphore mutex = new Semaphore(1);
         runOnUiThread(() -> {
@@ -84,8 +96,8 @@ public class ViewerActivity extends BaseConstructorActivity {
             paramsView.setVisibility(View.VISIBLE);
             TextView roomName = findViewById(R.id.roomPropertiesName);
             TextView roomDescription = findViewById(R.id.roomPropertiesDescription);
-            roomName.setText(pRoom.getmTitle());
-            roomDescription.setText(pRoom.getmDescription());
+            roomName.setText(pRoom.getTitle());
+            roomDescription.setText(pRoom.getDescription());
             paramsView.findViewById(R.id.roomPropertiesOk).setOnClickListener(v1 -> {
                 paramsView.setVisibility(View.GONE);
                 findViewById(R.id.viewerView).setEnabled(true);
