@@ -26,6 +26,9 @@ public class StickerSprite extends MapObjectSprite {
 
     private static ITextureRegion[] textureRegions;
 
+    private static float mMinSize = 0.2f;
+    private static float mMaxSize = 2f;
+
     private final StickerType mType;
     private PointF mPosition;
     private PointF mFirstTouch = null;
@@ -144,7 +147,7 @@ public class StickerSprite extends MapObjectSprite {
                         mCurrentSize = mSize * Geometry.distance(mPosition, currentTouch) /
                                 Geometry.distance(mPosition, mFirstTouch);
                         mCurrentSize = Geometry.bringValueToBounds(mCurrentSize,
-                                0.7f, 1.5f);
+                                mMinSize, mMaxSize);
                         setScale(mCurrentSize);
                     } else {
                         mPosition.offset(currentTouch.x - mPreviousTouch.x,

@@ -222,7 +222,7 @@ public class MainActivity extends AppCompatActivity {
         buildingsSuggestedList.setOnItemClickListener((adapterView, view, i, l) -> {
             Building chosenBuilding = buildingList.get(i);
             chooseBuildingsForNewMapDialog.cancel();
-            createNewMapDialog(chosenGroup, chosenBuilding, null);
+            createNewMapDialog(chosenGroup, chosenBuilding, toSave);
         });
 
         chooseBuildingsForNewMapDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Add new building",

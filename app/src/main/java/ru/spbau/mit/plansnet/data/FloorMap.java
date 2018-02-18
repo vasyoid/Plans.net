@@ -2,6 +2,7 @@ package ru.spbau.mit.plansnet.data;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -79,7 +80,9 @@ public class FloorMap extends AbstractNamedData implements Serializable {
 
     public void copyMap(@Nullable FloorMap map) {
         if (map != null) {
-            objects = map.objects;
+            objects = (ArrayList<MapObject>)map.objects.clone();
+        } else {
+            Log.d("copy map", "map is null");
         }
     }
 
