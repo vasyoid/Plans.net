@@ -18,9 +18,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CountDownLatch;
 
 import ru.spbau.mit.plansnet.constructor.objects.DoorSprite;
 import ru.spbau.mit.plansnet.constructor.objects.MapObjectLinear;
@@ -49,6 +48,8 @@ import static ru.spbau.mit.plansnet.constructor.constructorController.Constructo
  * that help an activity interact with the elements.
  */
 public class Map implements Serializable {
+
+    private static final Object MUTEX_FOR_REMOVE_BACKGROUND = new Object();
 
     private static int gridSize = 0;
 
@@ -170,16 +171,16 @@ public class Map implements Serializable {
      * @param pEngine engine that helps to visualize the background.
      */
     public void removeBackground(@NonNull Engine pEngine) {
-        Semaphore mutex = new Semaphore(0);
+        CountDownLatch doneSignal = new CountDownLatch(1);
         pEngine.runOnUpdateThread(() -> {
-            mBackgroundSprite.detachSelf();
-            mutex.release();
+            synchronized (MUTEX_FOR_REMOVE_BACKGROUND) {
+                mBackgroundSprite.detachSelf();
+            }
+            doneSignal.countDown();
         });
         try {
-            mutex.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            doneSignal.await();
+        } catch (InterruptedException ignored) { }
         mBackgroundSprite = null;
     }
 
@@ -322,7 +323,7 @@ public class Map implements Serializable {
      * Adds a new map object to the list of objects.
      * @param pObject object to add.
      */
-    public void addObject(@NonNull MapObjectSprite pObject) {
+    public synchronized void addObject(@NonNull MapObjectSprite pObject) {
         mRemovedObjects.remove(pObject);
         mObjects.add(pObject);
         if (pObject instanceof MapObjectLinear) {
@@ -336,7 +337,7 @@ public class Map implements Serializable {
      * Adds a new room to the list of rooms.
      * @param pRoom room to add.
      */
-    public void addRoom(@NonNull RoomSprite pRoom) {
+    public synchronized void addRoom(@NonNull RoomSprite pRoom) {
         mRemovedRooms.remove(pRoom);
         mRooms.add(pRoom);
     }
@@ -373,7 +374,7 @@ public class Map implements Serializable {
      * Removes a map object from the list of objects.
      * @param pObject object to remove.
      */
-    public void removeObject(@NonNull MapObjectSprite pObject) {
+    public synchronized void removeObject(@NonNull MapObjectSprite pObject) {
         mObjects.remove(pObject);
         if (pObject instanceof MapObjectLinear) {
             MapObjectLinear objectLinear = (MapObjectLinear) pObject;
@@ -391,7 +392,7 @@ public class Map implements Serializable {
      * Removes a room from the list of rooms.
      * @param pRoom room to remove.
      */
-    public void removeRoom(@NonNull RoomSprite pRoom) {
+    public synchronized void removeRoom(@NonNull RoomSprite pRoom) {
         mRooms.remove(pRoom);
         mRemovedRooms.add(pRoom);
     }
@@ -400,33 +401,28 @@ public class Map implements Serializable {
      * Detaches all removed objects from the scene.
      * @param pEngine engine containing scene.
      */
-    public void detachRemoved(@NonNull Engine pEngine) {
+    public synchronized void detachRemoved(@NonNull Engine pEngine) {
         if (mRemovedObjects.isEmpty() && mRemovedRooms.isEmpty()) {
             return;
         }
-        Semaphore mutex = new Semaphore(1);
         pEngine.runOnUpdateThread(() -> {
-            for (MapObjectSprite o : mRemovedObjects) {
-                o.detachSelf();
+            synchronized (Map.this) {
+                for (MapObjectSprite o : mRemovedObjects) {
+                    o.detachSelf();
+                }
+                for (RoomSprite r : mRemovedRooms) {
+                    r.detachSelf();
+                }
+                mRemovedObjects.clear();
+                mRemovedRooms.clear();
             }
-            for (RoomSprite r : mRemovedRooms) {
-                r.detachSelf();
-            }
-            mRemovedObjects.clear();
-            mRemovedRooms.clear();
-            mutex.release();
         });
-        try {
-            mutex.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
      * Removes all elements from the map.
      */
-    public void clear() {
+    public synchronized void clear() {
         mRemovedObjects.addAll(mObjects);
         mRemovedRooms.addAll(mRooms);
         mObjects.clear();

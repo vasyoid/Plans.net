@@ -1,5 +1,6 @@
 package ru.spbau.mit.plansnet.constructor.constructorController;
 
+import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.view.MotionEvent;
 import android.view.View;
@@ -9,7 +10,7 @@ import org.andengine.entity.primitive.Line;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CountDownLatch;
 
 import ru.spbau.mit.plansnet.R;
 import ru.spbau.mit.plansnet.constructor.objects.RoomSprite;
@@ -102,28 +103,38 @@ public class ViewerActivity extends BaseConstructorActivity {
 
     /**
      * Shows room information (name, description).
+     * Will be run on UI thread.
+     * @param pRoom room which information will be shown.
+     * @param pContext activity which contains view elements.
+     */
+    private static synchronized void showParamsOnUiThread(@NonNull RoomSprite pRoom,
+                                                          @NonNull Activity pContext) {
+        pContext.findViewById(R.id.viewerView).setEnabled(false);
+        View paramsView = pContext.findViewById(R.id.roomPropertiesView);
+        paramsView.setVisibility(View.VISIBLE);
+        TextView roomName = pContext.findViewById(R.id.roomPropertiesName);
+        TextView roomDescription = pContext.findViewById(R.id.roomPropertiesDescription);
+        roomName.setText(pRoom.getTitle());
+        roomDescription.setText(pRoom.getDescription());
+        paramsView.findViewById(R.id.roomPropertiesOk).setOnClickListener(v1 -> {
+            paramsView.setVisibility(View.GONE);
+            pContext.findViewById(R.id.viewerView).setEnabled(true);
+        });
+    }
+
+    /**
+     * Shows room information (name, description).
      * @param pRoom room which information will be shown.
      */
     public void showParams(@NonNull RoomSprite pRoom) {
-        Semaphore mutex = new Semaphore(1);
+        CountDownLatch doneSignal = new CountDownLatch(1);
         runOnUiThread(() -> {
-            findViewById(R.id.viewerView).setEnabled(false);
-            View paramsView = findViewById(R.id.roomPropertiesView);
-            paramsView.setVisibility(View.VISIBLE);
-            TextView roomName = findViewById(R.id.roomPropertiesName);
-            TextView roomDescription = findViewById(R.id.roomPropertiesDescription);
-            roomName.setText(pRoom.getTitle());
-            roomDescription.setText(pRoom.getDescription());
-            paramsView.findViewById(R.id.roomPropertiesOk).setOnClickListener(v1 -> {
-                paramsView.setVisibility(View.GONE);
-                findViewById(R.id.viewerView).setEnabled(true);
-            });
+            showParamsOnUiThread(pRoom, ViewerActivity.this);
+            doneSignal.countDown();
         });
         try {
-            mutex.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            doneSignal.await();
+        } catch (InterruptedException ignored) { }
     }
 
 }
