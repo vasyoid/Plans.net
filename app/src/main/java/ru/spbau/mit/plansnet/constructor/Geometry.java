@@ -178,12 +178,12 @@ public class Geometry {
     /**
      * Returns the distance between two points.
      * @param pPoint1 first point.
-     * @param pPoin2 second point.
+     * @param pPoint2 second point.
      * @return the distance between the points.
      */
-    public static float distance(@NonNull PointF pPoint1, @NonNull PointF pPoin2) {
+    public static float distance(@NonNull PointF pPoint1, @NonNull PointF pPoint2) {
         return length(new Line(pPoint1.x, pPoint1.y,
-                pPoin2.x, pPoin2.y, null));
+                pPoint2.x, pPoint2.y, null));
     }
 
     /**

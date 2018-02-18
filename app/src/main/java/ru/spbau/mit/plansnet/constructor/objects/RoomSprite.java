@@ -203,7 +203,7 @@ public class RoomSprite {
      * @param pPoint2 second segment end.
      * @return true if the segment is one of the room polygon sides, false otherwise.
      */
-    public boolean contains(@NonNull PointF pPoint1, @NonNull PointF pPoint2) {
+    public boolean containsSide(@NonNull PointF pPoint1, @NonNull PointF pPoint2) {
         for (int i = 0; i < mPolygon.size(); i++) {
             if (mPolygon.get(i).equals(pPoint1) &&
                     mPolygon.get((i + 1) % mPolygon.size()).equals(pPoint2) ||

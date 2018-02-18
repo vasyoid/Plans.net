@@ -52,10 +52,10 @@ public class Map implements Serializable {
 
     private static int gridSize = 0;
 
-    private List<MapObjectSprite> mObjects = new LinkedList<>();
-    private List<RoomSprite> mRooms = new LinkedList<>();
-    private List<MapObjectSprite> mRemovedObjects = new LinkedList<>();
-    private List<RoomSprite> mRemovedRooms = new LinkedList<>();
+    private List<MapObjectSprite> mObjects = new ArrayList<>();
+    private List<RoomSprite> mRooms = new ArrayList<>();
+    private List<MapObjectSprite> mRemovedObjects = new ArrayList<>();
+    private List<RoomSprite> mRemovedRooms = new ArrayList<>();
     private HashMap<PointF, HashSet<MapObjectLinear>> mLinearObjectsByCell = new HashMap<>();
     private ConstructorActivity.ActionState mTouchState = ADD;
     private Sprite mBackgroundSprite = null;
@@ -351,7 +351,7 @@ public class Map implements Serializable {
                                                         @NonNull PointF pPoint2) {
         List<RoomSprite> result = new ArrayList<>();
         for (RoomSprite room : mRooms) {
-            if (room.contains(pPoint1, pPoint2)) {
+            if (room.containsSide(pPoint1, pPoint2)) {
                 result.add(room);
             }
         }
@@ -377,10 +377,10 @@ public class Map implements Serializable {
         mObjects.remove(pObject);
         if (pObject instanceof MapObjectLinear) {
             MapObjectLinear objectLinear = (MapObjectLinear) pObject;
-            if (mLinearObjectsByCell.get(objectLinear.getPoint1()).contains(pObject)) {
+            if (mLinearObjectsByCell.containsKey(objectLinear.getPoint1())) {
                 mLinearObjectsByCell.get(objectLinear.getPoint1()).remove(pObject);
             }
-            if (mLinearObjectsByCell.get(objectLinear.getPoint2()).contains(pObject)) {
+            if (mLinearObjectsByCell.containsKey(objectLinear.getPoint2())) {
                 mLinearObjectsByCell.get(objectLinear.getPoint2()).remove(pObject);
             }
         }
