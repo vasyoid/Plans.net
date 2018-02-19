@@ -123,69 +123,70 @@ public class StickerSprite extends MapObjectSprite {
     @Override
     public boolean onAreaTouched(TouchEvent pSceneTouchEvent,
                                  float pTouchAreaLocalX, float pTouchAreaLocalY) {
-        if (MAP.getTouchState() == ConstructorActivity.ActionState.MOVE_OBJECT) {
-            switch (pSceneTouchEvent.getAction()) {
-                case ACTION_DOWN:
-                    mFirstTouch = mPreviousTouch = new PointF(pSceneTouchEvent.getX(),
-                            pSceneTouchEvent.getY());
-                    if (Geometry.isPointAtCorner(new PointF(pTouchAreaLocalX, pTouchAreaLocalY),
-                            new PointF(0, 0), new PointF(TEXTURE_SIZE, TEXTURE_SIZE),
-                            Map.getGridSize() / 2.0 / mSize)) {
-                        mZooming = true;
-                        mCurrentSize = mSize;
-                    } else {
-                        setScale(mSize + 0.05f);
-                    }
-                    break;
-                case ACTION_MOVE:
-                    if (mFirstTouch == null || mPreviousTouch == null) {
-                        return false;
-                    }
-                    PointF currentTouch = new PointF(pSceneTouchEvent.getX(),
-                            pSceneTouchEvent.getY());
-                    if (mZooming) {
-                        mCurrentSize = mSize * Geometry.distance(mPosition, currentTouch) /
-                                Geometry.distance(mPosition, mFirstTouch);
-                        mCurrentSize = Geometry.bringValueToBounds(mCurrentSize,
-                                mMinSize, mMaxSize);
-                        setScale(mCurrentSize);
-                    } else {
-                        mPosition.offset(currentTouch.x - mPreviousTouch.x,
-                                currentTouch.y - mPreviousTouch.y);
-                        mPosition.x = Geometry.bringValueToBounds(mPosition.x,
-                                getWidthScaled() / 2, MAP_WIDTH - getWidthScaled() / 2);
-                        mPosition.y = Geometry.bringValueToBounds(mPosition.y,
-                                getHeightScaled() / 2,
-                                MAP_HEIGHT - getHeightScaled() /2);
-                        super.setPosition(mPosition.x - TEXTURE_SIZE / 2,
-                                mPosition.y - TEXTURE_SIZE / 2);
-                        mPreviousTouch = currentTouch;
-                    }
-                    break;
-                case ACTION_UP:
-                    if (mZooming) {
-                        mSize = mCurrentSize;
-                        mZooming = false;
-                    }
-                    setScale(mSize);
-                    mPosition.x = Geometry.bringValueToBounds(mPosition.x,
-                            getWidthScaled() / 2, MAP_WIDTH - getWidthScaled() / 2);
-                    mPosition.y = Geometry.bringValueToBounds(mPosition.y,
-                            getHeightScaled() / 2, MAP_HEIGHT - getHeightScaled() /2);
-                    super.setPosition(mPosition.x - TEXTURE_SIZE / 2,
-                            mPosition.y - TEXTURE_SIZE / 2);
-                    mFirstTouch = mPreviousTouch = null;
-                    break;
-                default:
-                    break;
-            }
-            return true;
-        } else if (MAP.getTouchState() == ConstructorActivity.ActionState.DEL &&
+        if (MAP.getTouchState() == ConstructorActivity.ActionState.DEL &&
                 pSceneTouchEvent.getAction() == ACTION_DOWN) {
             MAP.removeObject(this);
             return true;
         }
-        return false;
+        if (MAP.getTouchState() != ConstructorActivity.ActionState.MOVE_OBJECT) {
+            return false;
+        }
+        switch (pSceneTouchEvent.getAction()) {
+            case ACTION_DOWN:
+                mFirstTouch = mPreviousTouch = new PointF(pSceneTouchEvent.getX(),
+                        pSceneTouchEvent.getY());
+                if (Geometry.isPointAtCorner(new PointF(pTouchAreaLocalX, pTouchAreaLocalY),
+                        new PointF(0, 0), new PointF(TEXTURE_SIZE, TEXTURE_SIZE),
+                        Map.getGridSize() / 2.0 / mSize)) {
+                    mZooming = true;
+                    mCurrentSize = mSize;
+                } else {
+                    setScale(mSize + 0.05f);
+                }
+                break;
+            case ACTION_MOVE:
+                if (mFirstTouch == null || mPreviousTouch == null) {
+                    return false;
+                }
+                PointF currentTouch = new PointF(pSceneTouchEvent.getX(),
+                        pSceneTouchEvent.getY());
+                if (mZooming) {
+                    mCurrentSize = mSize * Geometry.distance(mPosition, currentTouch) /
+                            Geometry.distance(mPosition, mFirstTouch);
+                    mCurrentSize = Geometry.bringValueToBounds(mCurrentSize,
+                            0.7f, 1.5f);
+                    setScale(mCurrentSize);
+                } else {
+                    mPosition.offset(currentTouch.x - mPreviousTouch.x,
+                            currentTouch.y - mPreviousTouch.y);
+                    mPosition.x = Geometry.bringValueToBounds(mPosition.x,
+                            getWidthScaled() / 2, MAP_WIDTH - getWidthScaled() / 2);
+                    mPosition.y = Geometry.bringValueToBounds(mPosition.y,
+                            getHeightScaled() / 2,
+                            MAP_HEIGHT - getHeightScaled() /2);
+                    super.setPosition(mPosition.x - TEXTURE_SIZE / 2,
+                            mPosition.y - TEXTURE_SIZE / 2);
+                    mPreviousTouch = currentTouch;
+                }
+                break;
+            case ACTION_UP:
+                if (mZooming) {
+                    mSize = mCurrentSize;
+                    mZooming = false;
+                }
+                setScale(mSize);
+                mPosition.x = Geometry.bringValueToBounds(mPosition.x,
+                        getWidthScaled() / 2, MAP_WIDTH - getWidthScaled() / 2);
+                mPosition.y = Geometry.bringValueToBounds(mPosition.y,
+                        getHeightScaled() / 2, MAP_HEIGHT - getHeightScaled() /2);
+                super.setPosition(mPosition.x - TEXTURE_SIZE / 2,
+                        mPosition.y - TEXTURE_SIZE / 2);
+                mFirstTouch = mPreviousTouch = null;
+                break;
+            default:
+                break;
+        }
+        return true;
     }
 
     /**

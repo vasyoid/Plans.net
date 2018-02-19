@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CountDownLatch;
 
 import org.andengine.entity.primitive.Line;
 import org.andengine.entity.scene.IOnSceneTouchListener;
@@ -59,6 +59,10 @@ import static ru.spbau.mit.plansnet.constructor.objects.StickerSprite.StickerTyp
 public class ConstructorActivity extends BaseConstructorActivity {
 
     private static final int PICK_IMAGE_TOKEN = 42;
+    private static final Object MUTEX_FOR_REMOVE_GRID = new Object();
+    private static final Object MUTEX_FOR_SHOW_PARAMS = new Object();
+    private static final Object MUTEX_FOR_CLEAR_MAP = new Object();
+    private static final Object MUTEX_FOR_SET_GRID_SIZE = new Object();
 
     private ActionState mState = ActionState.ADD;
     private MapItem mItem = MapItem.WALL;
@@ -67,23 +71,30 @@ public class ConstructorActivity extends BaseConstructorActivity {
 
     /**
      * Removes an existing grid from the current scene.
+     * Will be run on update thread.
      */
-    private void removeGrid() {
-        Semaphore mutex = new Semaphore(0);
-        getEngine().runOnUpdateThread(() -> {
+    private void removeGridOnUpdateThread() {
+        synchronized (MUTEX_FOR_REMOVE_GRID) {
             for (Line l : mGrid) {
                 l.detachSelf();
             }
             mGrid.clear();
-            mutex.release();
-        });
-        try {
-            mutex.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 
+    /**
+     * Removes an existing grid from the current scene.
+     */
+    private void removeGrid() {
+        CountDownLatch doneSignal = new CountDownLatch(1);
+        getEngine().runOnUpdateThread(() -> {
+            removeGridOnUpdateThread();
+            doneSignal.countDown();
+        });
+        try {
+            doneSignal.await();
+        } catch (InterruptedException ignored) { }
+    }
 
     /**
      * Creates a grid on a scene.
@@ -292,7 +303,7 @@ public class ConstructorActivity extends BaseConstructorActivity {
                         if (room != null) {
                             mMap.removeRoom(room);
                         }
-                        mMap.detachRemoved(mEngine);
+                        mMap.detachRemoved(getEngine());
                         break;
                     case SHOW_PARAMS:
                         if (room == null) {
@@ -392,14 +403,11 @@ public class ConstructorActivity extends BaseConstructorActivity {
 
     /**
      * Shows room information (name, description).
+     * Will be run on UI thread.
      * @param pRoom room which information will be shown.
      */
-    public void showParams(@NonNull RoomSprite pRoom) {
-        if (!findViewById(R.id.constructorView).isEnabled()) {
-            return;
-        }
-        Semaphore mutex = new Semaphore(0);
-        runOnUiThread(() -> {
+    public void showParamsOnUiThread(@NonNull RoomSprite pRoom) {
+        synchronized (MUTEX_FOR_SHOW_PARAMS) {
             disableAll();
             View paramsView = findViewById(R.id.roomParamsView);
             paramsView.setVisibility(View.VISIBLE);
@@ -416,13 +424,25 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 paramsView.setVisibility(View.GONE);
                 enableAll();
             });
-            mutex.release();
+        }
+    }
+
+    /**
+     * Shows room information (name, description).
+     * @param pRoom room which information will be shown.
+     */
+    public void showParams(@NonNull RoomSprite pRoom) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
+        CountDownLatch doneSignal = new CountDownLatch(1);
+        runOnUiThread(() -> {
+            showParamsOnUiThread(pRoom);
+            doneSignal.countDown();
         });
         try {
-            mutex.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            doneSignal.await();
+        } catch (InterruptedException ignored) { }
     }
 
     /**
@@ -569,14 +589,10 @@ public class ConstructorActivity extends BaseConstructorActivity {
 
     /**
      * Removes all elements from the map.
-     * @param pView button pressed.
+     * Will be run on UI thread.
      */
-    public void clearMap(@NonNull View pView) {
-        if (!findViewById(R.id.constructorView).isEnabled()) {
-            return;
-        }
-        Semaphore mutex = new Semaphore(0);
-        runOnUiThread(() -> {
+    public void clearMapOnUiTread() {
+        synchronized (MUTEX_FOR_CLEAR_MAP) {
             disableAll();
             View confirmClearView = findViewById(R.id.confirmClearView);
             confirmClearView.setVisibility(View.VISIBLE);
@@ -590,13 +606,25 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 confirmClearView.setVisibility(View.GONE);
                 enableAll();
             });
-            mutex.release();
+        }
+    }
+
+    /**
+     * Removes all elements from the map.
+     * @param pView button pressed.
+     */
+    public void clearMap(@NonNull View pView) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
+        CountDownLatch doneSignal = new CountDownLatch(1);
+        runOnUiThread(() -> {
+            clearMapOnUiTread();
+            doneSignal.countDown();
         });
         try {
-            mutex.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            doneSignal.await();
+        } catch (InterruptedException ignored) { }
     }
 
     /**
@@ -669,14 +697,10 @@ public class ConstructorActivity extends BaseConstructorActivity {
 
     /**
      * Shows an interface to change the size of the grid.
-     * @param pView button pressed.
+     * Will be run on UI thread.
      */
-    public void setGridSize(@NonNull View pView) {
-        if (!findViewById(R.id.constructorView).isEnabled()) {
-            return;
-        }
-        Semaphore mutex = new Semaphore(0);
-        runOnUiThread(() -> {
+    public void setGridSizeOnUiThread() {
+        synchronized (MUTEX_FOR_SET_GRID_SIZE) {
             disableAll();
             View gridSizeView = findViewById(R.id.gridSizeView);
             gridSizeView.setVisibility(View.VISIBLE);
@@ -702,13 +726,25 @@ public class ConstructorActivity extends BaseConstructorActivity {
                 gridSizeView.setVisibility(View.GONE);
                 enableAll();
             });
-            mutex.release();
+        }
+    }
+
+    /**
+         * Shows an interface to change the size of the grid.
+         * @param pView button pressed.
+         */
+    public void setGridSize(@NonNull View pView) {
+        if (!findViewById(R.id.constructorView).isEnabled()) {
+            return;
+        }
+        CountDownLatch doneSignal = new CountDownLatch(1);
+        runOnUiThread(() -> {
+            setGridSizeOnUiThread();
+            doneSignal.countDown();
         });
         try {
-            mutex.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            doneSignal.await();
+        } catch (InterruptedException ignored) { }
     }
 
     /**
