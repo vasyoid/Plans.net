@@ -154,8 +154,8 @@ class NetworkDataManager {
                         synchronized (isFinished) {
                             isFinished.set(true);
                             isFinished.notify();
-                            Log.d("SearchMaps", "finish!");
                         }
+                        Log.d("SearchMaps", "finish!");
                     }
 
                     @Override
@@ -225,16 +225,16 @@ class NetworkDataManager {
                                     synchronized (mapCount) {
                                         mapCount.incrementAndGet();
                                         mapCount.notify();
-                                        Log.d(STORAGE_TAG, mapCount.get()
-                                                + " get file from storage: " + mapFile.getName());
                                     }
+                                    Log.d(STORAGE_TAG, mapCount.get()
+                                            + " get file from storage: " + mapFile.getName());
                                 }).addOnFailureListener(e -> {
                                     synchronized (mapCount) {
                                         mapCount.incrementAndGet();
                                         mapCount.notify();
-                                        Toast.makeText(context, "Can't download map: "
-                                                + mapFile.getName(), Toast.LENGTH_SHORT).show();
                                     }
+                                    Toast.makeText(context, "Can't download map: "
+                                        + mapFile.getName(), Toast.LENGTH_SHORT).show();
                         });
                     });
         }

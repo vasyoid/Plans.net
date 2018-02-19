@@ -81,7 +81,7 @@ public class DataController {
             if (isDownloaded) {
                 userAccount.getDownloadedGroupsMap().remove(group.getName());
             } else {
-                userAccount.getAllData().remove(group.getName());
+                userAccount.getInnerMap().remove(group.getName());
             }
             netManager.deleteReference(group, null, null);
             return;
@@ -93,7 +93,7 @@ public class DataController {
         }
         if (map == null) {
             deleteRecursive(mapFile);
-            group.getAllData().remove(building.getName());
+            group.getInnerMap().remove(building.getName());
             netManager.deleteReference(group, building, null);
             return;
         }
@@ -102,7 +102,7 @@ public class DataController {
         if (building.findByName(map.getName()) == null) {
             throw new IllegalArgumentException("Doesn't exists map: " + map.getName());
         }
-        building.getAllData().remove(map.getName());
+        building.getInnerMap().remove(map.getName());
         deleteRecursive(mapFile);
 
         netManager.deleteReference(group, building, map);

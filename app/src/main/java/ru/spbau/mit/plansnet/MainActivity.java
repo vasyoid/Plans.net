@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
             Building building = dataController.addBuildingToGroup(new Building(newBuildingName), chosenGroup);
             buildingList.clear();
             if (currentGroup == chosenGroup) {
-                buildingList.addAll(currentGroup.getValues());
+                buildingList.addAll(currentGroup.getInnerValues());
             }
             buildingListAdapter.notifyDataSetChanged();
             createNewMapDialog(chosenGroup, building, toSave);
@@ -334,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
                 Building building = (Building)hierarchyList.get(i);
 
                 hierarchyList.clear();
-                hierarchyList.addAll(building.getValues());
+                hierarchyList.addAll(building.getInnerValues());
                 hierarchyListAdapter.notifyDataSetChanged();
 
                 pathTextView.setText(String.format("path: /%s/%s/",group.toString(), building.toString()));
@@ -358,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
         backBtn.setEnabled(false);
         backBtn.setOnClickListener(view -> {
             hierarchyList.clear();
-            hierarchyList.addAll(group.getValues());
+            hierarchyList.addAll(group.getInnerValues());
             hierarchyListAdapter.notifyDataSetChanged();
             backBtn.setEnabled(false);
             pathTextView.setText(String.format("path: /%s/", group.toString()));
@@ -376,7 +376,7 @@ public class MainActivity extends AppCompatActivity {
 
         groupSettingsDialog.show();
 
-        hierarchyList.addAll(group.getValues());
+        hierarchyList.addAll(group.getInnerValues());
         hierarchyListAdapter.notifyDataSetChanged();
     }
 
@@ -395,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
 
             buildingList.clear();
             if (currentGroup != null) {
-                buildingList.addAll(currentGroup.getValues());
+                buildingList.addAll(currentGroup.getInnerValues());
             }
             buildingListAdapter.notifyDataSetChanged();
 
@@ -430,7 +430,7 @@ public class MainActivity extends AppCompatActivity {
 
             buildingList.clear();
             if (currentGroup != null) {
-                buildingList.addAll(currentGroup.getValues());
+                buildingList.addAll(currentGroup.getInnerValues());
             }
             buildingListAdapter.notifyDataSetChanged();
 
@@ -575,9 +575,9 @@ public class MainActivity extends AppCompatActivity {
     private void floorListActivate() {
         floorList.clear();
         if (currentBuilding != null) {
-            floorList.addAll(currentBuilding.getValues());
-            if (currentBuilding.getValues().size() > 0) {
-                currentMap = currentBuilding.getValues().iterator().next();
+            floorList.addAll(currentBuilding.getInnerValues());
+            if (currentBuilding.getInnerValues().size() > 0) {
+                currentMap = currentBuilding.getInnerValues().iterator().next();
             }
         }
         floorListAdapter.notifyDataSetChanged();
@@ -993,7 +993,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateGroupLists() {
         myGroupList.clear();
-        myGroupList.addAll(dataController.getAccount().getValues());
+        myGroupList.addAll(dataController.getAccount().getInnerValues());
         myGroupListAdapter.notifyDataSetChanged();
 
         netGroupList.clear();

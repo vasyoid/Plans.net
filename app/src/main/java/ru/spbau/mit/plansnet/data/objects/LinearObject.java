@@ -8,35 +8,30 @@ import java.io.Serializable;
 
 import ru.spbau.mit.plansnet.constructor.objects.MapObjectLinear;
 
-/**
- * Created by kostya55516 on 26.11.17.
- */
-
 public class LinearObject extends MapObject implements Serializable {
-    private PointF coord;
-    private PointF secondCoord;
+    private PointF p1, p2;
 
     public LinearObject(@NonNull final MapObjectLinear object) {
         Line objCoord = object.getPosition();
 
-        coord = new PointF(objCoord.getX1(), objCoord.getY1());
-        secondCoord = new PointF(objCoord.getX2(), objCoord.getY2());
+        p1 = new PointF(objCoord.getX1(), objCoord.getY1());
+        p2 = new PointF(objCoord.getX2(), objCoord.getY2());
     }
 
     public float getX() {
-        return coord.getX();
+        return p1.getX();
     }
 
     public float getY() {
-        return coord.getY();
+        return p1.getY();
     }
 
     public float getX2() {
-        return secondCoord.getX();
+        return p2.getX();
     }
 
     public float getY2() {
-        return secondCoord.getY();
+        return p2.getY();
     }
 
 }
