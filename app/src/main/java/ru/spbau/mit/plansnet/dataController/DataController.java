@@ -33,28 +33,41 @@ import ru.spbau.mit.plansnet.data.UsersGroup;
  */
 
 public class DataController {
-    @NonNull
+    @Nullable
     private NetworkDataManager netManager;
     @NonNull
     private Account userAccount;
     @NonNull
     private Context context;
+    @NonNull
+    private String userID;
 
     private static final String DATA_TAG = "DATA_CONTROLLER_FILES";
 
     public DataController(@NonNull final Context context,
-                          @NonNull final FirebaseUser account) {
+                          @Nullable final FirebaseUser account) {
         this.context = context;
-        netManager = new NetworkDataManager(context, account);
+        if (account != null) {
+            netManager = new NetworkDataManager(context, account);
+        }
 
-        userAccount = new Account(account.getDisplayName(), account.getUid());
+        String name = account != null ? account.getDisplayName() : null;
+        if (name == null) {
+            name = "default";
+        }
+
+        userID = account != null ? account.getUid() : "default";
+
+        userAccount = new Account(name, userID);
     }
 
     /**
      * Download maps from server
      */
     public void downloadMaps(@NonNull final List<String> floorsPaths, @NonNull AtomicInteger mapCount) {
-        netManager.downloadByPaths(floorsPaths, mapCount);
+        if (netManager != null) {
+            netManager.downloadByPaths(floorsPaths, mapCount);
+        }
     }
 
     /**
@@ -70,7 +83,7 @@ public class DataController {
             throws IllegalArgumentException {
 
         File mapFile = new File(context.getApplicationContext().getFilesDir().getAbsolutePath() +
-                "/" + userAccount.getID() + "/" + group.getName());
+                "/" + userID + "/" + group.getName());
         boolean isDownloaded = userAccount.findDownloadedGroup(group.getName()) != null;
         if (userAccount.findByName(group.getName()) == null
                 && userAccount.findDownloadedGroup(group.getName()) == null) {
@@ -83,7 +96,9 @@ public class DataController {
             } else {
                 userAccount.getInnerMap().remove(group.getName());
             }
-            netManager.deleteReference(group, null, null);
+            if (netManager != null) {
+                netManager.deleteReference(group, null, null);
+            }
             return;
         }
 
@@ -94,7 +109,9 @@ public class DataController {
         if (map == null) {
             deleteRecursive(mapFile);
             group.getInnerMap().remove(building.getName());
-            netManager.deleteReference(group, building, null);
+            if (netManager != null) {
+                netManager.deleteReference(group, building, null);
+            }
             return;
         }
 
@@ -105,7 +122,9 @@ public class DataController {
         building.getInnerMap().remove(map.getName());
         deleteRecursive(mapFile);
 
-        netManager.deleteReference(group, building, map);
+        if (netManager != null) {
+            netManager.deleteReference(group, building, map);
+        }
     }
 
     /**
@@ -136,7 +155,12 @@ public class DataController {
     public void getSearchedGroupsAndOwners(@NonNull String substring,
                                            @NonNull final List<MainActivity.SearchResult> ownersAndGroups) {
         CountDownLatch latch = new CountDownLatch(1);
-        netManager.getGroupsWhichContainsName(substring, ownersAndGroups, latch);
+        if (netManager != null) {
+            netManager.getGroupsWhichContainsName(substring, ownersAndGroups, latch);
+        } else {
+            latch.countDown();
+            return;
+        }
         try {
             latch.await();
         } catch (InterruptedException e) {
@@ -146,12 +170,26 @@ public class DataController {
 
     public void searchGroupMaps(@NonNull String owner, @NonNull String group,
                                 @NonNull List<String> floorsPaths, @NonNull AtomicBoolean isFinished) {
-        netManager.searchGroupMaps(owner, group, floorsPaths, isFinished, userAccount);
+        if (netManager != null) {
+            netManager.searchGroupMaps(owner, group, floorsPaths, isFinished, userAccount);
+        } else {
+            synchronized (isFinished) {
+                isFinished.set(true);
+                isFinished.notify();
+            }
+        }
     }
 
 
     public void searchMaps(@NonNull List<String> floorsPaths, @NonNull AtomicBoolean isFinished) {
-        netManager.searchMaps(floorsPaths, isFinished, userAccount);
+        if (netManager != null) {
+            netManager.searchMaps(floorsPaths, isFinished, userAccount);
+        } else {
+            synchronized (isFinished) {
+                isFinished.set(true);
+                isFinished.notify();
+            }
+        }
     }
 
     @NonNull
@@ -189,12 +227,16 @@ public class DataController {
 
     public void setIsPrivate(@NonNull UsersGroup group, boolean isPrivate) {
         group.setPrivate(isPrivate);
-        netManager.setIsPrivate(group, isPrivate);
+        if (netManager != null) {
+            netManager.setIsPrivate(group, isPrivate);
+        }
     }
 
     public void setIsEditable(@NonNull UsersGroup group, boolean isEditable) {
         group.setEditable(isEditable);
-        netManager.setIsEditable(group, isEditable);
+        if (netManager != null) {
+            netManager.setIsEditable(group, isEditable);
+        }
     }
 
     /**
@@ -225,8 +267,9 @@ public class DataController {
         writeMap(map);
         Toast.makeText(context, "Map saved", Toast.LENGTH_SHORT).show();
 
-
-        netManager.putMapOnServer(map, userGroup);
+        if (netManager != null) {
+            netManager.putMapOnServer(map, userGroup);
+        }
     }
 
     //private function for writing map to file
@@ -266,13 +309,17 @@ public class DataController {
                     group = new UsersGroup(map.getGroupName());
                     userAccount.addDownloadedGroup(group);
                     group.setVisibleName(oldGroupName + " by " + map.getOwner());
-                    netManager.setUpDownloadedGroup(group, map.getOwner());
+                    if (netManager != null) {
+                        netManager.setUpDownloadedGroup(group, map.getOwner());
+                    }
                 }
             } else {
                 group = userAccount.findByName(map.getGroupName());
                 if (group == null) {
                     group = userAccount.setElementToContainer(new UsersGroup(map.getGroupName()));
-                    netManager.setUpDownloadedGroup(group, map.getOwner());
+                    if (netManager != null) {
+                        netManager.setUpDownloadedGroup(group, map.getOwner());
+                    }
                 }
             }
 

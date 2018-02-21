@@ -197,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
             );
             floor.copyMap(toSave);
             dataController.saveMap(floor);
+            floorListActivate();
         });
 
         newMapNameDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
@@ -654,6 +655,8 @@ public class MainActivity extends AppCompatActivity {
             Log.w(LOG_IN_TAG, "handleSignInResult:error", e);
             Toast.makeText(MainActivity.this, "Authentication failed.",
                     Toast.LENGTH_SHORT).show();
+
+            afterAuth();
         }
     }
 
@@ -1013,6 +1016,7 @@ public class MainActivity extends AppCompatActivity {
         findListAdapter.notifyDataSetChanged();
 
         floorListInactivate();
+        user = null;
 
         mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> logIn());
         Toast.makeText(MainActivity.this, "Logged out", Toast.LENGTH_SHORT).show();
