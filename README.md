@@ -1,13 +1,13 @@
 # Plans.net
-=Описание проекта=
-
 Демонстрация
 ------------
-[https://docs.google.com/presentation/d/1ABSJsHkVaqpgQqQ1YXEBqMYor2R7t8-12MsSpaSfIwc/edit?usp=sharing презентация]
+* [презентация]
+* [видео]
+* [APK]
 
-[https://youtu.be/g3LOm3XMufw видео]
-
-[https://drive.google.com/open?id=1uNbCwDd0VtIWy__wcP0CVCojCd-sZ3du APK]
+[презентация]: https://docs.google.com/presentation/d/1ABSJsHkVaqpgQqQ1YXEBqMYor2R7t8-12MsSpaSfIwc/edit?usp=sharing
+[видео]: https://youtu.be/g3LOm3XMufw
+[APK]: https://drive.google.com/open?id=1uNbCwDd0VtIWy__wcP0CVCojCd-sZ3du
 
 Идея
 ----
