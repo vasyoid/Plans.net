@@ -1,4 +1,43 @@
 # Plans.net
+Demo
+----
+* [slides]
+* [video]
+* [APK]
+
+[slides]: https://docs.google.com/presentation/d/1ABSJsHkVaqpgQqQ1YXEBqMYor2R7t8-12MsSpaSfIwc/edit?usp=sharing
+[video]: https://youtu.be/g3LOm3XMufw
+[APK]: https://drive.google.com/open?id=1uNbCwDd0VtIWy__wcP0CVCojCd-sZ3du
+
+Summary
+-------
+Interactive floor plans constructor. You can create, edit, view and share your plans to help people navigate at your place.
+
+Features
+-----------
+* Plans constructor
+* Interactive rooms with description and any additional info
+* Group plans in floors and buildings
+* Online spaces with packs of maps
+* Space administrator can edit all plans in the space
+* Search by spaces
+* Private spaces
+
+Possible features in the future
+--------------
+* Nearest spaces by GPS
+* More pics and interactive elements on a plan
+* Functionality for unaothorised users
+* Data synchronization during plans loading/asving
+* Automatic login
+* Backgroung synchronization
+* Optimized plans serialization
+* Lists of users able to edit a plan
+* Sharing by link
+* Comments for plans
+* User and group avatars
+* Realtime loading  in search
+
 Демонстрация
 ------------
 * [презентация]
@@ -31,7 +70,7 @@
 Планы
 -----
 * Полностью корректная работа без авторизации
-* Синхронизация карт при загрузке и сахранении, а не при авторизации
+* Синхронизация карт при загрузке и сохранении, а не при авторизации
 * Сохранение авторизированного аккаунта
 * Фоновая синхронизация
 * Собственная сериализация
